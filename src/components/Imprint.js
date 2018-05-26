@@ -1,30 +1,15 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import cx from 'classnames';
 import injectSheet from 'react-jss'; // eslint-disable-line
 
 
 const styles = theme => ({ // eslint-disable-line
-  imprint: {
-    width: '100%',
-    height: '100%',
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    background: theme.background,
-    overflow: 'auto',
-  },
   text: {
     fontSize: '1.2rem',
   },
-  content: {
-    padding: theme.spacing.unit * 7,
-  },
   close: {
-    fontSize: '1.5rem',
-    position: 'absolute',
-    top: theme.spacing.unit * 3,
-    right: theme.spacing.unit * 7,
+    fontSize: '1.3rem',
+    textAlign: 'right',
     color: theme.primary,
     cursor: 'pointer',
   },
@@ -36,6 +21,9 @@ class Imprint extends React.Component { // eslint-disable-line
     visible: PropTypes.bool.isRequired,
     onClose: PropTypes.func.isRequired,
   }
+  componentDidMount() {
+    window.scrollTo(0, 0);
+  }
   render() {
     const {
       classes,
@@ -44,11 +32,7 @@ class Imprint extends React.Component { // eslint-disable-line
     } = this.props;
     if (!visible) return null;
     return (
-      <div
-        className={cx(
-          classes.imprint,
-        )}
-      >
+      <div>
         <div className={classes.content}>
           <div
             className={classes.close}
@@ -67,7 +51,11 @@ class Imprint extends React.Component { // eslint-disable-line
             General
           </h6>
           <p className={classes.text}>
-            This website does not use any technology that collects data.
+            This website does not actively collect any data about your browsing.
+          </p>
+          <h6>Cookies</h6>
+          <p className={classes.text}>
+            This website does not actively use any cookies. If you want to make sure that cookies are not generated you can deactivate cookies in your browser settings.
           </p>
           <h6>
             SSL-Encryption
@@ -79,7 +67,7 @@ class Imprint extends React.Component { // eslint-disable-line
             Google-Fonts
           </h6>
           <p className={classes.text}>
-            For the sake of beauty this website uses fonts from <a href="https://www.google.com/webfonts/">Google Webfonts</a>. The fonts will be loaded into your browsers cache. You can deactivate the cache or disallow the access to Google Webfonts. Since this is a thrid party library there is the potential of Google Webfonts collecting information.
+            For the sake of beauty this website uses fonts from Google Webfonts. The fonts will be loaded into your browsers cache. Since this is third party library I have no liability about which data Google is collecting about you. You can deactivate cookies or third party services in your browser settings. For more informations about what Google does collect about you read Googles <a target="_blank" rel="noopener noreferrer" href="https://www.google.com/intl/de_de/help/terms_maps.html">Terms and Conditions</a> and <a target="_blank" rel="noopener noreferrer" href="https://policies.google.com/privacy">Privacy Policy</a>
           </p>
           <h6>
             Further information

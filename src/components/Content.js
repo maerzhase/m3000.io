@@ -22,6 +22,7 @@ const styles = theme => ({ // eslint-disable-line
   },
   imprintLink: {
     marginTop: theme.spacing.unit * 10,
+    marginBottom: theme.spacing.unit * 5,
     fontSize: '1.2rem',
     textAlign: 'right',
     cursor: 'pointer',
@@ -58,16 +59,23 @@ class Content extends React.Component { // eslint-disable-line
       showImprint: false,
     });
   }
-  render() {
+  renderContent = () => {
     const {
       classes,
     } = this.props;
     const {
       showImprint,
     } = this.state;
+    if (showImprint) {
+      return (
+        <Imprint
+          onClose={this.closeImprint}
+          visible={showImprint}
+        />
+      );
+    }
     return (
-      <div className={classes.content}>
-        <Html />
+      <React.Fragment>
         <h1>
           <Hello />.
           I am Markus — <br />
@@ -151,10 +159,20 @@ class Content extends React.Component { // eslint-disable-line
             Impressum and Privacy Policy
           </span>
         </p>
-        <Imprint
-          onClose={this.closeImprint}
-          visible={showImprint}
-        />
+      </React.Fragment>
+    );
+  }
+
+  render() {
+    const {
+      classes,
+    } = this.props;
+    return (
+      <div className={classes.content}>
+        <Html />
+        {
+          this.renderContent()
+        }
       </div>
     );
   }

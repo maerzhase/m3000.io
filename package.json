@@ -1,7 +1,8 @@
 {
-  "name": "ssr3000-simple-example",
+  "name": "m3000.io",
   "version": "0.0.1",
-  "description": "",
+  "description": "m3000.io website",
+  "repository": "https://github.com/maerzhase/m3000-website",
   "main": "src/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -24,7 +25,7 @@
     "react-dom": "^16.2.0",
     "react-hot-loader": "^4.0.0",
     "react-jss": "8.3.5",
-    "ssr3000": "^0.3.1"
+    "ssr3000": "^0.3.3"
   },
   "devDependencies": {
     "babel-eslint": "^8.2.3",

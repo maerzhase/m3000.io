@@ -25,7 +25,8 @@
     "react-dom": "^16.2.0",
     "react-hot-loader": "^4.0.0",
     "react-jss": "8.3.5",
-    "ssr3000": "^0.3.3"
+    "ssr3000": "^0.3.3",
+    "webfontloader": "^1.6.28"
   },
   "devDependencies": {
     "babel-eslint": "^8.2.3",

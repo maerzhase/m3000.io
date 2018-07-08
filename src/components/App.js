@@ -4,6 +4,19 @@ import { ThemeProvider } from 'react-jss';
 
 import Content from './Content';
 
+if (global.window) {
+  const loadFont = async (config) => {
+    const load = await require('webfontloader').load; // eslint-disable-line
+    load(config);
+  };
+  loadFont({
+    google: {
+      families: ['IBM Plex Sans:400,700'],
+    },
+  });
+}
+
+
 const dark = { // eslint-disable-line
   color: 'black',
 };

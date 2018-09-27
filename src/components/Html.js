@@ -20,13 +20,16 @@ const styles = theme => ({ // eslint-disable-line
     },
     [Media.l]: {
       html: {
-        fontSize: '16px',
+        fontSize: '15px',
       },
     },
     [Media.xl]: {
       html: {
-        fontSize: '16px',
+        fontSize: '15px',
       },
+    },
+    '[data-hidden]': {
+      display: 'none',
     },
     html: {
       fontFamily: "'IBM Plex Sans', sans-serif",

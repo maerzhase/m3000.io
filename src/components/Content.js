@@ -32,7 +32,7 @@ const styles = theme => ({ // eslint-disable-line
     },
   },
   h6: {
-    marginTop: theme.spacing.unit * 10,
+    marginTop: theme.spacing.unit * 6,
   },
 });
 
@@ -45,6 +45,7 @@ class Content extends React.Component { // eslint-disable-line
   }
   handleEmail = (e) => {
     e.preventDefault();
+    e.stopPropagation();
     window.location.href = 'mailto:markus@lili16.de';
   }
   openImprint = () => {
@@ -111,10 +112,10 @@ class Content extends React.Component { // eslint-disable-line
           >
             Studio NAND
           </a>
-          .
+          . As a design technoligist I am designing and realizing user facing visualizations and interfaces.
         </p>
         <p>
-          From 2013 - 2015 I build hardware prototypes for&nbsp;
+          From 2013 to 2015 I worked for&nbsp;
           <a
             target="_blank"
             rel="noopener noreferrer"
@@ -122,7 +123,15 @@ class Content extends React.Component { // eslint-disable-line
           >
             ART+COM Studios
           </a>
-          .
+          . As an interaction designer I was designing and building prototypes for&nbsp;
+          <a
+            target="_blank"
+            rel="noopener noreferrer"
+            href="///artcom.de/en/project/symphonie-cinetique/"
+          >
+            kinetic sculptures
+          </a>
+          &nbsp;and interactive exhibitions.
         </p>
         <h6
           className={classes.h6}
@@ -133,8 +142,7 @@ class Content extends React.Component { // eslint-disable-line
           Get in touch via&nbsp;
           <a
             ref={(ref) => { this.email = ref; }}
-            href="mailto:there_is_no_clear_link_to_not_feed_the_machines"
-            onMouseDown={this.handleEmail}
+            href="mailto:markus@lili16.de"
           >
             email
           </a>

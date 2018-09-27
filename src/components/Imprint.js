@@ -40,8 +40,8 @@ class Imprint extends React.Component { // eslint-disable-line
           >
             close
           </div>
-          <h4>Impressum</h4>
-          <p className={classes.text}>
+          <h4 data-hidden>Impressum</h4>
+          <p data-hidden className={classes.text}>
             Markus Kerschkewicz <br />
             Lilienthalstr. 16 <br />
             10965 Berlin

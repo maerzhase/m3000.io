@@ -1,0 +1,64 @@
+@import "tailwindcss";
+@import "dither-plugin";
+@plugin "@tailwindcss/typography";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  --primary: #ff2f00;
+  --secondary: #bda150;
+}
+
+@theme inline {
+  --text-1: 14px;
+  --text-2: 15px;
+  --text-3: 16px;
+  --text-4: 20px;
+  --text-5: 24px;
+  --text-6: 28px;
+  --text-7: 32px;
+  --text-8: 38px;
+  --text-9: 40px;
+  --text-10: 48px;
+
+  --leading-1: 16px;
+  --leading-2: 20px;
+  --leading-3: 24px;
+  --leading-4: 28px;
+  --leading-5: 32px;
+  --leading-6: 36px;
+  --leading-7: 40px;
+  --leading-8: 44px;
+  --leading-9: 52px;
+  --leading-10: 64px;
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+}
+
+@utility container {
+  width: 100%;
+  padding-inline: 0;
+
+  @variant sm {
+    max-width: 800px;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}

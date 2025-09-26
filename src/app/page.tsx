@@ -1,10 +1,6 @@
-"force dynamic";
+"force-dynamic";
 
-import {
-  IconExternalLink,
-  IconEyeFilled,
-  IconMailFilled,
-} from "@tabler/icons-react";
+import { IconExternalLink, IconMailFilled } from "@tabler/icons-react";
 import Image from "next/image";
 import Background from "@/components/Background";
 import { Hello } from "@/components/Hello";

@@ -17,7 +17,7 @@
 
   --color-text-primary: var(--color-white);
   --color-text-secondary: var(--color-primary);
-  --color-text-teritary: var(--color-grey-200);
+  --color-text-tertiary: var(--color-secondary);
 }
 
 @layer base {

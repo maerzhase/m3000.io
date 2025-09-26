@@ -11,7 +11,7 @@ import me from "../../public/me.png";
 export default function Home() {
   return (
     <Background>
-      <div className="min-h-screen p-8 gap-16 sm:p-12 container m-auto">
+      <div className="min-h-screen p-6 gap-16 sm:p-12 container m-auto">
         <main className="flex flex-col gap-[32px]">
           <Image
             src={me}
@@ -103,10 +103,14 @@ export default function Home() {
             </ExternalLink>{" "}
             and interactive exhibitions. ART+COM uses new media as artistic
             expression and{" "}
-            <span className="whitespace-nowrap">
+            <span className="md:whitespace-nowrap">
               designs{" "}
-              <ExternalLink href="///artcom.de/?project=river-is">
-                immersive spaces and installations
+              <ExternalLink href="///artcom.de/?project=river-is" noIcon>
+                immersive spaces and{" "}
+                <span className="whitespace-nowrap">
+                  installations
+                  <IconExternalLink size="14" className="ml-1" />
+                </span>
               </ExternalLink>
             </span>
             that engage senses and environments.

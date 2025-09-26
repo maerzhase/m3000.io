@@ -1,4 +1,4 @@
-"force-dynamic";
+export const dynamic = "force-dynamic";
 
 import { IconExternalLink, IconMailFilled } from "@tabler/icons-react";
 import Image from "next/image";

@@ -1,0 +1,27 @@
+@theme {
+  --background: #ffffff;
+  --foreground: #171717;
+  --primary: #ff2f00;
+  --secondary: #bda150;
+
+  /* DESIGN TOKEN COLORS */
+  --color-current: currentColor;
+  --color-transparent: transparent;
+  --color-white: #ffffff;
+  --color-black: #000000;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+
+  --color-text-primary: var(--color-white);
+  --color-text-secondary: var(--color-primary);
+  --color-text-teritary: var(--color-grey-200);
+}
+
+@layer base {
+  @variant dark {
+    /* in case we will have theme switch in the future */
+  }
+}

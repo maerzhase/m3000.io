@@ -1,5 +1,5 @@
-import React from "react";
 import PropTypes from "prop-types";
+import React from "react";
 import injectSheet from "react-jss"; // eslint-disable-line
 
 const styles = (theme) => ({

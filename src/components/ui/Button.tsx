@@ -1,57 +1,98 @@
-import * as React from "react";
-import { Slot } from "@radix-ui/react-slot";
+import { mergeProps } from "@base-ui-components/react/merge-props";
+import { useRender } from "@base-ui-components/react/use-render";
+import { IconLoader2 } from "@tabler/icons-react";
 import { cva, type VariantProps } from "class-variance-authority";
+import * as React from "react";
 import { cn } from "@/lib/cn";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+  cn(
+    "rounded-xs px-4 py-3 text-2 leading-none",
+    "inline-flex flex-wrap items-center gap-1.5",
+    "border-1 border-solid",
+    "disabled:border-grey-900 disabled:bg-grey-900 disabled:text-grey-500",
+    "focus-visible:ring focus-visible:outline-none",
+  ),
   {
     variants: {
-      variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
-        destructive:
-          "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
-        outline:
-          "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
-        secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost:
-          "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
-        link: "text-primary underline-offset-4 hover:underline",
-      },
-      size: {
-        default: "h-9 px-4 py-2 has-[>svg]:px-3",
-        sm: "h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5",
-        lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
-        icon: "size-9",
+      color: {
+        primary: cn(
+          "border-white bg-white text-black",
+          "hover:border-grey-100 hover:bg-grey-100",
+          "active:border-grey-100 active:bg-grey-100",
+          "focus-visible:inset-ring-2",
+        ),
+        secondary: cn(
+          "border-grey-700 bg-black text-text-secondary",
+          "hover:bg-grey-900 hover:text-text-primary",
+          "active:bg-grey-900 active:text-text-primary",
+        ),
+        tertiary: cn(
+          "border-grey-800 bg-grey-800 text-text-primary",
+          "hover:bg-grey-900",
+          "active:bg-grey-900",
+        ),
       },
     },
     defaultVariants: {
-      variant: "default",
-      size: "default",
+      color: "primary",
     },
   },
 );
 
-function Button({
-  className,
-  variant,
-  size,
-  asChild = false,
-  ...props
-}: React.ComponentProps<"button"> &
-  VariantProps<typeof buttonVariants> & {
-    asChild?: boolean;
-  }) {
-  const Comp = asChild ? Slot : "button";
-
-  return (
-    <Comp
-      data-slot="button"
-      className={cn(buttonVariants({ variant, size, className }))}
-      {...props}
-    />
-  );
+export interface ButtonProps
+  extends VariantProps<typeof buttonVariants>,
+    Omit<useRender.ComponentProps<"button">, "color"> {
+  loading?: boolean;
 }
 
-export { Button, buttonVariants };
+export type ButtonElement = React.ElementRef<"button">;
+
+export const Button = React.forwardRef<ButtonElement, ButtonProps>(
+  function Button(
+    {
+      className,
+      color,
+      render,
+      disabled,
+      loading,
+      children,
+      ...props
+    }: ButtonProps,
+    forwardRef,
+  ) {
+    const defaultProps: useRender.ElementProps<"button"> = {
+      className: cn(buttonVariants({ color }), { relative: loading }),
+      type: "button",
+    };
+
+    const _disabled = disabled || loading;
+
+    // Keep the button size the same, while the spinner is shown
+    const _children = loading ? (
+      <>
+        <span className="invisible contents">{children}</span>
+        <span className="absolute inset-0 flex items-center justify-center">
+          <IconLoader2 className="animate-spin" size="16" />
+        </span>
+      </>
+    ) : (
+      children
+    );
+
+    const element = useRender({
+      defaultTagName: "button",
+      render,
+      props: mergeProps<"button">(
+        defaultProps,
+        { className, disabled: _disabled, children: _children },
+        props,
+      ),
+      ref: forwardRef,
+    });
+
+    return element;
+  },
+);
+
+Button.displayName = "Button";

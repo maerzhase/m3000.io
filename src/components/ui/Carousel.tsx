@@ -1,12 +1,11 @@
 "use client";
 
-import * as React from "react";
+import { IconArrowLeft, IconArrowRight } from "@tabler/icons-react";
 import useEmblaCarousel, {
   type UseEmblaCarouselType,
 } from "embla-carousel-react";
-
+import * as React from "react";
 import { cn } from "@/lib/cn";
-import { IconArrowLeft, IconArrowRight } from "@tabler/icons-react";
 import { Button } from "./Button";
 
 type CarouselApi = UseEmblaCarouselType[1];

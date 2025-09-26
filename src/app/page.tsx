@@ -102,10 +102,13 @@ export default function Home() {
               </span>
             </ExternalLink>{" "}
             and interactive exhibitions. ART+COM uses new media as artistic
-            expression and designs{" "}
-            <ExternalLink href="///artcom.de/?project=river-is">
-              immersive spaces and installations
-            </ExternalLink>{" "}
+            expression and{" "}
+            <span className="whitespace-nowrap">
+              designs{" "}
+              <ExternalLink href="///artcom.de/?project=river-is">
+                immersive spaces and installations
+              </ExternalLink>
+            </span>
             that engage senses and environments.
           </Text>
         </main>

@@ -1,6 +1,11 @@
 export const dynamic = "force-dynamic";
 
-import { IconExternalLink, IconMailFilled } from "@tabler/icons-react";
+import {
+  IconBrandGithub,
+  IconBrandGithubFilled,
+  IconExternalLink,
+  IconMailFilled,
+} from "@tabler/icons-react";
 import Image from "next/image";
 import Background from "@/components/Background";
 import { Hello } from "@/components/Hello";
@@ -126,8 +131,9 @@ export default function Home() {
             </Link>
             <br />
             Or check out what I am doing on&nbsp;
-            <ExternalLink href="https://github.com/maerzhase/">
+            <ExternalLink href="https://github.com/maerzhase/" noIcon>
               GitHub
+              <IconBrandGithubFilled size="14" className="ml-1" />
             </ExternalLink>
           </Text>
         </footer>

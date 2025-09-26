@@ -120,8 +120,8 @@ function Carousel({
       <div
         onKeyDownCapture={handleKeyDown}
         className={cn("relative", className)}
-        role="region"
-        aria-roledescription="carousel"
+        //       role="region"
+        //     aria-roledescription="carousel"
         data-slot="carousel"
         {...props}
       >
@@ -157,8 +157,8 @@ function CarouselItem({ className, ...props }: React.ComponentProps<"div">) {
 
   return (
     <div
-      role="group"
-      aria-roledescription="slide"
+      //role="group"
+      //      aria-roledescription="slide"
       data-slot="carousel-item"
       className={cn(
         "min-w-0 shrink-0 grow-0 basis-full",
@@ -172,8 +172,6 @@ function CarouselItem({ className, ...props }: React.ComponentProps<"div">) {
 
 function CarouselPrevious({
   className,
-  variant = "outline",
-  size = "icon",
   ...props
 }: React.ComponentProps<typeof Button>) {
   const { orientation, scrollPrev, canScrollPrev } = useCarousel();
@@ -181,8 +179,6 @@ function CarouselPrevious({
   return (
     <Button
       data-slot="carousel-previous"
-      variant={variant}
-      size={size}
       className={cn(
         "absolute size-8 rounded-full",
         orientation === "horizontal"
@@ -202,8 +198,6 @@ function CarouselPrevious({
 
 function CarouselNext({
   className,
-  variant = "outline",
-  size = "icon",
   ...props
 }: React.ComponentProps<typeof Button>) {
   const { orientation, scrollNext, canScrollNext } = useCarousel();
@@ -211,8 +205,6 @@ function CarouselNext({
   return (
     <Button
       data-slot="carousel-next"
-      variant={variant}
-      size={size}
       className={cn(
         "absolute size-8 rounded-full",
         orientation === "horizontal"

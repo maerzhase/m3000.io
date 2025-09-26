@@ -1,5 +1,6 @@
 "use client";
-import React, { useEffect, useRef } from "react";
+import type React from "react";
+import { useEffect, useRef } from "react";
 
 const Background: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
   const rootRef = useRef<HTMLDivElement>(null);

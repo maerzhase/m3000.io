@@ -1,10 +1,10 @@
-import React from "react";
-import { renderToString } from "react-dom/server";
 import { Router } from "express";
 import compile from "lodash.template";
+import React from "react";
+import { renderToString } from "react-dom/server";
 import { JssProvider, SheetsRegistry } from "react-jss";
-import templateContent from "./index.ejs";
 import App from "../components/App";
+import templateContent from "./index.ejs";
 
 const template = compile(templateContent);
 

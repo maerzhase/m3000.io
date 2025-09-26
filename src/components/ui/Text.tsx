@@ -1,8 +1,8 @@
-import * as React from "react";
-import { Slot } from "@radix-ui/react-slot";
+import { mergeProps } from "@base-ui-components/react/merge-props";
+import { useRender } from "@base-ui-components/react/use-render";
 import { cva, type VariantProps } from "class-variance-authority";
+import * as React from "react";
 import { cn } from "@/lib/cn";
-import type { PropsWithoutRefOrColor } from "./helpers";
 
 const textVariants = cva("", {
   variants: {
@@ -16,11 +16,11 @@ const textVariants = cva("", {
       "7": "text-7 leading-7",
       "8": "text-8 leading-8",
       "9": "text-9 leading-9",
-      "10": "text-10 leading-10",
     },
     weight: {
       regular: "font-normal",
       medium: "font-medium",
+      semibold: "font-semibold",
     },
     align: {
       left: "text-left",
@@ -28,11 +28,9 @@ const textVariants = cva("", {
       right: "text-right",
     },
     color: {
-      grey: "text-grey-900 dark:text-grey-100",
-      "grey-light": "text-grey-500 dark:text-grey-400",
-      green: "text-green-900 dark:text-green-700",
-      red: "text-red-900 dark:text-red-700",
-      orange: "text-orange-900 dark:text-orange-700",
+      primary: "text-text-primary",
+      secondary: "text-text-secondary",
+      tertiary: "text-text-tertiary",
       current: "text-current",
     },
     variant: {
@@ -41,68 +39,35 @@ const textVariants = cva("", {
     },
   },
   defaultVariants: {
-    size: "3",
+    size: "2",
     weight: "regular",
-    color: "grey",
+    color: "primary",
     variant: "sans",
   },
 });
 
-export type TextElement = React.ElementRef<"span">;
-interface TextOwnProps extends VariantProps<typeof textVariants> {}
-type TextAsChildProps = {
-  asChild?: boolean;
-  as?: never;
-} & PropsWithoutRefOrColor<"span">;
-type TextSpanProps = {
-  as?: "span";
-  asChild?: never;
-} & PropsWithoutRefOrColor<"span">;
-type TextDivProps = {
-  as: "div";
-  asChild?: never;
-} & PropsWithoutRefOrColor<"div">;
-type TextLabelProps = {
-  as: "label";
-  asChild?: never;
-} & PropsWithoutRefOrColor<"label">;
-type TextPProps = { as: "p"; asChild?: never } & PropsWithoutRefOrColor<"p">;
-export type TextProps = TextOwnProps &
-  (
-    | TextAsChildProps
-    | TextSpanProps
-    | TextDivProps
-    | TextLabelProps
-    | TextPProps
-  );
+export interface TextProps
+  extends VariantProps<typeof textVariants>,
+    Omit<useRender.ComponentProps<"span">, "color"> {}
 
-export const Text = React.forwardRef<TextElement, TextProps>(
-  (
-    {
-      children,
-      className,
-      asChild = false,
-      as: Tag = "span",
-      align,
-      size,
-      weight,
-      color,
-      variant,
-      ...textProps
-    },
-    forwardedRef,
-  ) => {
-    return (
-      <Slot
-        {...textProps}
-        ref={forwardedRef}
-        className={cn(
-          textVariants({ align, size, weight, color, className, variant }),
-        )}
-      >
-        {asChild ? children : <Tag>{children}</Tag>}
-      </Slot>
-    );
-  },
-);
+export type TextElement = React.ElementRef<"span">;
+
+export const Text = React.forwardRef<TextElement, TextProps>(function Text(
+  { className, align, size, weight, color, variant, render, ...props },
+  forwardedRef,
+) {
+  const defaultProps: useRender.ElementProps<"span"> = {
+    className: cn(textVariants({ align, size, weight, color, variant })),
+  };
+
+  const element = useRender({
+    defaultTagName: "span",
+    render,
+    props: mergeProps<"span">(defaultProps, { className }, props),
+    ref: forwardedRef,
+  });
+
+  return element;
+});
+
 Text.displayName = "Text";

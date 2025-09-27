@@ -43,7 +43,7 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: "https://m3000.io",
-    title: "m3000.ioo — Design engineering",
+    title: "m3000.io — Design engineering",
     description:
       "Developer & Designer. Building at fxhash, leading generative art across blockchains. Former Studio NAND & ART+COM. Graduate thesis on computer linguistics — years before the rise of before LLMS and ChatGPT.",
     siteName: "m3000.io — Design engineering",

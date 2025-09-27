@@ -1,6 +1,6 @@
 html {
   -webkit-font-smoothing: antialiased;
-  background-color: var(--color-backgournd-primary);
+  background-color: var(--color-background);
   color: var(--color-text-primary);
   @variant dark {
     /* in case we will have theme switch in the future */
@@ -8,7 +8,7 @@ html {
 }
 
 body {
-  background: var(--background);
+  background: var(--color-background);
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }

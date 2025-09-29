@@ -8,13 +8,36 @@ import { useState } from "react";
 import { cn } from "@/lib/cn";
 import confetti from "canvas-confetti";
 
+function shootConfetti() {
+  const rand = Math.random();
+  if (rand > 0.5) {
+    confetti({
+      particleCount: 200,
+      spread: 60,
+      origin: { y: 0.6 },
+    });
+  } else {
+    const heart = confetti.shapeFromPath({
+      path: "M10 30 A20 20 0 0 1 50 30 Q50 60 10 90 Q-30 60 -30 30 A20 20 0 0 1 10 30 Z",
+    });
+
+    confetti({
+      particleCount: 200,
+      shapes: [heart],
+      colors: ["#ff4d6d", "#ff8fa3", "#ffccd5"],
+      spread: 80,
+      origin: { y: 0.6 },
+    });
+  }
+}
+
 export default function BdayPage() {
   const [on, setOn] = useState(false);
 
   function toggleCandles() {
     setOn(!on);
     if (!on) {
-      confetti();
+      shootConfetti();
     }
   }
 

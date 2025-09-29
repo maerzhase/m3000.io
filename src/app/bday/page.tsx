@@ -43,43 +43,46 @@ export default function BdayPage() {
 
   return (
     <div className="bg-amber-200 w-screen h-screen bg-[url(/bg.png)] relative overflow-hidden">
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-1/2 aspect-[1024/1024] ">
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-1/2 aspect-square">
         {/* base (candles off) */}
         <Image
           src={cakeOff}
           alt="bday cake off"
-          className="size-full absolute"
+          className="size-[80%] absolute left-1/2 top-1/2 -translate-1/2"
           onClick={toggleCandles}
         />
         <Image
           onClick={toggleCandles}
           src={cakeOn}
           alt="bday cake on"
-          className={cn("size-full transition-opacity duration-200 absolute", {
-            "opacity-0": !on,
-            "opacity-100": on,
-          })}
+          className={cn(
+            "size-[80%] absolute left-1/2 top-1/2 -translate-1/2",
+            "transition-opacity duration-200",
+            {
+              "opacity-0": !on,
+              "opacity-100": on,
+            },
+          )}
         />
         {on && (
           <>
             <div
               className="flame"
-              style={{ "--x": "44%", "--y": "58%" } as any}
+              style={{ "--x": "45.3%", "--y": "59%" } as any}
             ></div>
             <div
               className="flame"
-              style={{ "--x": "55%", "--y": "58%" } as any}
+              style={{ "--x": "54%", "--y": "59%" } as any}
             ></div>
           </>
         )}
+        {/* frame overlay */}
+        <Image
+          src={frame}
+          alt="bday cake frame"
+          className="absolute size-[95%] left-1/2 top-1/2 -translate-1/2 pointer-events-none"
+        />
       </div>
-
-      {/* frame overlay */}
-      <Image
-        src={frame}
-        alt="bday cake frame"
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[60%] w-auto pointer-events-none"
-      />
 
       <style jsx global>{`
         .flame {

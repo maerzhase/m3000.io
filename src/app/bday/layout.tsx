@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "cat's 40s birthday suprise",
-  description: "cat's 40s birthday suprise",
+  title: "cat's 40s birthday surprise",
+  description: "cat's 40s birthday surprise",
   authors: [{ name: "m3000" }],
   openGraph: {
     type: "website",
     locale: "en_US",
     url: "https://m3000.io/bday",
-    title: "cat's 40s birthday suprise",
-    description: "cat's 40s birthday suprise",
-    siteName: "cat's 40s birthday suprise",
+    title: "cat's 40s birthday surprise",
+    description: "cat's 40s birthday surprise",
+    siteName: "cat's 40s birthday surprise",
     images: [
       {
         url: "https://m3000.io/bday-image.jpg",

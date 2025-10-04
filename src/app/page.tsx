@@ -60,7 +60,7 @@ export default function Home() {
             </Text>
             , exploring how algorithmic logic interacts with natural language —
             a topic that has since become central to modern AI systems such as
-            ChatGPT
+            ChatGPT.
           </Text>
           <Text>
             Since 2022, I’ve been a{" "}

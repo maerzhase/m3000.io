@@ -59,7 +59,8 @@ export default function Home() {
               (Sprache / Algorithmen)
             </Text>
             , exploring how algorithmic logic interacts with natural language —
-            long before the rise of large language models such as ChatGPT.
+            a topic that has since become central to modern AI systems such as
+            ChatGPT
           </Text>
           <Text>
             Since 2022, I’ve been a{" "}

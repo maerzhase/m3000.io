@@ -4,7 +4,7 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
-        source: "/symphony-cinetique",
+        source: "/symphonie-cinetique",
         destination: "https://artcom.de/en/?project=symphonie-cinetique",
         permanent: false,
       },

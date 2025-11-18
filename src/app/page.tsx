@@ -68,7 +68,7 @@ export default function Home() {
               Full-Stack Developer
             </Text>{" "}
             at <ExternalLink href="///fxhash.xyz">fxhash</ExternalLink>,
-            building the largest open platforms for generative art across
+            building the largest open platform for generative art across
             multiple blockchains. fxhash is known for its open, uncurated model
             that lets artists mint generative works freely, and for pioneering
             ways to connect code, community, and art in a blockchain-based

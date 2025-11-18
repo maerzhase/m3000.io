@@ -1,7 +1,30 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  async redirects() {
+    return [
+      {
+        source: "/symphony-cinetique",
+        destination: "https://artcom.de/en/?project=symphonie-cinetique",
+        permanent: false,
+      },
+      {
+        source: "/spotti",
+        destination: "https://www.nand.io/case-studies/spotti",
+        permanent: false,
+      },
+      {
+        source: "/futurium",
+        destination: "https://www.jonas-loh.com/projects/do-you-like-working",
+        permanent: false,
+      },
+      {
+        source: "/fxhash",
+        destination: "https://fxhash.xyz",
+        permanent: false,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

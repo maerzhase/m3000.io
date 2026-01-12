@@ -9,6 +9,11 @@ const nextConfig: NextConfig = {
         permanent: false,
       },
       {
+        source: "/peakspotting",
+        destination: "https://www.nand.io/case-studies/peakspotting",
+        permanent: false,
+      },
+      {
         source: "/spotti",
         destination: "https://www.nand.io/case-studies/spotti",
         permanent: false,

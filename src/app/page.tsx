@@ -7,7 +7,7 @@ import {
   IconMailFilled,
 } from "@tabler/icons-react";
 import Image from "next/image";
-import Background from "@/components/Background";
+import BackgroundShader from "@/components/BackgroundShader";
 import { Hello } from "@/components/Hello";
 import { ExternalLink, Link } from "@/components/ui/Link";
 import { Text } from "@/components/ui/Text";
@@ -15,7 +15,7 @@ import me from "../../public/me.png";
 
 export default function Home() {
   return (
-    <Background>
+    <BackgroundShader>
       <div className="min-h-screen p-6 gap-16 sm:p-12 container m-auto">
         <main className="flex flex-col gap-[32px]">
           <Image
@@ -139,6 +139,6 @@ export default function Home() {
           </Text>
         </footer>
       </div>
-    </Background>
+    </BackgroundShader>
   );
 }

@@ -32,6 +32,8 @@ uniform float u_noise_band_strength;
 uniform float u_noise_global_strength;
 uniform float u_dither_levels;
 uniform float u_dither_strength;
+uniform float u_dither_coarseness;
+uniform float u_scroll_phase;
 
 varying vec2 v_uv;
 
@@ -85,9 +87,10 @@ void main() {
 
   float minRes = min(u_resolution.x, u_resolution.y);
   float rScale = clamp(520.0 / minRes, 1.0, 1.6);
-  vec2 c1 = vec2(0.25, 0.5) + 0.04 * vec2(sin(u_time * 0.1), cos(u_time * 0.12));
-  vec2 c2 = vec2(0.5, 0.45) + 0.03 * vec2(cos(u_time * 0.08), sin(u_time * 0.1));
-  vec2 c3 = vec2(0.75, 0.5) + 0.04 * vec2(sin(u_time * 0.11 + 1.0), cos(u_time * 0.09));
+  float t = u_time + u_scroll_phase;
+  vec2 c1 = vec2(0.25, 0.5) + 0.04 * vec2(sin(t * 0.1), cos(t * 0.12));
+  vec2 c2 = vec2(0.5, 0.45) + 0.03 * vec2(cos(t * 0.08), sin(t * 0.1));
+  vec2 c3 = vec2(0.75, 0.5) + 0.04 * vec2(sin(t * 0.11 + 1.0), cos(t * 0.09));
   vec3 b1 = vec3(0.09);
   vec3 b2 = vec3(0.14);
   vec3 b3 = vec3(0.08);
@@ -100,12 +103,12 @@ void main() {
   vig = mix(1.0 - u_vignette_strength, 1.0, vig);
   col *= vig;
 
-  float bandX = uv.x + u_noise_band_warp * valueNoise(uv * 2.0 + u_time * 0.2);
-  float band = sin(bandX * 6.28318 * 2.0 + u_time * 0.1) * 0.5 + 0.5;
-  band += (valueNoise(uv * 4.0 + u_time * 0.15) - 0.5) * u_noise_band_strength;
+  float bandX = uv.x + u_noise_band_warp * valueNoise(uv * 2.0 + t * 0.2);
+  float band = sin(bandX * 6.28318 * 2.0 + t * 0.1) * 0.5 + 0.5;
+  band += (valueNoise(uv * 4.0 + t * 0.15) - 0.5) * u_noise_band_strength;
   col += u_band_strength * band;
 
-  col += (valueNoise(uv * 8.0 + u_time * 0.1) - 0.5) * u_noise_global_strength;
+  col += (valueNoise(uv * 8.0 + t * 0.1) - 0.5) * u_noise_global_strength;
 
   if (u_mouse.x >= 0.0 && u_mouse.x <= 1.0 && u_mouse.y >= 0.0 && u_mouse.y <= 1.0) {
     float mouseGlow = blob(uv, u_mouse, u_mouse_glow_radius);
@@ -115,7 +118,7 @@ void main() {
   col = clamp(col, 0.0, 1.0);
 
   if (u_dither_strength > 0.0 && u_dither_levels > 1.0) {
-    float bayer = bayer4(gl_FragCoord.xy);
+    float bayer = bayer4(gl_FragCoord.xy * u_dither_coarseness);
     vec3 quantized = floor(col * u_dither_levels + bayer) / u_dither_levels;
     col = mix(col, quantized, u_dither_strength);
   }
@@ -177,16 +180,17 @@ const DEFAULT_PARAMS = {
   intensity: 0.3,
   colorIntensity: 2.5,
   mouseGlowIntensity: 0.1,
-  mouseGlowRadius: 0.17,
+  mouseGlowRadius: 0.1,
   vignetteStrength: 1,
-  vignetteRadius: 0.35,
-  bandStrength: 0.065,
-  noiseBandWarp: 0.15,
-  noiseBandStrength: 0.08,
+  vignetteRadius: 0.45,
+  bandStrength: 0.055,
+  noiseBandWarp: 0.12,
+  noiseBandStrength: 0.07,
   noiseGlobalStrength: 0.04,
   ditherLevels: 3,
-  ditherStrength: 0.3,
-  opacity: 0.62,
+  ditherStrength: 0.35,
+  ditherCoarseness: 0.5,
+  opacity: 0.56,
 } as const;
 
 type ShaderParams = Record<keyof typeof DEFAULT_PARAMS, number>;
@@ -274,6 +278,10 @@ const BackgroundShader: React.FC<{ children?: React.ReactNode }> = ({
     );
     const uDitherLevels = gl.getUniformLocation(program, "u_dither_levels");
     const uDitherStrength = gl.getUniformLocation(program, "u_dither_strength");
+    const uDitherCoarseness = gl.getUniformLocation(
+      program,
+      "u_dither_coarseness",
+    );
     const uMouseGlowIntensity = gl.getUniformLocation(
       program,
       "u_mouse_glow_intensity",
@@ -283,35 +291,54 @@ const BackgroundShader: React.FC<{ children?: React.ReactNode }> = ({
       "u_mouse_glow_radius",
     );
     const uColorIntensity = gl.getUniformLocation(program, "u_color_intensity");
+    const uScrollPhase = gl.getUniformLocation(program, "u_scroll_phase");
 
     const mouse = { x: -1, y: -1 };
+    const SCROLL_DECAY = 0.97;
+    const SCROLL_SMOOTHING = 0.08;
+    const SCROLL_PHASE_RATE = 0.012;
+    const SCROLL_CLAMP = 400;
+    const WHEEL_CLAMP = 600;
+    const WHEEL_FACTOR = 1.2;
+    let scrollVelocity = 0;
+    let smoothedScrollVelocity = 0;
+    let scrollPhase = 0;
+    let lastScrollTop = 0;
+    let lastScrollTime = 0;
 
-    const setMouseFromEvent = (e: PointerEvent) => {
+    const onMouseMove = (e: MouseEvent) => {
       mouse.x = e.clientX / window.innerWidth;
       mouse.y = 1 - e.clientY / window.innerHeight;
     };
-    const onPointerMove = setMouseFromEvent;
-    const onPointerDown = setMouseFromEvent;
-    const onPointerLeave = () => {
+    const onMouseLeave = () => {
       mouse.x = -1;
       mouse.y = -1;
     };
-    const onPointerUp = (e: PointerEvent) => {
-      if (e.pointerType === "touch") {
-        mouse.x = -1;
-        mouse.y = -1;
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseleave", onMouseLeave);
+
+    const onScroll = () => {
+      const scrollTop = window.scrollY ?? document.documentElement.scrollTop ?? 0;
+      const now = performance.now() * 0.001;
+      if (lastScrollTime > 0) {
+        const scrollDt = now - lastScrollTime;
+        if (scrollDt > 0 && scrollDt < 0.5) {
+          const v = (scrollTop - lastScrollTop) / scrollDt;
+          scrollVelocity = Math.max(-SCROLL_CLAMP, Math.min(SCROLL_CLAMP, v));
+        }
       }
+      lastScrollTop = scrollTop;
+      lastScrollTime = now;
     };
-    const onPointerCancel = () => {
-      mouse.x = -1;
-      mouse.y = -1;
+    const onWheel = (e: WheelEvent) => {
+      const delta = e.deltaY !== 0 ? e.deltaY : e.deltaX;
+      scrollVelocity = Math.max(
+        -WHEEL_CLAMP,
+        Math.min(WHEEL_CLAMP, scrollVelocity + delta * WHEEL_FACTOR),
+      );
     };
-    const useCapture = true;
-    document.addEventListener("pointermove", onPointerMove, useCapture);
-    document.addEventListener("pointerdown", onPointerDown, useCapture);
-    document.addEventListener("pointerup", onPointerUp, useCapture);
-    document.addEventListener("pointercancel", onPointerCancel, useCapture);
-    document.addEventListener("pointerleave", onPointerLeave, useCapture);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("wheel", onWheel, { passive: true });
 
     const reducedMotionQuery = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
@@ -338,15 +365,22 @@ const BackgroundShader: React.FC<{ children?: React.ReactNode }> = ({
       const reduce = reducedMotionQuery.matches;
       const hidden = document.hidden;
 
+      const dt = Math.min(now - lastTime, 0.1);
       if (!reduce && !hidden) {
-        timeSeconds += now - lastTime;
+        timeSeconds += dt;
       }
       lastTime = now;
+
+      scrollVelocity *= SCROLL_DECAY;
+      smoothedScrollVelocity +=
+        (scrollVelocity - smoothedScrollVelocity) * SCROLL_SMOOTHING;
+      scrollPhase += Math.abs(smoothedScrollVelocity) * SCROLL_PHASE_RATE * dt;
 
       gl.useProgram(program);
 
       const p = paramsRef.current;
       gl.uniform1f(uTime, timeSeconds);
+      gl.uniform1f(uScrollPhase, scrollPhase);
       gl.uniform2f(uResolution, canvas.width, canvas.height);
       gl.uniform3f(uBaseColor, BASE_COLOR[0], BASE_COLOR[1], BASE_COLOR[2]);
       gl.uniform3f(
@@ -365,6 +399,7 @@ const BackgroundShader: React.FC<{ children?: React.ReactNode }> = ({
       gl.uniform1f(uNoiseGlobalStrength, p.noiseGlobalStrength);
       gl.uniform1f(uDitherLevels, p.ditherLevels);
       gl.uniform1f(uDitherStrength, p.ditherStrength);
+      gl.uniform1f(uDitherCoarseness, p.ditherCoarseness);
       gl.uniform1f(uMouseGlowIntensity, p.mouseGlowIntensity);
       gl.uniform1f(uMouseGlowRadius, p.mouseGlowRadius);
       gl.uniform1f(uColorIntensity, p.colorIntensity);
@@ -387,11 +422,10 @@ const BackgroundShader: React.FC<{ children?: React.ReactNode }> = ({
     return () => {
       cancelAnimationFrame(rafId);
       window.removeEventListener("resize", onResize);
-      document.removeEventListener("pointermove", onPointerMove, true);
-      document.removeEventListener("pointerdown", onPointerDown, true);
-      document.removeEventListener("pointerup", onPointerUp, true);
-      document.removeEventListener("pointercancel", onPointerCancel, true);
-      document.removeEventListener("pointerleave", onPointerLeave, true);
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseleave", onMouseLeave);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("wheel", onWheel);
       gl.deleteProgram(program);
       gl.deleteBuffer(buffer);
     };
@@ -650,6 +684,25 @@ const BackgroundShader: React.FC<{ children?: React.ReactNode }> = ({
                   />
                   <span className="text-xs text-white/50">
                     {params.ditherStrength.toFixed(2)}
+                  </span>
+                </label>
+                <label className="block">
+                  <span className="block text-xs text-white/70">
+                    Dither coarseness
+                  </span>
+                  <input
+                    type="range"
+                    min={0.1}
+                    max={1}
+                    step={0.05}
+                    value={params.ditherCoarseness}
+                    onChange={(e) =>
+                      updateParam("ditherCoarseness", Number(e.target.value))
+                    }
+                    className="w-full accent-[#ff2f00]"
+                  />
+                  <span className="text-xs text-white/50">
+                    {params.ditherCoarseness.toFixed(2)}
                   </span>
                 </label>
                 <label className="block">

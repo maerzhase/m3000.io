@@ -296,9 +296,22 @@ const BackgroundShader: React.FC<{ children?: React.ReactNode }> = ({
       mouse.x = -1;
       mouse.y = -1;
     };
-    window.addEventListener("pointermove", onPointerMove);
-    window.addEventListener("pointerdown", onPointerDown);
-    window.addEventListener("pointerleave", onPointerLeave);
+    const onPointerUp = (e: PointerEvent) => {
+      if (e.pointerType === "touch") {
+        mouse.x = -1;
+        mouse.y = -1;
+      }
+    };
+    const onPointerCancel = () => {
+      mouse.x = -1;
+      mouse.y = -1;
+    };
+    const useCapture = true;
+    document.addEventListener("pointermove", onPointerMove, useCapture);
+    document.addEventListener("pointerdown", onPointerDown, useCapture);
+    document.addEventListener("pointerup", onPointerUp, useCapture);
+    document.addEventListener("pointercancel", onPointerCancel, useCapture);
+    document.addEventListener("pointerleave", onPointerLeave, useCapture);
 
     const reducedMotionQuery = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
@@ -374,9 +387,11 @@ const BackgroundShader: React.FC<{ children?: React.ReactNode }> = ({
     return () => {
       cancelAnimationFrame(rafId);
       window.removeEventListener("resize", onResize);
-      window.removeEventListener("pointermove", onPointerMove);
-      window.removeEventListener("pointerdown", onPointerDown);
-      window.removeEventListener("pointerleave", onPointerLeave);
+      document.removeEventListener("pointermove", onPointerMove, true);
+      document.removeEventListener("pointerdown", onPointerDown, true);
+      document.removeEventListener("pointerup", onPointerUp, true);
+      document.removeEventListener("pointercancel", onPointerCancel, true);
+      document.removeEventListener("pointerleave", onPointerLeave, true);
       gl.deleteProgram(program);
       gl.deleteBuffer(buffer);
     };

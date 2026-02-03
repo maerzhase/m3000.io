@@ -17,6 +17,8 @@ uniform float u_noise_band_strength;
 uniform float u_noise_global_strength;
 uniform float u_dither_levels;
 uniform float u_dither_strength;
+uniform float u_dither_coarseness;
+uniform float u_scroll_phase;
 
 varying vec2 v_uv;
 
@@ -70,9 +72,10 @@ void main() {
 
   float minRes = min(u_resolution.x, u_resolution.y);
   float rScale = clamp(520.0 / minRes, 1.0, 1.6);
-  vec2 c1 = vec2(0.25, 0.5) + 0.04 * vec2(sin(u_time * 0.1), cos(u_time * 0.12));
-  vec2 c2 = vec2(0.5, 0.45) + 0.03 * vec2(cos(u_time * 0.08), sin(u_time * 0.1));
-  vec2 c3 = vec2(0.75, 0.5) + 0.04 * vec2(sin(u_time * 0.11 + 1.0), cos(u_time * 0.09));
+  float t = u_time + u_scroll_phase;
+  vec2 c1 = vec2(0.25, 0.5) + 0.04 * vec2(sin(t * 0.1), cos(t * 0.12));
+  vec2 c2 = vec2(0.5, 0.45) + 0.03 * vec2(cos(t * 0.08), sin(t * 0.1));
+  vec2 c3 = vec2(0.75, 0.5) + 0.04 * vec2(sin(t * 0.11 + 1.0), cos(t * 0.09));
   vec3 b1 = vec3(0.09);
   vec3 b2 = vec3(0.14);
   vec3 b3 = vec3(0.08);
@@ -85,12 +88,12 @@ void main() {
   vig = mix(1.0 - u_vignette_strength, 1.0, vig);
   col *= vig;
 
-  float bandX = uv.x + u_noise_band_warp * valueNoise(uv * 2.0 + u_time * 0.2);
-  float band = sin(bandX * 6.28318 * 2.0 + u_time * 0.1) * 0.5 + 0.5;
-  band += (valueNoise(uv * 4.0 + u_time * 0.15) - 0.5) * u_noise_band_strength;
+  float bandX = uv.x + u_noise_band_warp * valueNoise(uv * 2.0 + t * 0.2);
+  float band = sin(bandX * 6.28318 * 2.0 + t * 0.1) * 0.5 + 0.5;
+  band += (valueNoise(uv * 4.0 + t * 0.15) - 0.5) * u_noise_band_strength;
   col += u_band_strength * band;
 
-  col += (valueNoise(uv * 8.0 + u_time * 0.1) - 0.5) * u_noise_global_strength;
+  col += (valueNoise(uv * 8.0 + t * 0.1) - 0.5) * u_noise_global_strength;
 
   if (u_mouse.x >= 0.0 && u_mouse.x <= 1.0 && u_mouse.y >= 0.0 && u_mouse.y <= 1.0) {
     float mouseGlow = blob(uv, u_mouse, u_mouse_glow_radius);
@@ -100,7 +103,7 @@ void main() {
   col = clamp(col, 0.0, 1.0);
 
   if (u_dither_strength > 0.0 && u_dither_levels > 1.0) {
-    float bayer = bayer4(gl_FragCoord.xy);
+    float bayer = bayer4(gl_FragCoord.xy * u_dither_coarseness);
     vec3 quantized = floor(col * u_dither_levels + bayer) / u_dither_levels;
     col = mix(col, quantized, u_dither_strength);
   }

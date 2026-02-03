@@ -5,9 +5,8 @@ uniform vec2 u_resolution;
 uniform vec3 u_base_color;
 uniform vec3 u_primary_color;
 uniform float u_intensity;
-uniform vec2 u_mouse;
+uniform sampler2D u_trail;
 uniform float u_mouse_glow_intensity;
-uniform float u_mouse_glow_radius;
 uniform float u_color_intensity;
 uniform float u_vignette_strength;
 uniform float u_vignette_radius;
@@ -19,6 +18,8 @@ uniform float u_dither_levels;
 uniform float u_dither_strength;
 uniform float u_dither_coarseness;
 uniform float u_scroll_phase;
+uniform float u_displace_strength;
+uniform float u_rgb_split;
 
 varying vec2 v_uv;
 
@@ -65,14 +66,10 @@ float blob(vec2 uv, vec2 center, float radius) {
   return exp(-(d * d) / (2.0 * radius * radius));
 }
 
-void main() {
-  vec2 uv = v_uv;
-
-  vec3 col = u_base_color;
-
+vec3 baseScene(vec2 p) {
   float minRes = min(u_resolution.x, u_resolution.y);
   float rScale = clamp(520.0 / minRes, 1.0, 1.6);
-  float t = u_time + u_scroll_phase;
+  float t = u_time * 1.2 + u_scroll_phase;
   vec2 c1 = vec2(0.25, 0.5) + 0.04 * vec2(sin(t * 0.1), cos(t * 0.12));
   vec2 c2 = vec2(0.5, 0.45) + 0.03 * vec2(cos(t * 0.08), sin(t * 0.1));
   vec2 c3 = vec2(0.75, 0.5) + 0.04 * vec2(sin(t * 0.11 + 1.0), cos(t * 0.09));
@@ -81,24 +78,45 @@ void main() {
   vec3 b3 = vec3(0.08);
   float r = 0.45 * rScale;
   float rCenter = 0.55 * rScale;
-  col += u_intensity * (blob(uv, c1, r) * b1 + blob(uv, c2, rCenter) * b2 + blob(uv, c3, r) * b3);
-
-  float d = length(uv - 0.5);
+  vec3 col = u_base_color;
+  col += u_intensity * (blob(p, c1, r) * b1 + blob(p, c2, rCenter) * b2 + blob(p, c3, r) * b3);
+  float d = length(p - 0.5);
   float vig = 1.0 - smoothstep(u_vignette_radius * 0.5, u_vignette_radius, d);
   vig = mix(1.0 - u_vignette_strength, 1.0, vig);
   col *= vig;
-
-  float bandX = uv.x + u_noise_band_warp * valueNoise(uv * 2.0 + t * 0.2);
+  float bandX = p.x + u_noise_band_warp * valueNoise(p * 2.0 + t * 0.2);
   float band = sin(bandX * 6.28318 * 2.0 + t * 0.1) * 0.5 + 0.5;
-  band += (valueNoise(uv * 4.0 + t * 0.15) - 0.5) * u_noise_band_strength;
+  band += (valueNoise(p * 4.0 + t * 0.15) - 0.5) * u_noise_band_strength;
   col += u_band_strength * band;
+  col += (valueNoise(p * 8.0 + t * 0.1) - 0.5) * u_noise_global_strength;
+  return col;
+}
 
-  col += (valueNoise(uv * 8.0 + t * 0.1) - 0.5) * u_noise_global_strength;
+void main() {
+  vec2 uv = v_uv;
+  float trail = texture2D(u_trail, uv).r;
+  // Boost trail for displacement/split so faint trail still shows effect (trail is often 0.1–0.3)
+  float trailEff = pow(max(0.0, trail), 0.65);
 
-  if (u_mouse.x >= 0.0 && u_mouse.x <= 1.0 && u_mouse.y >= 0.0 && u_mouse.y <= 1.0) {
-    float mouseGlow = blob(uv, u_mouse, u_mouse_glow_radius);
-    col += u_color_intensity * 1.85 * u_mouse_glow_intensity * mouseGlow * u_primary_color;
+  // Displacement: large UV offset so it's visible even at mid trail strength
+  vec2 displaceDir = vec2(1.2, 0.35);
+  vec2 uv_d = uv + trailEff * u_displace_strength * displaceDir;
+
+  vec3 col;
+  if (u_rgb_split > 0.0 && trail > 0.005) {
+    // RGB split along velocity direction (stored in trail.gb); fallback to horizontal if no velocity
+    vec2 velDir = vec2(texture2D(u_trail, uv).g * 2.0 - 1.0, texture2D(u_trail, uv).b * 2.0 - 1.0);
+    if (length(velDir) < 0.01) velDir = vec2(1.0, 0.0);
+    else velDir = normalize(velDir);
+    float rs = trailEff * u_rgb_split * 4.0;
+    vec3 cr = baseScene(uv_d - rs * velDir);
+    vec3 cg = baseScene(uv_d);
+    vec3 cb = baseScene(uv_d + rs * velDir);
+    col = vec3(cr.r, cg.g, cb.b);
+  } else {
+    col = baseScene(uv_d);
   }
+  col += trail * u_color_intensity * 1.5 * u_mouse_glow_intensity * u_primary_color;
 
   col = clamp(col, 0.0, 1.0);
 

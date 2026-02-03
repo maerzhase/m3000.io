@@ -379,6 +379,7 @@ const BackgroundShader: React.FC<{ children?: React.ReactNode }> = ({
     const TRAIL_SPLAT = 0.22;
 
     function createTrailTexture(): WebGLTexture | null {
+      if (!gl) return null;
       const tex = gl.createTexture();
       if (!tex) return null;
       gl.bindTexture(gl.TEXTURE_2D, tex);
@@ -389,6 +390,7 @@ const BackgroundShader: React.FC<{ children?: React.ReactNode }> = ({
       return tex;
     }
     function resizeTrailTargets(w: number, h: number) {
+      if (!gl) return;
       w = Math.max(1, w);
       h = Math.max(1, h);
       if (trailWidth === w && trailHeight === h) return;

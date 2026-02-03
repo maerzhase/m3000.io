@@ -68,14 +68,17 @@ void main() {
 
   vec3 col = u_base_color;
 
+  float minRes = min(u_resolution.x, u_resolution.y);
+  float rScale = clamp(520.0 / minRes, 1.0, 1.6);
   vec2 c1 = vec2(0.25, 0.5) + 0.04 * vec2(sin(u_time * 0.1), cos(u_time * 0.12));
   vec2 c2 = vec2(0.5, 0.45) + 0.03 * vec2(cos(u_time * 0.08), sin(u_time * 0.1));
   vec2 c3 = vec2(0.75, 0.5) + 0.04 * vec2(sin(u_time * 0.11 + 1.0), cos(u_time * 0.09));
   vec3 b1 = vec3(0.09);
-  vec3 b2 = vec3(0.07);
+  vec3 b2 = vec3(0.14);
   vec3 b3 = vec3(0.08);
-  float r = 0.45;
-  col += u_intensity * (blob(uv, c1, r) * b1 + blob(uv, c2, r) * b2 + blob(uv, c3, r) * b3);
+  float r = 0.45 * rScale;
+  float rCenter = 0.55 * rScale;
+  col += u_intensity * (blob(uv, c1, r) * b1 + blob(uv, c2, rCenter) * b2 + blob(uv, c3, r) * b3);
 
   float d = length(uv - 0.5);
   float vig = 1.0 - smoothstep(u_vignette_radius * 0.5, u_vignette_radius, d);

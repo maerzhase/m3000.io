@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import {
   IconBrandGithub,
   IconBrandGithubFilled,
+  IconBrandLinkedinFilled,
   IconExternalLink,
   IconMailFilled,
 } from "@tabler/icons-react";
@@ -135,6 +136,12 @@ export default function Home() {
             <ExternalLink href="https://github.com/maerzhase/" noIcon>
               GitHub
               <IconBrandGithubFilled size="14" className="ml-1" />
+            </ExternalLink>
+            <br />
+            Connect with me on&nbsp;
+            <ExternalLink href="https://linkedin.com/in/maerzhase3000/" noIcon>
+              LinkedIn
+              <IconBrandLinkedinFilled size="14" className="ml-1" />
             </ExternalLink>
           </Text>
         </footer>

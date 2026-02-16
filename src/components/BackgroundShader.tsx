@@ -358,7 +358,10 @@ const BackgroundShader: React.FC<{ children?: React.ReactNode }> = ({
     const trailPositionLoc = gl.getAttribLocation(trailProgram, "a_position");
     const uPrevTrail = gl.getUniformLocation(trailProgram, "u_prev_trail");
     const uTrailMouse = gl.getUniformLocation(trailProgram, "u_mouse");
-    const uTrailResolution = gl.getUniformLocation(trailProgram, "u_resolution");
+    const uTrailResolution = gl.getUniformLocation(
+      trailProgram,
+      "u_resolution",
+    );
     const uTrailDecay = gl.getUniformLocation(trailProgram, "u_decay");
     const uTrailSplat = gl.getUniformLocation(trailProgram, "u_splat");
     const uTrailSplatAmount = gl.getUniformLocation(
@@ -403,16 +406,48 @@ const BackgroundShader: React.FC<{ children?: React.ReactNode }> = ({
       const texA = trailTexA!;
       const texB = trailTexB!;
       gl.bindTexture(gl.TEXTURE_2D, texA);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+      gl.texImage2D(
+        gl.TEXTURE_2D,
+        0,
+        gl.RGBA,
+        w,
+        h,
+        0,
+        gl.RGBA,
+        gl.UNSIGNED_BYTE,
+        null,
+      );
       gl.bindTexture(gl.TEXTURE_2D, texB);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+      gl.texImage2D(
+        gl.TEXTURE_2D,
+        0,
+        gl.RGBA,
+        w,
+        h,
+        0,
+        gl.RGBA,
+        gl.UNSIGNED_BYTE,
+        null,
+      );
       gl.bindTexture(gl.TEXTURE_2D, null);
       gl.bindFramebuffer(gl.FRAMEBUFFER, trailFboA);
-      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texA, 0);
+      gl.framebufferTexture2D(
+        gl.FRAMEBUFFER,
+        gl.COLOR_ATTACHMENT0,
+        gl.TEXTURE_2D,
+        texA,
+        0,
+      );
       gl.clearColor(0, 0, 0, 1);
       gl.clear(gl.COLOR_BUFFER_BIT);
       gl.bindFramebuffer(gl.FRAMEBUFFER, trailFboB);
-      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texB, 0);
+      gl.framebufferTexture2D(
+        gl.FRAMEBUFFER,
+        gl.COLOR_ATTACHMENT0,
+        gl.TEXTURE_2D,
+        texB,
+        0,
+      );
       gl.clear(gl.COLOR_BUFFER_BIT);
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     }
@@ -456,7 +491,8 @@ const BackgroundShader: React.FC<{ children?: React.ReactNode }> = ({
     window.addEventListener("mouseleave", onMouseLeave);
 
     const onScroll = () => {
-      const scrollTop = window.scrollY ?? document.documentElement.scrollTop ?? 0;
+      const scrollTop =
+        window.scrollY ?? document.documentElement.scrollTop ?? 0;
       const now = performance.now() * 0.001;
       if (lastScrollTime > 0) {
         const scrollDt = now - lastScrollTime;
@@ -550,7 +586,9 @@ const BackgroundShader: React.FC<{ children?: React.ReactNode }> = ({
         const dy = smoothedMouseY - prevSmoothedMouseY;
         const moved = Math.sqrt(dx * dx + dy * dy);
         splatAmount =
-          moved < SPLAT_MOVE_THRESHOLD ? 0 : Math.min(1, moved * SPLAT_MOVE_SCALE);
+          moved < SPLAT_MOVE_THRESHOLD
+            ? 0
+            : Math.min(1, moved * SPLAT_MOVE_SCALE);
         velX = dx;
         velY = dy;
       }
@@ -940,9 +978,7 @@ const BackgroundShader: React.FC<{ children?: React.ReactNode }> = ({
                   </span>
                 </label>
                 <label className="block">
-                  <span className="block text-xs text-white/70">
-                    RGB split
-                  </span>
+                  <span className="block text-xs text-white/70">RGB split</span>
                   <input
                     type="range"
                     min={0}

@@ -28,6 +28,21 @@ const nextConfig: NextConfig = {
         destination: "https://fxhash.xyz",
         permanent: false,
       },
+      {
+        source: "/soli",
+        destination: "https://www.jonas-loh.com/projects/project-soli",
+        permanent: false,
+      },
+      {
+        source: "/ucla",
+        destination: "https://www.nand.io/case-studies/ucla-energy-atlas",
+        permanent: false,
+      },
+      {
+        source: "/blanq",
+        destination: "https://www.jonas-loh.com/projects/blanq",
+        permanent: false,
+      },
     ];
   },
 };

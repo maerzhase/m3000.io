@@ -10,11 +10,18 @@ import {
 import Image from "next/image";
 import BackgroundShader from "@/components/BackgroundShader";
 import { Hello } from "@/components/Hello";
+import { ProjectCardDock } from "@/components/ProjectCardDock";
 import { ExternalLink, Link } from "@/components/ui/Link";
 import { Text } from "@/components/ui/Text";
+import { projectGroups } from "@/data/projects";
 import me from "../../public/me.png";
 
 export default function Home() {
+  const fxhash = projectGroups.find((g) => g.id === "fxhash");
+  const nand = projectGroups.find((g) => g.id === "nand");
+  const artcom = projectGroups.find((g) => g.id === "artcom");
+  const thesis = projectGroups.find((g) => g.id === "thesis");
+
   return (
     <BackgroundShader>
       <div className="min-h-screen p-6 gap-16 sm:p-12 container m-auto">
@@ -34,9 +41,9 @@ export default function Home() {
             .
           </Text>
           <Text size="4">
-            Since 2011 I’ve been working with data and information
+            Since 2011 I've been working with data and information
             technology—both inside and outside the web. I thrive in modern
-            design and coding environments, and when existing tools don’t quite
+            design and coding environments, and when existing tools don't quite
             fit, I build my own.
           </Text>
           <Text>
@@ -63,8 +70,11 @@ export default function Home() {
             a topic that has since become central to modern AI systems such as
             ChatGPT.
           </Text>
+          {thesis && (
+            <ProjectCardDock projects={thesis.projects} groupIndex={3} />
+          )}
           <Text>
-            Since 2022, I’ve been a{" "}
+            Since 2022, I've been a{" "}
             <Text size="1" weight="semibold">
               Full-Stack Developer
             </Text>{" "}
@@ -75,6 +85,9 @@ export default function Home() {
             ways to connect code, community, and art in a blockchain-based
             environment.
           </Text>
+          {fxhash && (
+            <ProjectCardDock projects={fxhash.projects} groupIndex={0} />
+          )}
           <Text>
             From 2015 to 2023 I was{" "}
             <Text size="1" weight="semibold">
@@ -88,6 +101,9 @@ export default function Home() {
             large-scale exhibitions and interactive installations, bridging the
             gap between concept, design, and implementation.
           </Text>
+          {nand && (
+            <ProjectCardDock projects={nand.projects} groupIndex={1} />
+          )}
           <Text>
             From 2013 to 2015 I was at{" "}
             <ExternalLink href="///artcom.de" noIcon>
@@ -122,6 +138,9 @@ export default function Home() {
             </span>
             that engage senses and environments.
           </Text>
+          {artcom && (
+            <ProjectCardDock projects={artcom.projects} groupIndex={2} />
+          )}
         </main>
         <footer className="flex flex-col gap-4 mt-8">
           <Text size="3">Interested to collaborate?</Text>

@@ -1,0 +1,306 @@
+/* ============================================================
+   PROJECT CARDS — Interactive portfolio showcase
+   ============================================================ */
+
+/* ---- Dock: horizontal flex container for card groups ---- */
+.project-card-dock {
+  display: flex;
+  gap: 16px;
+  padding: 8px 0;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+@media (min-width: 640px) {
+  .project-card-dock {
+    gap: 20px;
+    padding: 12px 0;
+  }
+}
+
+/* ---- Card: the interactive artifact ---- */
+.project-card {
+  position: relative;
+  width: 260px;
+  min-height: 160px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  overflow: hidden;
+  cursor: grab;
+  user-select: none;
+  flex-shrink: 0;
+
+  /* Reveal: starts hidden */
+  opacity: 0;
+  transform:
+    translateY(32px)
+    scale(0.96)
+    rotate(var(--card-rotation, 0deg));
+  transition:
+    opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1) var(--card-stagger, 0ms),
+    transform 0.7s cubic-bezier(0.16, 1, 0.3, 1) var(--card-stagger, 0ms),
+    box-shadow 0.4s ease;
+
+  /* Composited transforms: tilt + drag + rotation */
+  will-change: transform, opacity;
+}
+
+.project-card[data-visible="true"] {
+  opacity: 1;
+  transform:
+    perspective(800px)
+    rotateX(var(--card-tilt-x, 0deg))
+    rotateY(var(--card-tilt-y, 0deg))
+    translate(var(--drag-x, 0px), var(--drag-y, 0px))
+    scale(var(--card-scale, 1))
+    rotate(var(--card-rotation, 0deg));
+}
+
+.project-card.is-dragging {
+  cursor: grabbing;
+  z-index: 10;
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.4),
+    0 0 40px color-mix(in srgb, var(--card-accent) 15%, transparent);
+}
+
+/* ---- Visual: gradient placeholder background ---- */
+.project-card__visual {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.project-card__visual-accent {
+  position: absolute;
+  bottom: -20%;
+  left: 20%;
+  width: 60%;
+  height: 60%;
+  border-radius: 50%;
+  background: var(--card-accent);
+  opacity: 0.06;
+  filter: blur(40px);
+  transition: opacity 0.5s ease;
+}
+
+.project-card:hover .project-card__visual-accent,
+.project-card.is-dragging .project-card__visual-accent {
+  opacity: 0.12;
+}
+
+/* ---- Glare: cursor-following shine ---- */
+.project-card__glare {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(
+    circle at var(--card-glare-x, 50%) var(--card-glare-y, 50%),
+    rgba(255, 255, 255, 0.12) 0%,
+    rgba(255, 255, 255, 0) 60%
+  );
+  transition: opacity 0.3s ease;
+}
+
+.project-card:hover .project-card__glare {
+  opacity: 1;
+}
+
+/* ---- Content: layered reveal ---- */
+.project-card__content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  min-height: 160px;
+  padding: 18px 20px;
+}
+
+.project-card__header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transform: translateY(6px);
+  opacity: 0.85;
+  transition:
+    transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.4s ease;
+}
+
+.project-card[data-visible="true"]:hover .project-card__header,
+.project-card.is-dragging .project-card__header {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.project-card__title {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: #fff;
+  letter-spacing: -0.01em;
+}
+
+.project-card__subtitle {
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.project-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: auto;
+  padding-top: 12px;
+  transform: translateY(4px);
+  opacity: 0;
+  transition:
+    transform 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.08s,
+    opacity 0.4s ease 0.08s;
+}
+
+.project-card[data-visible="true"]:hover .project-card__tags,
+.project-card.is-dragging .project-card__tags {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.project-card__tag {
+  font-size: 10px;
+  line-height: 1;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  letter-spacing: 0.02em;
+}
+
+/* ---- Link: external arrow ---- */
+.project-card__link {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  opacity: 0;
+  transform: translateY(-4px);
+  transition:
+    opacity 0.3s ease 0.1s,
+    transform 0.3s ease 0.1s,
+    color 0.2s ease,
+    background 0.2s ease;
+  cursor: pointer;
+}
+
+.project-card:hover .project-card__link {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.project-card__link:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* ---- Subtle border glow on hover ---- */
+.project-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  pointer-events: none;
+  border: 1px solid transparent;
+  transition: border-color 0.4s ease;
+}
+
+.project-card:hover::before {
+  border-color: color-mix(in srgb, var(--card-accent) 20%, transparent);
+}
+
+/* ---- Bottom edge glow ---- */
+.project-card::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  z-index: 1;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--card-accent) 30%, transparent),
+    transparent
+  );
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.project-card:hover::after {
+  opacity: 1;
+}
+
+/* ---- Reduced motion ---- */
+@media (prefers-reduced-motion: reduce) {
+  .project-card {
+    opacity: 1;
+    transform: rotate(var(--card-rotation, 0deg));
+    transition: none;
+  }
+
+  .project-card__header {
+    transform: none;
+    opacity: 1;
+    transition: none;
+  }
+
+  .project-card__tags {
+    transform: none;
+    opacity: 1;
+    transition: none;
+  }
+
+  .project-card__glare {
+    display: none;
+  }
+}
+
+/* ---- Mobile: tighter cards, reduced flair ---- */
+@media (max-width: 639px) {
+  .project-card-dock {
+    gap: 12px;
+  }
+
+  .project-card {
+    width: 100%;
+    max-width: 280px;
+  }
+
+  /* Tags always visible on touch devices */
+  .project-card[data-visible="true"] .project-card__tags {
+    opacity: 0.8;
+    transform: translateY(0);
+  }
+
+  .project-card[data-visible="true"] .project-card__header {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

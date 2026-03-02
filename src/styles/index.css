@@ -3,6 +3,7 @@
 @import "./theme/index.css";
 @import "./globals.css";
 @import "./utility.css";
+@import "./project-cards.css";
 @plugin "@tailwindcss/typography";
 
 :root {

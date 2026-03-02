@@ -22,9 +22,9 @@ export const projectGroups: ProjectGroup[] = [
         description:
           "The largest open platform for generative art. Built the full-stack from marketplace UI to on-chain minting across Tezos and Ethereum.",
         images: [
-          "/images/placeholder-1.svg",
-          "/images/placeholder-2.svg",
-          "/images/placeholder-3.svg",
+          "/images/placeholder-1.jpg",
+          "/images/placeholder-2.jpg",
+          "/images/placeholder-3.jpg",
         ],
         href: "https://fxhash.xyz",
         color: "#ff2f00",
@@ -34,7 +34,7 @@ export const projectGroups: ProjectGroup[] = [
         title: "Minting Pipeline",
         description:
           "End-to-end pipeline for generative token creation, from code upload and sandbox preview to on-chain deployment and IPFS storage.",
-        images: ["/images/placeholder-4.svg", "/images/placeholder-5.svg"],
+        images: ["/images/placeholder-4.jpg", "/images/placeholder-5.jpg"],
         color: "#ff5a33",
       },
     ],
@@ -48,9 +48,9 @@ export const projectGroups: ProjectGroup[] = [
         description:
           "Large-scale interactive installations translating complex datasets into tangible, immersive environments using custom hardware and real-time graphics.",
         images: [
-          "/images/placeholder-6.svg",
-          "/images/placeholder-7.svg",
-          "/images/placeholder-8.svg",
+          "/images/placeholder-6.jpg",
+          "/images/placeholder-7.jpg",
+          "/images/placeholder-8.jpg",
         ],
         href: "https://nand.io",
         color: "#bda150",
@@ -60,7 +60,7 @@ export const projectGroups: ProjectGroup[] = [
         title: "Digital Products",
         description:
           "Design systems and interactive prototypes for enterprise clients, bridging UX research with production-ready component architectures.",
-        images: ["/images/placeholder-9.svg"],
+        images: ["/images/placeholder-9.jpg"],
         color: "#d4b85c",
       },
     ],
@@ -74,8 +74,8 @@ export const projectGroups: ProjectGroup[] = [
         description:
           "Symphonie Cinetique: choreographed mechanical installation with hundreds of individually controlled kinetic elements responding to musical compositions.",
         images: [
-          "/images/placeholder-10.svg",
-          "/images/placeholder-11.svg",
+          "/images/placeholder-10.jpg",
+          "/images/placeholder-11.jpg",
         ],
         href: "https://artcom.de/en/project/symphonie-cinetique/",
         color: "#ff2f00",
@@ -86,9 +86,9 @@ export const projectGroups: ProjectGroup[] = [
         description:
           "Spatial installations combining projection mapping, sensor networks, and generative visuals to create responsive architectural environments.",
         images: [
-          "/images/placeholder-12.svg",
-          "/images/placeholder-13.svg",
-          "/images/placeholder-14.svg",
+          "/images/placeholder-12.jpg",
+          "/images/placeholder-13.jpg",
+          "/images/placeholder-14.jpg",
         ],
         color: "#cc2600",
       },
@@ -102,7 +102,7 @@ export const projectGroups: ProjectGroup[] = [
         title: "Sprache / Algorithmen",
         description:
           "Thesis on computational linguistics exploring how algorithmic logic interacts with natural language structures and meaning-making.",
-        images: ["/images/placeholder-15.svg"],
+        images: ["/images/placeholder-15.jpg"],
         color: "#bda150",
       },
     ],

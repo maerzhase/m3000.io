@@ -1,8 +1,8 @@
 export type Project = {
   id: string;
   title: string;
-  subtitle: string;
-  tags: string[];
+  description: string;
+  images: string[]; // up to 3 image paths
   href?: string;
   color: string;
 };
@@ -19,16 +19,22 @@ export const projectGroups: ProjectGroup[] = [
       {
         id: "fxhash-platform",
         title: "fxhash",
-        subtitle: "Generative Art Platform",
-        tags: ["Next.js", "TypeScript", "GraphQL"],
+        description:
+          "The largest open platform for generative art. Built the full-stack from marketplace UI to on-chain minting across Tezos and Ethereum.",
+        images: [
+          "/images/placeholder-1.svg",
+          "/images/placeholder-2.svg",
+          "/images/placeholder-3.svg",
+        ],
         href: "https://fxhash.xyz",
         color: "#ff2f00",
       },
       {
         id: "fxhash-mint",
         title: "Minting Pipeline",
-        subtitle: "On-chain Generative Tokens",
-        tags: ["Solidity", "Tezos", "IPFS"],
+        description:
+          "End-to-end pipeline for generative token creation, from code upload and sandbox preview to on-chain deployment and IPFS storage.",
+        images: ["/images/placeholder-4.svg", "/images/placeholder-5.svg"],
         color: "#ff5a33",
       },
     ],
@@ -39,16 +45,22 @@ export const projectGroups: ProjectGroup[] = [
       {
         id: "nand-dataviz",
         title: "Data Experiences",
-        subtitle: "Interactive Installations",
-        tags: ["D3.js", "WebGL", "Arduino"],
+        description:
+          "Large-scale interactive installations translating complex datasets into tangible, immersive environments using custom hardware and real-time graphics.",
+        images: [
+          "/images/placeholder-6.svg",
+          "/images/placeholder-7.svg",
+          "/images/placeholder-8.svg",
+        ],
         href: "https://nand.io",
         color: "#bda150",
       },
       {
         id: "nand-ux",
         title: "Digital Products",
-        subtitle: "UX & Design Systems",
-        tags: ["React", "Figma", "Storybook"],
+        description:
+          "Design systems and interactive prototypes for enterprise clients, bridging UX research with production-ready component architectures.",
+        images: ["/images/placeholder-9.svg"],
         color: "#d4b85c",
       },
     ],
@@ -59,16 +71,25 @@ export const projectGroups: ProjectGroup[] = [
       {
         id: "artcom-kinetic",
         title: "Kinetic Sculptures",
-        subtitle: "Symphonie Cinetique",
-        tags: ["C++", "Processing", "Motors"],
+        description:
+          "Symphonie Cinetique: choreographed mechanical installation with hundreds of individually controlled kinetic elements responding to musical compositions.",
+        images: [
+          "/images/placeholder-10.svg",
+          "/images/placeholder-11.svg",
+        ],
         href: "https://artcom.de/en/project/symphonie-cinetique/",
         color: "#ff2f00",
       },
       {
         id: "artcom-immersive",
         title: "Immersive Spaces",
-        subtitle: "Spatial Installations",
-        tags: ["openFrameworks", "Sensors", "Projection"],
+        description:
+          "Spatial installations combining projection mapping, sensor networks, and generative visuals to create responsive architectural environments.",
+        images: [
+          "/images/placeholder-12.svg",
+          "/images/placeholder-13.svg",
+          "/images/placeholder-14.svg",
+        ],
         color: "#cc2600",
       },
     ],
@@ -79,8 +100,9 @@ export const projectGroups: ProjectGroup[] = [
       {
         id: "thesis-sprache",
         title: "Sprache / Algorithmen",
-        subtitle: "Computational Linguistics",
-        tags: ["NLP", "Algorithms", "Language"],
+        description:
+          "Thesis on computational linguistics exploring how algorithmic logic interacts with natural language structures and meaning-making.",
+        images: ["/images/placeholder-15.svg"],
         color: "#bda150",
       },
     ],

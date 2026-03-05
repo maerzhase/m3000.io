@@ -1,116 +1,87 @@
 /* ============================================================
    PROJECT ORNAMENTS & MORPH CARD
-   Inline typographic ornaments that morph into project cards
-   GSAP owns all card geometry/opacity — CSS handles only
-   internal styling and the ornament button.
+   Ornament = colored inline chip in text.
+   Click → GSAP morphs it to a full card. Page fades out.
+   Shader bg remains visible throughout.
    ============================================================ */
 
-/* ─── Inline ornament button ─────────────────────────────────────────────── */
+/* ─── Inline ornament chip ───────────────────────────────────────────────── */
 
 .project-ornament {
   display: inline-flex;
-  align-items: baseline;
-  gap: 1px;
-  background: none;
+  align-items: center;
+  gap: 0;
+  /* Colored bg tint — the morph starts from this exact element */
+  background-color: var(--ornament-color, #333);
+  color: #fff;
   border: none;
-  padding: 0 2px;
-  margin: 0 1px;
+  padding: 1px 7px 2px;
+  margin: 0 2px;
   cursor: pointer;
-  font-size: inherit;
-  line-height: inherit;
-  color: var(--ornament-color, currentColor);
-  vertical-align: baseline;
+  font-size: 0.72em;
+  line-height: 1.6;
+  letter-spacing: 0.04em;
+  border-radius: 3px;
+  vertical-align: middle;
   position: relative;
-  border-radius: 2px;
-  transition: opacity 0.25s ease;
   white-space: nowrap;
-}
-
-.project-ornament::after {
-  content: "";
-  position: absolute;
-  left: 2px;
-  right: 2px;
-  bottom: 0;
-  height: 1px;
-  background: currentColor;
-  opacity: 0.3;
-  transition: opacity 0.2s ease;
-}
-
-.project-ornament:hover::after {
-  opacity: 0.8;
-}
-
-.project-ornament:focus-visible {
-  outline: 1px solid currentColor;
-  outline-offset: 2px;
-}
-
-.project-ornament__bracket {
-  opacity: 0.35;
-  font-size: 0.85em;
-  transition: opacity 0.2s ease;
-}
-
-.project-ornament:hover .project-ornament__bracket {
-  opacity: 0.85;
-}
-
-.project-ornament__label {
-  letter-spacing: 0.01em;
-}
-
-/* Dim other ornaments while one is active */
-.project-ornament[data-dimmed="true"] {
-  opacity: 0.15;
-  pointer-events: none;
-  transition: opacity 0.4s ease;
-}
-
-/* ─── Page content fade — GSAP animates this, but set base transition */
-#page-content {
+  transition:
+    opacity 0.3s ease,
+    filter 0.3s ease;
+  /* Ensure GPU compositing for the morph to clone from */
   will-change: opacity;
 }
 
-/* ─── Dimmer ─────────────────────────────────────────────────────────────── */
-
-.morph-dimmer {
-  position: fixed;
-  inset: 0;
-  z-index: 199;
-  background: rgba(0, 0, 0, 0.75);
-  /* GSAP controls opacity */
+.project-ornament:hover {
+  filter: brightness(1.2);
 }
 
-/* ─── Morph card shell ───────────────────────────────────────────────────── */
+.project-ornament:focus-visible {
+  outline: 2px solid var(--ornament-color, #fff);
+  outline-offset: 2px;
+}
+
+/* Dim siblings while one is open */
+.project-ornament[data-dimmed="true"] {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+}
+
+/* ─── Page fade — GSAP sets inline opacity, we just ensure will-change ───── */
+
+#page-content {
+  will-change: opacity;
+  transition: none; /* GSAP owns this */
+}
+
+/* ─── Morph card shell — GSAP sets all geometry imperatively ─────────────── */
 
 .morph-card {
-  /* position: fixed and all geometry set imperatively by GSAP */
   position: fixed;
   z-index: 200;
   overflow: hidden;
-  will-change: top, left, width, height;
+  /* No CSS transitions — GSAP handles everything */
 }
 
-/* Accent stripe on left edge */
-.morph-card__accent {
+/* Thin colored accent on left edge */
+.morph-card__accent-bar {
   position: absolute;
   top: 0;
   left: 0;
   width: 2px;
-  bottom: 0;
+  height: 100%;
+  opacity: 0.7;
   pointer-events: none;
-  opacity: 0.5;
 }
 
-/* Inner scroll container */
+/* Scrollable inner */
 .morph-card__inner {
   position: absolute;
   inset: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 40px 44px 44px;
+  padding: 40px 40px 44px;
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
 }
@@ -119,34 +90,30 @@
   width: 4px;
 }
 
-.morph-card__inner::-webkit-scrollbar-track {
-  background: transparent;
-}
-
 .morph-card__inner::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.1);
   border-radius: 2px;
 }
 
-/* Close button */
+/* Close ✕ */
 .morph-card__close {
   position: absolute;
-  top: 14px;
-  right: 14px;
+  top: 12px;
+  right: 12px;
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.28);
+  color: rgba(255, 255, 255, 0.25);
   cursor: pointer;
-  font-size: 14px;
-  padding: 6px 10px;
+  font-size: 13px;
+  padding: 6px 8px;
   line-height: 1;
-  border-radius: 2px;
+  border-radius: 3px;
   transition: color 0.15s ease;
   z-index: 1;
 }
 
 .morph-card__close:hover {
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .morph-card__close:focus-visible {
@@ -154,24 +121,23 @@
   outline-offset: 2px;
 }
 
-/* Content layout */
-.morph-card__content {
+/* Content */
+.morph-card__body {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  padding-top: 6px;
+  gap: 18px;
 }
 
-.morph-card__meta {
+.morph-card__year {
   font-size: 10px;
   font-weight: 400;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.25);
+  color: rgba(255, 255, 255, 0.22);
 }
 
 .morph-card__title {
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 600;
   line-height: 1.15;
   letter-spacing: -0.03em;
@@ -182,7 +148,7 @@
 .morph-card__description {
   font-size: 14px;
   line-height: 1.75;
-  color: rgba(255, 255, 255, 0.42);
+  color: rgba(255, 255, 255, 0.45);
   margin: 0;
   max-width: 52ch;
 }
@@ -191,7 +157,8 @@
 
 .morph-card__images {
   display: grid;
-  gap: 5px;
+  gap: 4px;
+  margin-top: 4px;
 }
 
 .morph-card__images[data-count="1"] {
@@ -206,44 +173,45 @@
   grid-template-columns: 1fr 1fr;
 }
 
-.morph-card__images[data-count="3"] .morph-card__image-wrap:first-child {
+/* First image in a 3-image grid spans full width */
+.morph-card__images[data-count="3"] .morph-card__img-wrap:first-child {
   grid-column: 1 / -1;
 }
 
-.morph-card__image-wrap {
+.morph-card__img-wrap {
   border-radius: 3px;
   overflow: hidden;
   aspect-ratio: 16 / 9;
   background: rgba(255, 255, 255, 0.03);
 }
 
-.morph-card__images[data-count="3"] .morph-card__image-wrap:first-child {
+.morph-card__images[data-count="3"] .morph-card__img-wrap:first-child {
   aspect-ratio: 21 / 9;
 }
 
-.morph-card__image {
+.morph-card__img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
-  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.morph-card__image-wrap:hover .morph-card__image {
+.morph-card__img-wrap:hover .morph-card__img {
   transform: scale(1.04);
 }
 
-/* ─── Visit link ─────────────────────────────────────────────────────────── */
+/* ─── Link ───────────────────────────────────────────────────────────────── */
 
 .morph-card__link {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 6px;
   font-size: 10px;
   font-weight: 500;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.25);
+  color: rgba(255, 255, 255, 0.22);
   text-decoration: none;
   transition: color 0.2s ease, gap 0.2s ease;
   align-self: flex-start;
@@ -251,16 +219,14 @@
 }
 
 .morph-card__link:hover {
-  color: rgba(255, 255, 255, 0.8);
-  gap: 12px;
+  color: rgba(255, 255, 255, 0.75);
+  gap: 10px;
 }
 
 /* ─── Reduced motion ─────────────────────────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {
-  .project-ornament,
-  .project-ornament::after,
-  .project-ornament__bracket {
+  .project-ornament {
     transition: none !important;
   }
 }
@@ -273,7 +239,7 @@
   }
 
   .morph-card__title {
-    font-size: 18px;
+    font-size: 19px;
   }
 
   .morph-card__images[data-count="2"],
@@ -281,7 +247,7 @@
     grid-template-columns: 1fr;
   }
 
-  .morph-card__images[data-count="3"] .morph-card__image-wrap:first-child {
+  .morph-card__images[data-count="3"] .morph-card__img-wrap:first-child {
     grid-column: auto;
     aspect-ratio: 16 / 9;
   }

@@ -23,7 +23,8 @@ export function ProjectOrnament({ project }: ProjectOrnamentProps) {
     });
   };
 
-  const isDimmed = activeId !== null && activeId !== project.id;
+  const isActive = activeId === project.id;
+  const isDimmed = activeId !== null && !isActive;
 
   return (
     <button
@@ -32,12 +33,18 @@ export function ProjectOrnament({ project }: ProjectOrnamentProps) {
       className="project-ornament font-mono"
       onClick={handleClick}
       aria-label={`View project: ${project.title}`}
+      aria-expanded={isActive}
       data-dimmed={isDimmed ? "true" : undefined}
-      style={{ "--ornament-color": project.color } as React.CSSProperties}
+      data-active={isActive ? "true" : undefined}
+      style={
+        {
+          "--ornament-color": project.color,
+          // invisible during active state — the morph card is rendering in its place
+          opacity: isActive ? 0 : undefined,
+        } as React.CSSProperties
+      }
     >
-      <span className="project-ornament__bracket" aria-hidden="true">[</span>
-      <span className="project-ornament__label">{project.title}</span>
-      <span className="project-ornament__bracket" aria-hidden="true">]</span>
+      {project.title}
     </button>
   );
 }

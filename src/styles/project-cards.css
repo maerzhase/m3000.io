@@ -68,7 +68,16 @@
 */
 
 .morph-card {
-  /* position:fixed + geometry set by GSAP useLayoutEffect before first paint */
+  /* position:fixed lives HERE — never in document flow, never expands body.
+     useLayoutEffect overwrites top/left/width/height before first paint.
+     Starting at -9999px prevents any flash at wrong position. */
+  position: fixed;
+  top: -9999px;
+  left: -9999px;
+  width: 0;
+  height: 0;
+  z-index: 200;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   box-shadow:

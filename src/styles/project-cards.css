@@ -10,30 +10,38 @@
 .project-ornament {
   display: inline-flex;
   align-items: center;
-  gap: 0;
-  /* Colored bg tint — the morph starts from this exact element */
+  gap: 4px;
   background-color: var(--ornament-color, #333);
   color: #fff;
   border: none;
   padding: 1px 7px 2px;
-  margin: 0 2px;
+  margin: 0 1px;
   cursor: pointer;
+  font-family: var(--font-mono, monospace);
   font-size: 0.72em;
   line-height: 1.6;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
   border-radius: 3px;
   vertical-align: middle;
-  position: relative;
   white-space: nowrap;
-  transition:
-    opacity 0.3s ease,
-    filter 0.3s ease;
-  /* Ensure GPU compositing for the morph to clone from */
-  will-change: opacity;
+  transition: filter 0.2s ease, opacity 0.3s ease;
+}
+
+.project-ornament::after {
+  content: "↗";
+  font-size: 0.8em;
+  opacity: 0.6;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  display: inline-block;
 }
 
 .project-ornament:hover {
   filter: brightness(1.2);
+}
+
+.project-ornament:hover::after {
+  opacity: 1;
+  transform: translate(1px, -1px);
 }
 
 .project-ornament:focus-visible {
@@ -41,114 +49,134 @@
   outline-offset: 2px;
 }
 
-/* Dim siblings while one is open */
 .project-ornament[data-dimmed="true"] {
-  opacity: 0;
+  opacity: 0.2;
   pointer-events: none;
-  transition: opacity 0.35s ease;
 }
 
-/* ─── Page fade — GSAP sets inline opacity, we just ensure will-change ───── */
+/* ─── Page content — GSAP animates opacity, no CSS transition ────────────── */
 
 #page-content {
   will-change: opacity;
-  transition: none; /* GSAP owns this */
+  /* No transition here — GSAP owns all opacity changes */
 }
 
-/* ─── Morph card shell — GSAP sets all geometry imperatively ─────────────── */
+/* ─── Morph card shell ───────────────────────────────────────────────────── */
+/*
+  All geometry (top/left/width/height/border-radius/background-color)
+  is set and animated exclusively by GSAP. CSS only handles internal layout.
+*/
 
 .morph-card {
-  position: fixed;
-  z-index: 200;
-  overflow: hidden;
-  /* No CSS transitions — GSAP handles everything */
+  /* position:fixed + geometry set by GSAP useLayoutEffect before first paint */
+  display: flex;
+  flex-direction: column;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 40px 100px rgba(0, 0, 0, 0.75),
+    0 8px 20px rgba(0, 0, 0, 0.4);
 }
 
-/* Thin colored accent on left edge */
+/* Thin colored accent strip along the top */
 .morph-card__accent-bar {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 2px;
-  height: 100%;
-  opacity: 0.7;
-  pointer-events: none;
+  flex-shrink: 0;
+  height: 3px;
+  width: 100%;
+  opacity: 0.85;
 }
 
-/* Scrollable inner */
+/* Scrollable inner — fades in via GSAP after morph completes */
 .morph-card__inner {
-  position: absolute;
-  inset: 0;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  overflow-x: hidden;
   overscroll-behavior: contain;
-  padding: 40px 40px 44px;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
 }
 
 .morph-card__inner::-webkit-scrollbar {
   width: 4px;
 }
-
+.morph-card__inner::-webkit-scrollbar-track {
+  background: transparent;
+}
 .morph-card__inner::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.1);
   border-radius: 2px;
 }
 
-/* Close ✕ */
+/* Close button — sticky top-right */
 .morph-card__close {
-  position: absolute;
+  position: sticky;
   top: 12px;
-  right: 12px;
-  background: none;
-  border: none;
-  color: rgba(255, 255, 255, 0.25);
+  float: right;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  margin: 12px 12px 0 0;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  color: rgba(255, 255, 255, 0.5);
   cursor: pointer;
-  font-size: 13px;
-  padding: 6px 8px;
-  line-height: 1;
-  border-radius: 3px;
-  transition: color 0.15s ease;
-  z-index: 1;
+  transition: background 0.15s ease, color 0.15s ease;
+  z-index: 2;
+  flex-shrink: 0;
 }
 
 .morph-card__close:hover {
-  color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
 }
 
 .morph-card__close:focus-visible {
-  outline: 1px solid rgba(255, 255, 255, 0.3);
+  outline: 1px solid rgba(255, 255, 255, 0.4);
   outline-offset: 2px;
 }
 
-/* Content */
+/* Content body */
 .morph-card__body {
+  padding: 8px 36px 40px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 16px;
+  /* clear the floated close button */
+  clear: both;
+}
+
+@media (max-width: 600px) {
+  .morph-card__body {
+    padding: 8px 20px 32px;
+  }
 }
 
 .morph-card__year {
+  font-family: var(--font-mono, monospace);
   font-size: 10px;
   font-weight: 400;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.22);
+  color: rgba(255, 255, 255, 0.25);
 }
 
 .morph-card__title {
-  font-size: 24px;
+  font-size: clamp(1.4rem, 3.5vw, 2rem);
   font-weight: 600;
-  line-height: 1.15;
+  line-height: 1.1;
   letter-spacing: -0.03em;
-  color: rgba(255, 255, 255, 0.92);
+  color: rgba(255, 255, 255, 0.95);
   margin: 0;
 }
 
 .morph-card__description {
-  font-size: 14px;
+  font-size: 0.88rem;
   line-height: 1.75;
-  color: rgba(255, 255, 255, 0.45);
+  color: rgba(255, 255, 255, 0.48);
   margin: 0;
   max-width: 52ch;
 }
@@ -157,7 +185,7 @@
 
 .morph-card__images {
   display: grid;
-  gap: 4px;
+  gap: 6px;
   margin-top: 4px;
 }
 
@@ -173,16 +201,15 @@
   grid-template-columns: 1fr 1fr;
 }
 
-/* First image in a 3-image grid spans full width */
 .morph-card__images[data-count="3"] .morph-card__img-wrap:first-child {
   grid-column: 1 / -1;
 }
 
 .morph-card__img-wrap {
-  border-radius: 3px;
+  border-radius: 4px;
   overflow: hidden;
   aspect-ratio: 16 / 9;
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .morph-card__images[data-count="3"] .morph-card__img-wrap:first-child {
@@ -194,7 +221,7 @@
   height: 100%;
   object-fit: cover;
   display: block;
-  transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .morph-card__img-wrap:hover .morph-card__img {
@@ -206,12 +233,13 @@
 .morph-card__link {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
+  font-family: var(--font-mono, monospace);
   font-size: 10px;
   font-weight: 500;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.22);
+  color: rgba(255, 255, 255, 0.25);
   text-decoration: none;
   transition: color 0.2s ease, gap 0.2s ease;
   align-self: flex-start;
@@ -219,14 +247,15 @@
 }
 
 .morph-card__link:hover {
-  color: rgba(255, 255, 255, 0.75);
-  gap: 10px;
+  color: rgba(255, 255, 255, 0.8);
+  gap: 9px;
 }
 
 /* ─── Reduced motion ─────────────────────────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {
-  .project-ornament {
+  .project-ornament,
+  .morph-card__img {
     transition: none !important;
   }
 }
@@ -234,12 +263,8 @@
 /* ─── Mobile ─────────────────────────────────────────────────────────────── */
 
 @media (max-width: 600px) {
-  .morph-card__inner {
-    padding: 28px 20px 32px;
-  }
-
   .morph-card__title {
-    font-size: 19px;
+    font-size: 1.3rem;
   }
 
   .morph-card__images[data-count="2"],

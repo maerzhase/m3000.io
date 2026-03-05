@@ -5,10 +5,11 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
 } from "react";
-import Image from "next/image";
+import { createPortal } from "react-dom";
 import type { Project } from "@/data/projects";
 
 export interface OriginRect {
@@ -20,7 +21,8 @@ export interface OriginRect {
 
 interface OverlayContextValue {
   activeId: string | null;
-  open: (project: Project, originRect: OriginRect) => void;
+  open: (project: Project, originRect: OriginRect, ornamentEl: HTMLElement) => void;
+  close: () => void;
 }
 
 const OverlayContext = createContext<OverlayContextValue | null>(null);
@@ -28,47 +30,50 @@ const OverlayContext = createContext<OverlayContextValue | null>(null);
 export function useProjectOverlay() {
   const ctx = useContext(OverlayContext);
   if (!ctx)
-    throw new Error(
-      "useProjectOverlay must be used inside ProjectOverlayProvider"
-    );
+    throw new Error("useProjectOverlay must be used inside ProjectOverlayProvider");
   return ctx;
 }
 
-export function ProjectOverlayProvider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export function ProjectOverlayProvider({ children }: { children: React.ReactNode }) {
   const [project, setProject] = useState<Project | null>(null);
   const [origin, setOrigin] = useState<OriginRect | null>(null);
   const [mounted, setMounted] = useState(false);
-  const [activeId, setActiveId] = useState<string | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const ornamentElRef = useRef<HTMLElement | null>(null);
+  const activeId = project?.id ?? null;
 
-  const open = useCallback((p: Project, rect: OriginRect) => {
+  const open = useCallback((p: Project, rect: OriginRect, ornamentEl: HTMLElement) => {
+    ornamentElRef.current = ornamentEl;
     setProject(p);
     setOrigin(rect);
-    setActiveId(p.id);
     setMounted(true);
+    setIsOpen(true);
   }, []);
 
   const close = useCallback(() => {
-    setActiveId(null);
+    setIsOpen(false);
   }, []);
 
   const handleCloseComplete = useCallback(() => {
+    // Restore the ornament element visibility
+    if (ornamentElRef.current) {
+      ornamentElRef.current.style.opacity = "";
+      ornamentElRef.current.style.pointerEvents = "";
+      ornamentElRef.current = null;
+    }
     setMounted(false);
     setProject(null);
     setOrigin(null);
   }, []);
 
   return (
-    <OverlayContext.Provider value={{ activeId, open }}>
+    <OverlayContext.Provider value={{ activeId, open, close }}>
       {children}
       {mounted && project && origin && (
         <MorphCard
           project={project}
           origin={origin}
-          isOpen={activeId !== null}
+          isOpen={isOpen}
           onClose={close}
           onCloseComplete={handleCloseComplete}
         />
@@ -87,21 +92,53 @@ interface MorphCardProps {
   onCloseComplete: () => void;
 }
 
-function MorphCard({ project, origin, isOpen, onClose, onCloseComplete }: MorphCardProps) {
+function MorphCard({
+  project,
+  origin,
+  isOpen,
+  onClose,
+  onCloseComplete,
+}: MorphCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
-  const hasAnimatedOpen = useRef(false);
+  const isClosing = useRef(false);
   const onCloseCompleteRef = useRef(onCloseComplete);
   onCloseCompleteRef.current = onCloseComplete;
+  const originRef = useRef(origin);
+  originRef.current = origin;
 
-  // ── Open animation (runs once on mount) ───────────────────────────────────
+  // ── Synchronously place card at ornament rect before first paint ──────────
+  // useLayoutEffect fires synchronously after DOM mutations but before paint.
+  // This guarantees the card starts at the ornament's exact position with no
+  // visible gap — the ornament is already hidden (opacity:0) from the click handler.
+  useLayoutEffect(() => {
+    const card = cardRef.current;
+    if (!card) return;
+    const o = originRef.current;
+    // Set all geometry inline so GSAP can animate FROM these values
+    Object.assign(card.style, {
+      position: "fixed",
+      top: `${o.top}px`,
+      left: `${o.left}px`,
+      width: `${o.width}px`,
+      height: `${o.height}px`,
+      borderRadius: "3px",
+      backgroundColor: project.color,
+      zIndex: "200",
+      opacity: "1",
+    });
+    if (contentRef.current) {
+      contentRef.current.style.opacity = "0";
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ── Open animation ────────────────────────────────────────────────────────
   useEffect(() => {
-    if (hasAnimatedOpen.current) return;
-    hasAnimatedOpen.current = true;
-
+    let raf: number;
     let cancelled = false;
 
-    async function animateOpen() {
+    async function run() {
       const { gsap } = await import("gsap");
       if (cancelled) return;
 
@@ -110,75 +147,50 @@ function MorphCard({ project, origin, isOpen, onClose, onCloseComplete }: MorphC
       const page = document.getElementById("page-content");
       if (!card || !content) return;
 
-      // Target: vertically centered, same horizontal constraints as the page column
       const vw = window.innerWidth;
       const vh = window.innerHeight;
-      const padding = vw < 640 ? 24 : 48;
-      const maxW = Math.min(vw - padding * 2, 640);
-      const CARD_W = maxW;
-      const CARD_H = Math.min(vh * 0.82, 680);
-      const targetTop = (vh - CARD_H) / 2;
-      const targetLeft = (vw - CARD_W) / 2;
+      const hPad = vw < 640 ? 24 : 48;
+      const W = Math.min(vw - hPad * 2, 640);
+      const H = Math.min(vh * 0.82, 700);
+      const tTop = Math.max((vh - H) / 2, 16);
+      const tLeft = (vw - W) / 2;
 
-      // Start exactly at the ornament — same size, same position, same bg color
-      gsap.set(card, {
-        position: "fixed",
-        top: origin.top,
-        left: origin.left,
-        width: origin.width,
-        height: origin.height,
-        borderRadius: 3,
-        zIndex: 200,
-        opacity: 1,
-        overflow: "hidden",
-        backgroundColor: project.color,
-      });
+      // Fade page behind
+      if (page) gsap.to(page, { opacity: 0, duration: 0.3, ease: "power2.out" });
 
-      gsap.set(content, { opacity: 0 });
-
-      // Fade page text out
-      if (page) {
-        gsap.to(page, {
-          opacity: 0,
-          duration: 0.35,
-          ease: "power2.out",
-        });
-      }
-
-      // Spring-morph to full card
+      // Morph from ornament rect → full card
       gsap.to(card, {
-        top: targetTop,
-        left: targetLeft,
-        width: CARD_W,
-        height: CARD_H,
-        borderRadius: 8,
-        backgroundColor: "rgba(10,10,10,0.97)",
-        duration: 0.75,
+        top: tTop,
+        left: tLeft,
+        width: W,
+        height: H,
+        borderRadius: 10,
+        backgroundColor: "rgb(10, 10, 10)",
+        duration: 0.65,
         ease: "power4.out",
-        delay: 0.1,
         onComplete: () => {
           if (cancelled) return;
-          gsap.to(content, {
-            opacity: 1,
-            duration: 0.35,
-            ease: "power2.out",
-          });
+          gsap.to(content, { opacity: 1, duration: 0.28, ease: "power2.out" });
         },
       });
     }
 
-    animateOpen();
-    return () => { cancelled = true; };
+    // Defer one frame so the browser has painted the initial position
+    raf = requestAnimationFrame(() => run());
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(raf);
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── Close animation (triggered when isOpen → false) ───────────────────────
+  // ── Close animation ───────────────────────────────────────────────────────
   useEffect(() => {
-    if (isOpen) return; // only run when closing
-
+    if (isOpen || isClosing.current) return;
+    isClosing.current = true;
     let cancelled = false;
 
-    async function animateClose() {
+    async function run() {
       const { gsap } = await import("gsap");
       if (cancelled) return;
 
@@ -187,31 +199,30 @@ function MorphCard({ project, origin, isOpen, onClose, onCloseComplete }: MorphC
       const page = document.getElementById("page-content");
       if (!card || !content) return;
 
-      // Fade content first
-      gsap.to(content, { opacity: 0, duration: 0.18, ease: "power2.in" });
+      const o = originRef.current;
 
-      // Morph back to ornament rect
+      // Fade content out first
+      gsap.to(content, { opacity: 0, duration: 0.15, ease: "power2.in" });
+
+      // Morph back to ornament
       gsap.to(card, {
-        top: origin.top,
-        left: origin.left,
-        width: origin.width,
-        height: origin.height,
+        top: o.top,
+        left: o.left,
+        width: o.width,
+        height: o.height,
         borderRadius: 3,
         backgroundColor: project.color,
-        duration: 0.52,
+        duration: 0.48,
         delay: 0.1,
         ease: "power3.inOut",
         onComplete: () => {
           if (cancelled) return;
-          // Restore page
           if (page) {
             gsap.to(page, {
               opacity: 1,
-              duration: 0.4,
+              duration: 0.35,
               ease: "power2.out",
-              onComplete: () => {
-                if (page) gsap.set(page, { clearProps: "opacity" });
-              },
+              onComplete: () => gsap.set(page, { clearProps: "opacity" }),
             });
           }
           onCloseCompleteRef.current();
@@ -219,22 +230,24 @@ function MorphCard({ project, origin, isOpen, onClose, onCloseComplete }: MorphC
       });
     }
 
-    animateClose();
+    run();
     return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   // Escape key
   useEffect(() => {
-    if (!isOpen) return;
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [isOpen, onClose]);
+  }, [onClose]);
 
-  return (
+  // Only render portal client-side
+  const [clientReady, setClientReady] = useState(false);
+  useEffect(() => setClientReady(true), []);
+  if (!clientReady) return null;
+
+  return createPortal(
     <div
       ref={cardRef}
       role="dialog"
@@ -242,27 +255,34 @@ function MorphCard({ project, origin, isOpen, onClose, onCloseComplete }: MorphC
       aria-label={project.title}
       className="morph-card"
     >
-      {/* Accent bar */}
+      {/* Accent strip — same color as ornament */}
       <div
         className="morph-card__accent-bar"
         style={{ backgroundColor: project.color }}
         aria-hidden="true"
       />
 
-      {/* Scrollable content — fades in after morph */}
-      <div ref={contentRef} className="morph-card__inner" style={{ opacity: 0 }}>
+      {/* Content — fades in after morph completes */}
+      <div ref={contentRef} className="morph-card__inner">
         <button
           type="button"
-          className="morph-card__close font-mono"
+          className="morph-card__close"
           onClick={onClose}
-          aria-label="Close"
+          aria-label="Close project panel"
         >
-          ✕
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+            <path
+              d="M1 1L11 11M11 1L1 11"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+            />
+          </svg>
         </button>
 
         <div className="morph-card__body">
           {project.year && (
-            <span className="morph-card__year font-mono">{project.year}</span>
+            <span className="morph-card__year">{project.year}</span>
           )}
           <h2 className="morph-card__title">{project.title}</h2>
           <p className="morph-card__description">{project.description}</p>
@@ -277,7 +297,7 @@ function MorphCard({ project, origin, isOpen, onClose, onCloseComplete }: MorphC
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={src}
-                    alt={`${project.title} — ${i + 1}`}
+                    alt={`${project.title} — view ${i + 1}`}
                     className="morph-card__img"
                     loading="lazy"
                   />
@@ -291,10 +311,10 @@ function MorphCard({ project, origin, isOpen, onClose, onCloseComplete }: MorphC
               href={project.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="morph-card__link font-mono"
+              className="morph-card__link"
             >
               Visit project
-              <svg width="11" height="11" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+              <svg width="10" height="10" viewBox="0 0 14 14" fill="none" aria-hidden="true">
                 <path
                   d="M4 1.5H12.5V10M12 2L1.5 12.5"
                   stroke="currentColor"
@@ -307,6 +327,7 @@ function MorphCard({ project, origin, isOpen, onClose, onCloseComplete }: MorphC
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

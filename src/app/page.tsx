@@ -33,7 +33,7 @@ export default function Home() {
   return (
     <ProjectOverlayProvider>
       <BackgroundShader>
-        <div className="min-h-screen p-6 gap-16 sm:p-12 container m-auto">
+        <div id="page-content" className="min-h-screen p-6 gap-16 sm:p-12 container m-auto">
           <main className="flex flex-col gap-[32px]">
             <Image
               src={me}

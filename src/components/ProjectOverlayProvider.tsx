@@ -10,7 +10,7 @@ import {
 } from "react";
 import type { Project } from "@/data/projects";
 
-interface OriginRect {
+export interface OriginRect {
   top: number;
   left: number;
   width: number;
@@ -18,6 +18,7 @@ interface OriginRect {
 }
 
 interface OverlayContextValue {
+  activeId: string | null;
   open: (project: Project, originRect: OriginRect) => void;
 }
 
@@ -29,10 +30,12 @@ export function useProjectOverlay() {
   return ctx;
 }
 
+type Phase = "closed" | "opening" | "open" | "closing";
+
 export function ProjectOverlayProvider({ children }: { children: React.ReactNode }) {
   const [project, setProject] = useState<Project | null>(null);
   const [origin, setOrigin] = useState<OriginRect | null>(null);
-  const [phase, setPhase] = useState<"closed" | "opening" | "open" | "closing">("closed");
+  const [phase, setPhase] = useState<Phase>("closed");
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const open = useCallback((p: Project, rect: OriginRect) => {
@@ -40,7 +43,7 @@ export function ProjectOverlayProvider({ children }: { children: React.ReactNode
     setProject(p);
     setOrigin(rect);
     setPhase("opening");
-    // next frame: kick to "open" so CSS picks up the transition
+    // Double rAF: paint the "from" state first, then trigger transition to "open"
     requestAnimationFrame(() => {
       requestAnimationFrame(() => setPhase("open"));
     });
@@ -52,10 +55,9 @@ export function ProjectOverlayProvider({ children }: { children: React.ReactNode
       setPhase("closed");
       setProject(null);
       setOrigin(null);
-    }, 600);
+    }, 700);
   }, []);
 
-  // Escape key
   useEffect(() => {
     if (phase === "closed") return;
     const handler = (e: KeyboardEvent) => {
@@ -65,20 +67,30 @@ export function ProjectOverlayProvider({ children }: { children: React.ReactNode
     return () => window.removeEventListener("keydown", handler);
   }, [phase, close]);
 
-  // Lock body scroll when open
+  // Fade the page content, not with a backdrop layer
   useEffect(() => {
+    const pageEl = document.getElementById("page-content");
+    if (!pageEl) return;
     if (phase === "closed") {
-      document.body.style.overflow = "";
-    } else {
-      document.body.style.overflow = "hidden";
+      pageEl.style.opacity = "";
+      pageEl.style.pointerEvents = "";
+    } else if (phase === "open") {
+      pageEl.style.opacity = "0";
+      pageEl.style.pointerEvents = "none";
+    } else if (phase === "opening") {
+      pageEl.style.opacity = "";
+      pageEl.style.pointerEvents = "none";
+    } else if (phase === "closing") {
+      pageEl.style.opacity = "";
+      pageEl.style.pointerEvents = "none";
     }
   }, [phase]);
 
   return (
-    <OverlayContext.Provider value={{ open }}>
+    <OverlayContext.Provider value={{ activeId: project?.id ?? null, open }}>
       {children}
       {project && origin && phase !== "closed" && (
-        <ProjectOverlay
+        <MorphCard
           project={project}
           origin={origin}
           phase={phase}
@@ -89,107 +101,168 @@ export function ProjectOverlayProvider({ children }: { children: React.ReactNode
   );
 }
 
-// ─── The actual overlay ───────────────────────────────────────────────────────
+// ─── MorphCard ────────────────────────────────────────────────────────────────
 
-interface ProjectOverlayProps {
+interface MorphCardProps {
   project: Project;
   origin: OriginRect;
-  phase: "opening" | "open" | "closing";
+  phase: Phase;
   onClose: () => void;
 }
 
-function ProjectOverlay({ project, origin, phase, onClose }: ProjectOverlayProps) {
-  const isVisible = phase === "open";
+function MorphCard({ project, origin, phase, onClose }: MorphCardProps) {
+  // Target: centered card
+  const vw = typeof window !== "undefined" ? window.innerWidth : 800;
+  const vh = typeof window !== "undefined" ? window.innerHeight : 600;
 
-  // Compute the transform-origin as viewport percentages so the card
-  // appears to grow out of the ornament's position.
-  const ox = ((origin.left + origin.width / 2) / window.innerWidth) * 100;
-  const oy = ((origin.top + origin.height / 2) / window.innerHeight) * 100;
+  const CARD_W = Math.min(600, vw * 0.9);
+  const CARD_H = Math.min(vh * 0.85, 700);
+  const targetTop = (vh - CARD_H) / 2;
+  const targetLeft = (vw - CARD_W) / 2;
+
+  const isOpen = phase === "open";
+  const isClosing = phase === "closing";
+  const isOpening = phase === "opening";
+
+  // In "opening" phase, start from origin. In "open", animate to target. In "closing", go back.
+  const fromState = isOpen;
+  const top = fromState ? targetTop : origin.top;
+  const left = fromState ? targetLeft : origin.left;
+  const width = fromState ? CARD_W : origin.width;
+  const height = fromState ? CARD_H : origin.height;
+  const borderRadius = fromState ? 6 : 2;
+
+  // Content visible only when open
+  const contentVisible = phase === "open";
+
+  const spring = "cubic-bezier(0.32, 0.72, 0, 1)";
+  const duration = "0.65s";
+
+  const transition =
+    isOpening
+      ? "none" // no transition on first paint
+      : `top ${duration} ${spring}, left ${duration} ${spring}, width ${duration} ${spring}, height ${duration} ${spring}, border-radius ${duration} ${spring}, background ${duration} ${spring}, box-shadow ${duration} ${spring}`;
 
   return (
-    <div
-      className="project-overlay"
-      data-phase={phase}
-      style={{ "--origin-x": `${ox}%`, "--origin-y": `${oy}%` } as React.CSSProperties}
-      aria-modal="true"
-      role="dialog"
-      aria-label={project.title}
-    >
-      {/* Backdrop */}
-      <button
-        type="button"
-        className="project-overlay__backdrop"
+    <>
+      {/* Page dimmer - separate from the card so it doesn't move */}
+      <div
+        className="morph-dimmer"
+        data-phase={phase}
         onClick={onClose}
-        aria-label="Close project"
-        tabIndex={-1}
+        aria-hidden="true"
       />
 
-      {/* Panel */}
-      <div className="project-overlay__panel">
-        {/* Close button */}
-        <button
-          type="button"
-          className="project-overlay__close font-mono"
-          onClick={onClose}
-          aria-label="Close"
-        >
-          <span aria-hidden="true">&#x2715;</span>
-        </button>
-
-        {/* Accent line */}
+      {/* The morphing card element */}
+      <div
+        className="morph-card"
+        data-phase={phase}
+        role="dialog"
+        aria-modal="true"
+        aria-label={project.title}
+        style={{
+          position: "fixed",
+          top,
+          left,
+          width,
+          height,
+          borderRadius,
+          transition,
+          zIndex: 200,
+          overflow: "hidden",
+          background: isOpen
+            ? "rgba(10, 10, 10, 0.97)"
+            : "rgba(10, 10, 10, 0.0)",
+          boxShadow: isOpen
+            ? "0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.07)"
+            : "none",
+          willChange: "top, left, width, height",
+          cursor: isOpen ? "default" : "pointer",
+        }}
+      >
+        {/* Accent stripe */}
         <div
-          className="project-overlay__accent"
-          style={{ background: project.color }}
-          aria-hidden="true"
+          className="morph-card__accent"
+          style={{
+            background: project.color,
+            opacity: isOpen ? 0.6 : 0,
+            transition: `opacity ${duration} ${spring}`,
+          }}
         />
 
-        {/* Content */}
-        <div className="project-overlay__content">
-          <h2 className="project-overlay__title font-sans">{project.title}</h2>
-          <p className="project-overlay__description font-sans">
-            {project.description}
-          </p>
+        {/* Inner content - fades in after morph */}
+        <div
+          className="morph-card__inner"
+          style={{
+            opacity: contentVisible ? 1 : 0,
+            transform: contentVisible ? "translateY(0)" : "translateY(6px)",
+            transition: contentVisible
+              ? "opacity 0.35s ease 0.25s, transform 0.35s ease 0.25s"
+              : "opacity 0.15s ease, transform 0.15s ease",
+          }}
+        >
+          {/* Close */}
+          <button
+            type="button"
+            className="morph-card__close font-mono"
+            onClick={onClose}
+            aria-label="Close"
+          >
+            &#x2715;
+          </button>
 
-          {project.images && project.images.length > 0 && (
-            <div
-              className="project-overlay__images"
-              data-count={Math.min(project.images.length, 3)}
-            >
-              {project.images.slice(0, 3).map((src, i) => (
-                <div key={src} className="project-overlay__image-wrap">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={src}
-                    alt={`${project.title} — image ${i + 1}`}
-                    className="project-overlay__image"
-                    loading="lazy"
+          <div className="morph-card__content">
+            {/* Year / tag */}
+            {project.year && (
+              <span className="morph-card__meta font-mono">{project.year}</span>
+            )}
+
+            <h2 className="morph-card__title font-sans">{project.title}</h2>
+            <p className="morph-card__description font-sans">
+              {project.description}
+            </p>
+
+            {project.images && project.images.length > 0 && (
+              <div
+                className="morph-card__images"
+                data-count={Math.min(project.images.length, 3)}
+              >
+                {project.images.slice(0, 3).map((src, i) => (
+                  <div key={src} className="morph-card__image-wrap">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={src}
+                      alt={`${project.title} — image ${i + 1}`}
+                      className="morph-card__image"
+                      loading="lazy"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {project.href && (
+              <a
+                href={project.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="morph-card__link font-mono"
+              >
+                <span>Visit project</span>
+                <svg width="11" height="11" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                  <path
+                    d="M4 1.5H12.5V10M12 2L1.5 12.5"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                   />
-                </div>
-              ))}
-            </div>
-          )}
-
-          {project.href && (
-            <a
-              href={project.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="project-overlay__link font-mono"
-            >
-              <span>Visit project</span>
-              <svg width="12" height="12" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-                <path
-                  d="M4 1.5H12.5V10M12 2L1.5 12.5"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </a>
-          )}
+                </svg>
+              </a>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

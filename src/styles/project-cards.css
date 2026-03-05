@@ -1,6 +1,6 @@
 /* ============================================================
-   PROJECT ORNAMENTS & OVERLAY
-   Inline typographic ornaments that expand to fullscreen
+   PROJECT ORNAMENTS & MORPH CARD
+   Inline typographic ornaments that morph into project cards
    ============================================================ */
 
 /* ─── Inline ornament button ─────────────────────────────────────────────── */
@@ -16,11 +16,11 @@
   cursor: pointer;
   font-size: inherit;
   line-height: inherit;
-  color: var(--ornament-color, var(--color-primary));
+  color: var(--ornament-color, currentColor);
   vertical-align: baseline;
   position: relative;
   border-radius: 2px;
-  transition: color 0.2s ease;
+  transition: opacity 0.2s ease;
   white-space: nowrap;
 }
 
@@ -29,17 +29,15 @@
   position: absolute;
   left: 2px;
   right: 2px;
-  bottom: 0px;
+  bottom: 0;
   height: 1px;
   background: currentColor;
-  opacity: 0.35;
-  transform: scaleX(1);
-  transform-origin: left;
-  transition: opacity 0.25s ease, transform 0.25s ease;
+  opacity: 0.3;
+  transition: opacity 0.2s ease;
 }
 
 .project-ornament:hover::after {
-  opacity: 0.7;
+  opacity: 0.75;
 }
 
 .project-ornament:focus-visible {
@@ -48,289 +46,257 @@
 }
 
 .project-ornament__bracket {
-  opacity: 0.45;
-  font-size: 0.9em;
+  opacity: 0.4;
+  font-size: 0.85em;
   transition: opacity 0.2s ease;
 }
 
 .project-ornament:hover .project-ornament__bracket {
-  opacity: 0.8;
+  opacity: 0.85;
 }
 
 .project-ornament__label {
   letter-spacing: 0.01em;
 }
 
-/* ─── Overlay container ──────────────────────────────────────────────────── */
+/* When another ornament is active, dim this one */
+.project-ornament[data-dimmed="true"] {
+  opacity: 0.2;
+  pointer-events: none;
+}
 
-.project-overlay {
+/* ─── Page content fade ──────────────────────────────────────────────────── */
+
+#page-content {
+  transition: opacity 0.55s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* ─── Dimmer (sits behind morph card, dims page) ─────────────────────────── */
+
+.morph-dimmer {
   position: fixed;
   inset: 0;
-  z-index: 100;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  /* pointer events handled by children */
-}
-
-/* ─── Backdrop ───────────────────────────────────────────────────────────── */
-
-.project-overlay__backdrop {
-  position: absolute;
-  inset: 0;
+  z-index: 199;
   background: rgba(0, 0, 0, 0);
-  border: none;
+  transition: background 0.55s cubic-bezier(0.32, 0.72, 0, 1);
   cursor: pointer;
-  padding: 0;
-  transition: background 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
 }
 
-.project-overlay[data-phase="open"] .project-overlay__backdrop {
-  background: rgba(0, 0, 0, 0.88);
+.morph-dimmer[data-phase="open"] {
+  background: rgba(0, 0, 0, 0.82);
+  pointer-events: auto;
 }
 
-.project-overlay[data-phase="closing"] .project-overlay__backdrop {
+.morph-dimmer[data-phase="closing"] {
   background: rgba(0, 0, 0, 0);
+  pointer-events: none;
 }
 
-/* ─── Panel ──────────────────────────────────────────────────────────────── */
-
-.project-overlay__panel {
-  position: relative;
-  z-index: 1;
-  width: min(640px, 92vw);
-  max-height: 90vh;
-  overflow-y: auto;
-  background: rgba(8, 8, 8, 0.95);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 4px;
-  padding: 40px;
-
-  /* Start from ornament position: tiny, invisible */
-  opacity: 0;
-  transform-origin: var(--origin-x, 50%) var(--origin-y, 50%);
-  transform: scale(0.15);
-  transition:
-    opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
-    transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: transform, opacity;
+.morph-dimmer[data-phase="opening"] {
+  background: rgba(0, 0, 0, 0);
+  pointer-events: none;
 }
 
-.project-overlay[data-phase="open"] .project-overlay__panel {
-  opacity: 1;
-  transform: scale(1);
+/* ─── Morph card ─────────────────────────────────────────────────────────── */
+
+.morph-card {
+  /* Base — all geometry via inline style */
 }
 
-.project-overlay[data-phase="closing"] .project-overlay__panel {
-  opacity: 0;
-  transform: scale(0.15);
-}
-
-/* ─── Close button ───────────────────────────────────────────────────────── */
-
-.project-overlay__close {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  background: none;
-  border: none;
-  color: rgba(255, 255, 255, 0.35);
-  cursor: pointer;
-  font-size: 16px;
-  padding: 4px 8px;
-  line-height: 1;
-  border-radius: 2px;
-  transition: color 0.2s ease;
-}
-
-.project-overlay__close:hover {
-  color: rgba(255, 255, 255, 0.9);
-}
-
-.project-overlay__close:focus-visible {
-  outline: 1px solid rgba(255, 255, 255, 0.4);
-  outline-offset: 2px;
-}
-
-/* ─── Accent line ────────────────────────────────────────────────────────── */
-
-.project-overlay__accent {
+/* Accent stripe on left edge */
+.morph-card__accent {
   position: absolute;
   top: 0;
   left: 0;
   width: 2px;
   bottom: 0;
-  border-radius: 4px 0 0 4px;
-  opacity: 0.7;
+  pointer-events: none;
 }
 
-/* ─── Content ────────────────────────────────────────────────────────────── */
+/* Inner content wrapper */
+.morph-card__inner {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 36px 40px 40px;
+  /* Scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
 
-.project-overlay__content {
+.morph-card__inner::-webkit-scrollbar {
+  width: 4px;
+}
+
+.morph-card__inner::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.morph-card__inner::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 2px;
+}
+
+/* Close button */
+.morph-card__close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  font-size: 15px;
+  padding: 6px 10px;
+  line-height: 1;
+  border-radius: 2px;
+  transition: color 0.2s ease;
+  z-index: 1;
+}
+
+.morph-card__close:hover {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.morph-card__close:focus-visible {
+  outline: 1px solid rgba(255, 255, 255, 0.35);
+  outline-offset: 2px;
+}
+
+/* Content layout */
+.morph-card__content {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 18px;
+  padding-top: 4px;
 }
 
-.project-overlay__title {
-  font-size: 20px;
+.morph-card__meta {
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.morph-card__title {
+  font-size: 22px;
   font-weight: 600;
-  line-height: 1.25;
-  letter-spacing: -0.02em;
+  line-height: 1.2;
+  letter-spacing: -0.025em;
   color: rgba(255, 255, 255, 0.95);
   margin: 0;
-  /* stagger in after panel appears */
-  opacity: 0;
-  transform: translateY(8px);
-  transition:
-    opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.15s,
-    transform 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.15s;
 }
 
-.project-overlay[data-phase="open"] .project-overlay__title {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.project-overlay__description {
+.morph-card__description {
   font-size: 14px;
-  line-height: 1.65;
-  color: rgba(255, 255, 255, 0.5);
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.48);
   margin: 0;
-  opacity: 0;
-  transform: translateY(8px);
-  transition:
-    opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.22s,
-    transform 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.22s;
-}
-
-.project-overlay[data-phase="open"] .project-overlay__description {
-  opacity: 1;
-  transform: translateY(0);
 }
 
 /* ─── Image grid ─────────────────────────────────────────────────────────── */
 
-.project-overlay__images {
+.morph-card__images {
   display: grid;
-  gap: 8px;
-  opacity: 0;
-  transform: translateY(12px);
-  transition:
-    opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.3s,
-    transform 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.3s;
+  gap: 6px;
 }
 
-.project-overlay[data-phase="open"] .project-overlay__images {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.project-overlay__images[data-count="1"] {
+.morph-card__images[data-count="1"] {
   grid-template-columns: 1fr;
 }
 
-.project-overlay__images[data-count="2"] {
+.morph-card__images[data-count="2"] {
   grid-template-columns: 1fr 1fr;
 }
 
-.project-overlay__images[data-count="3"] {
+.morph-card__images[data-count="3"] {
   grid-template-columns: 1fr 1fr;
 }
 
-.project-overlay__images[data-count="3"] .project-overlay__image-wrap:first-child {
+.morph-card__images[data-count="3"] .morph-card__image-wrap:first-child {
   grid-column: 1 / -1;
 }
 
-.project-overlay__image-wrap {
+.morph-card__image-wrap {
   border-radius: 3px;
   overflow: hidden;
   aspect-ratio: 16 / 9;
   background: rgba(255, 255, 255, 0.04);
 }
 
-.project-overlay__images[data-count="3"] .project-overlay__image-wrap:first-child {
+.morph-card__images[data-count="3"] .morph-card__image-wrap:first-child {
   aspect-ratio: 16 / 7;
 }
 
-.project-overlay__image {
+.morph-card__image {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
-  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.55s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-.project-overlay__image-wrap:hover .project-overlay__image {
-  transform: scale(1.03);
+.morph-card__image-wrap:hover .morph-card__image {
+  transform: scale(1.04);
 }
 
 /* ─── Visit link ─────────────────────────────────────────────────────────── */
 
-.project-overlay__link {
+.morph-card__link {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.35);
+  color: rgba(255, 255, 255, 0.28);
   text-decoration: none;
   transition: color 0.2s ease, gap 0.2s ease;
-  opacity: 0;
-  transition:
-    opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.38s,
-    color 0.2s ease,
-    gap 0.2s ease;
+  align-self: flex-start;
 }
 
-.project-overlay[data-phase="open"] .project-overlay__link {
-  opacity: 1;
-}
-
-.project-overlay__link:hover {
-  color: rgba(255, 255, 255, 0.85);
-  gap: 10px;
+.morph-card__link:hover {
+  color: rgba(255, 255, 255, 0.82);
+  gap: 11px;
 }
 
 /* ─── Reduced motion ─────────────────────────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {
-  .project-overlay__panel {
-    transform: none !important;
+  .morph-card {
     transition: opacity 0.2s ease !important;
   }
 
-  .project-overlay__backdrop {
+  .morph-dimmer {
     transition: background 0.2s ease !important;
   }
 
-  .project-overlay__title,
-  .project-overlay__description,
-  .project-overlay__images,
-  .project-overlay__link {
-    opacity: 1 !important;
-    transform: none !important;
-    transition: none !important;
+  #page-content {
+    transition: opacity 0.2s ease !important;
   }
 }
 
 /* ─── Mobile ─────────────────────────────────────────────────────────────── */
 
-@media (max-width: 639px) {
-  .project-overlay__panel {
-    padding: 28px 20px;
-    width: 92vw;
-    max-height: 85vh;
+@media (max-width: 600px) {
+  .morph-card__inner {
+    padding: 28px 20px 32px;
   }
 
-  .project-overlay__images[data-count="2"],
-  .project-overlay__images[data-count="3"] {
+  .morph-card__title {
+    font-size: 18px;
+  }
+
+  .morph-card__images[data-count="2"],
+  .morph-card__images[data-count="3"] {
     grid-template-columns: 1fr;
   }
 
-  .project-overlay__images[data-count="3"] .project-overlay__image-wrap:first-child {
+  .morph-card__images[data-count="3"] .morph-card__image-wrap:first-child {
     grid-column: auto;
   }
 }

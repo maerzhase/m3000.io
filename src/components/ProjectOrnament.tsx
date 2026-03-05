@@ -9,7 +9,7 @@ interface ProjectOrnamentProps {
 }
 
 export function ProjectOrnament({ project }: ProjectOrnamentProps) {
-  const { open } = useProjectOverlay();
+  const { open, activeId } = useProjectOverlay();
   const ref = useRef<HTMLButtonElement>(null);
 
   const handleClick = () => {
@@ -23,6 +23,8 @@ export function ProjectOrnament({ project }: ProjectOrnamentProps) {
     });
   };
 
+  const isDimmed = activeId !== null && activeId !== project.id;
+
   return (
     <button
       ref={ref}
@@ -30,6 +32,7 @@ export function ProjectOrnament({ project }: ProjectOrnamentProps) {
       className="project-ornament font-mono"
       onClick={handleClick}
       aria-label={`View project: ${project.title}`}
+      data-dimmed={isDimmed ? "true" : undefined}
       style={{ "--ornament-color": project.color } as React.CSSProperties}
     >
       <span className="project-ornament__bracket" aria-hidden="true">[</span>

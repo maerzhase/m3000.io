@@ -1,279 +1,336 @@
 /* ============================================================
-   PROJECT CARDS — Interactive portfolio showcase
+   PROJECT ORNAMENTS & OVERLAY
+   Inline typographic ornaments that expand to fullscreen
    ============================================================ */
 
-/* ---- Dock: flex row of cards ---- */
-.project-card-dock {
-  display: flex;
-  gap: 12px;
-  padding: 4px 0 12px;
-  flex-wrap: wrap;
-  align-items: flex-start;
-}
+/* ─── Inline ornament button ─────────────────────────────────────────────── */
 
-/* ---- Card shell ---- */
-.project-card {
-  position: relative;
-  width: 240px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(10, 10, 10, 0.72);
-  backdrop-filter: blur(12px);
-  overflow: hidden;
-  flex-shrink: 0;
-
-  /* Scroll reveal: starts invisible */
-  opacity: 0;
-  transform: translateY(24px) scale(0.97);
-  transition:
-    opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1) var(--card-stagger, 0ms),
-    transform 0.65s cubic-bezier(0.16, 1, 0.3, 1) var(--card-stagger, 0ms),
-    border-color 0.3s ease,
-    box-shadow 0.3s ease;
-  will-change: transform, opacity;
-}
-
-/* Revealed state — tilt driven by JS CSS vars */
-.project-card[data-visible="true"] {
-  opacity: 1;
-  transform:
-    perspective(900px)
-    rotateX(var(--card-tilt-x, 0deg))
-    rotateY(var(--card-tilt-y, 0deg))
-    scale(var(--card-scale, 1));
-}
-
-.project-card:hover,
-.project-card[data-expanded="true"] {
-  border-color: color-mix(in srgb, var(--card-accent) 25%, transparent);
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.35),
-    0 0 0 0.5px color-mix(in srgb, var(--card-accent) 15%, transparent) inset;
-}
-
-/* ---- Left accent bar ---- */
-.project-card__accent-bar {
-  position: absolute;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  width: 2px;
-  background: var(--card-accent);
-  opacity: 0.5;
-  transition: opacity 0.3s ease;
-  border-radius: 2px 0 0 2px;
-  pointer-events: none;
-  z-index: 2;
-}
-
-.project-card:hover .project-card__accent-bar,
-.project-card[data-expanded="true"] .project-card__accent-bar {
-  opacity: 1;
-}
-
-/* ---- Glare overlay ---- */
-.project-card__glare {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  border-radius: inherit;
-  pointer-events: none;
-  opacity: 0;
-  background: radial-gradient(
-    circle at var(--card-glare-x, 50%) var(--card-glare-y, 50%),
-    rgba(255, 255, 255, 0.08) 0%,
-    rgba(255, 255, 255, 0) 65%
-  );
-  transition: opacity 0.35s ease;
-}
-
-.project-card:hover .project-card__glare {
-  opacity: 1;
-}
-
-/* ---- Header: always visible toggle button ---- */
-.project-card__header {
-  position: relative;
-  z-index: 3;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  padding: 14px 16px 14px 20px;
+.project-ornament {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 1px;
   background: none;
   border: none;
+  padding: 0 2px;
+  margin: 0 1px;
   cursor: pointer;
-  text-align: left;
-  gap: 10px;
-  color: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  color: var(--ornament-color, var(--color-primary));
+  vertical-align: baseline;
+  position: relative;
+  border-radius: 2px;
+  transition: color 0.2s ease;
+  white-space: nowrap;
 }
 
-.project-card__header:focus-visible {
-  outline: 2px solid var(--card-accent);
-  outline-offset: -2px;
-  border-radius: 11px;
+.project-ornament::after {
+  content: "";
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  bottom: 0px;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.35;
+  transform: scaleX(1);
+  transform-origin: left;
+  transition: opacity 0.25s ease, transform 0.25s ease;
 }
 
-.project-card__title {
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 1.3;
-  color: rgba(255, 255, 255, 0.9);
-  letter-spacing: -0.01em;
-  flex: 1;
+.project-ornament:hover::after {
+  opacity: 0.7;
 }
 
-.project-card__toggle-icon {
+.project-ornament:focus-visible {
+  outline: 1px solid currentColor;
+  outline-offset: 2px;
+}
+
+.project-ornament__bracket {
+  opacity: 0.45;
+  font-size: 0.9em;
+  transition: opacity 0.2s ease;
+}
+
+.project-ornament:hover .project-ornament__bracket {
+  opacity: 0.8;
+}
+
+.project-ornament__label {
+  letter-spacing: 0.01em;
+}
+
+/* ─── Overlay container ──────────────────────────────────────────────────── */
+
+.project-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
-  color: rgba(255, 255, 255, 0.35);
-  transition: color 0.25s ease;
+  /* pointer events handled by children */
 }
 
-.project-card:hover .project-card__toggle-icon,
-.project-card[data-expanded="true"] .project-card__toggle-icon {
-  color: color-mix(in srgb, var(--card-accent) 80%, rgba(255,255,255,0.6));
+/* ─── Backdrop ───────────────────────────────────────────────────────────── */
+
+.project-overlay__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0);
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.55s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* ---- Expandable body — grid-rows trick for smooth height ---- */
-.project-card__body {
-  display: grid;
-  grid-template-rows: 0fr;
-  transition: grid-template-rows 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+.project-overlay[data-phase="open"] .project-overlay__backdrop {
+  background: rgba(0, 0, 0, 0.88);
+}
+
+.project-overlay[data-phase="closing"] .project-overlay__backdrop {
+  background: rgba(0, 0, 0, 0);
+}
+
+/* ─── Panel ──────────────────────────────────────────────────────────────── */
+
+.project-overlay__panel {
   position: relative;
-  z-index: 2;
+  z-index: 1;
+  width: min(640px, 92vw);
+  max-height: 90vh;
+  overflow-y: auto;
+  background: rgba(8, 8, 8, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 4px;
+  padding: 40px;
+
+  /* Start from ornament position: tiny, invisible */
+  opacity: 0;
+  transform-origin: var(--origin-x, 50%) var(--origin-y, 50%);
+  transform: scale(0.15);
+  transition:
+    opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity;
 }
 
-.project-card[data-expanded="true"] .project-card__body {
-  grid-template-rows: 1fr;
+.project-overlay[data-phase="open"] .project-overlay__panel {
+  opacity: 1;
+  transform: scale(1);
 }
 
-.project-card__body-inner {
-  overflow: hidden;
+.project-overlay[data-phase="closing"] .project-overlay__panel {
+  opacity: 0;
+  transform: scale(0.15);
+}
+
+/* ─── Close button ───────────────────────────────────────────────────────── */
+
+.project-overlay__close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px 8px;
+  line-height: 1;
+  border-radius: 2px;
+  transition: color 0.2s ease;
+}
+
+.project-overlay__close:hover {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.project-overlay__close:focus-visible {
+  outline: 1px solid rgba(255, 255, 255, 0.4);
+  outline-offset: 2px;
+}
+
+/* ─── Accent line ────────────────────────────────────────────────────────── */
+
+.project-overlay__accent {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 2px;
+  bottom: 0;
+  border-radius: 4px 0 0 4px;
+  opacity: 0.7;
+}
+
+/* ─── Content ────────────────────────────────────────────────────────────── */
+
+.project-overlay__content {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 0 16px 0;
-  transition: padding 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  gap: 20px;
 }
 
-.project-card[data-expanded="true"] .project-card__body-inner {
-  padding: 0 16px 16px;
-}
-
-/* ---- Description text ---- */
-.project-card__description {
-  font-size: 11.5px;
-  line-height: 1.6;
-  color: rgba(255, 255, 255, 0.55);
+.project-overlay__title {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  color: rgba(255, 255, 255, 0.95);
   margin: 0;
+  /* stagger in after panel appears */
+  opacity: 0;
+  transform: translateY(8px);
+  transition:
+    opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.15s,
+    transform 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.15s;
 }
 
-/* ---- Image grid ---- */
-.project-card__images {
+.project-overlay[data-phase="open"] .project-overlay__title {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.project-overlay__description {
+  font-size: 14px;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0;
+  opacity: 0;
+  transform: translateY(8px);
+  transition:
+    opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.22s,
+    transform 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.22s;
+}
+
+.project-overlay[data-phase="open"] .project-overlay__description {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ─── Image grid ─────────────────────────────────────────────────────────── */
+
+.project-overlay__images {
   display: grid;
-  gap: 6px;
-  border-radius: 8px;
-  overflow: hidden;
+  gap: 8px;
+  opacity: 0;
+  transform: translateY(12px);
+  transition:
+    opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.3s,
+    transform 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.3s;
 }
 
-/* 1 image: full width */
-.project-card__images[data-count="1"] {
+.project-overlay[data-phase="open"] .project-overlay__images {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.project-overlay__images[data-count="1"] {
   grid-template-columns: 1fr;
 }
 
-/* 2 images: side by side */
-.project-card__images[data-count="2"] {
+.project-overlay__images[data-count="2"] {
   grid-template-columns: 1fr 1fr;
 }
 
-/* 3 images: first image spans full width, two below */
-.project-card__images[data-count="3"] {
+.project-overlay__images[data-count="3"] {
   grid-template-columns: 1fr 1fr;
-  grid-template-rows: auto auto;
 }
 
-.project-card__images[data-count="3"] .project-card__image-wrap:first-child {
+.project-overlay__images[data-count="3"] .project-overlay__image-wrap:first-child {
   grid-column: 1 / -1;
 }
 
-/* Image wrapper with fixed aspect ratio */
-.project-card__image-wrap {
-  position: relative;
-  aspect-ratio: 16 / 9;
-  border-radius: 6px;
+.project-overlay__image-wrap {
+  border-radius: 3px;
   overflow: hidden;
+  aspect-ratio: 16 / 9;
   background: rgba(255, 255, 255, 0.04);
 }
 
-.project-card__images[data-count="3"] .project-card__image-wrap:first-child {
+.project-overlay__images[data-count="3"] .project-overlay__image-wrap:first-child {
   aspect-ratio: 16 / 7;
 }
 
-.project-card__image {
+.project-overlay__image {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
-  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  display: block;
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.project-card__image-wrap:hover .project-card__image {
-  transform: scale(1.04);
+.project-overlay__image-wrap:hover .project-overlay__image {
+  transform: scale(1.03);
 }
 
-/* ---- Visit link ---- */
-.project-card__link {
+/* ─── Visit link ─────────────────────────────────────────────────────────── */
+
+.project-overlay__link {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 11px;
+  gap: 7px;
+  font-size: 12px;
   font-weight: 500;
-  color: color-mix(in srgb, var(--card-accent) 90%, rgba(255,255,255,0.7));
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.35);
   text-decoration: none;
-  letter-spacing: 0.01em;
-  padding: 5px 0;
   transition: color 0.2s ease, gap 0.2s ease;
+  opacity: 0;
+  transition:
+    opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.38s,
+    color 0.2s ease,
+    gap 0.2s ease;
 }
 
-.project-card__link:hover {
-  color: #fff;
-  gap: 8px;
+.project-overlay[data-phase="open"] .project-overlay__link {
+  opacity: 1;
 }
 
-/* ---- Separator between header and body ---- */
-.project-card[data-expanded="true"] .project-card__header {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+.project-overlay__link:hover {
+  color: rgba(255, 255, 255, 0.85);
+  gap: 10px;
 }
 
-/* ---- Reduced motion ---- */
+/* ─── Reduced motion ─────────────────────────────────────────────────────── */
+
 @media (prefers-reduced-motion: reduce) {
-  .project-card {
-    opacity: 1;
-    transform: none;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  .project-overlay__panel {
+    transform: none !important;
+    transition: opacity 0.2s ease !important;
   }
 
-  .project-card__body {
-    transition: none;
+  .project-overlay__backdrop {
+    transition: background 0.2s ease !important;
   }
 
-  .project-card__glare {
-    display: none;
-  }
-
-  .project-card__image {
-    transition: none;
+  .project-overlay__title,
+  .project-overlay__description,
+  .project-overlay__images,
+  .project-overlay__link {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
   }
 }
 
-/* ---- Mobile ---- */
+/* ─── Mobile ─────────────────────────────────────────────────────────────── */
+
 @media (max-width: 639px) {
-  .project-card-dock {
-    gap: 10px;
+  .project-overlay__panel {
+    padding: 28px 20px;
+    width: 92vw;
+    max-height: 85vh;
   }
 
-  .project-card {
-    width: 100%;
-    max-width: 320px;
+  .project-overlay__images[data-count="2"],
+  .project-overlay__images[data-count="3"] {
+    grid-template-columns: 1fr;
+  }
+
+  .project-overlay__images[data-count="3"] .project-overlay__image-wrap:first-child {
+    grid-column: auto;
   }
 }

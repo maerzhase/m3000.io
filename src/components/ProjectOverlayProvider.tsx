@@ -26,75 +26,50 @@ const OverlayContext = createContext<OverlayContextValue | null>(null);
 
 export function useProjectOverlay() {
   const ctx = useContext(OverlayContext);
-  if (!ctx) throw new Error("useProjectOverlay must be used inside ProjectOverlayProvider");
+  if (!ctx)
+    throw new Error(
+      "useProjectOverlay must be used inside ProjectOverlayProvider"
+    );
   return ctx;
 }
 
-type Phase = "closed" | "opening" | "open" | "closing";
-
-export function ProjectOverlayProvider({ children }: { children: React.ReactNode }) {
+export function ProjectOverlayProvider({
+  children,
+}: { children: React.ReactNode }) {
   const [project, setProject] = useState<Project | null>(null);
   const [origin, setOrigin] = useState<OriginRect | null>(null);
-  const [phase, setPhase] = useState<Phase>("closed");
-  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [isVisible, setIsVisible] = useState(false);
+  // activeId exposed to ornaments so they can dim themselves
+  const [activeId, setActiveId] = useState<string | null>(null);
 
   const open = useCallback((p: Project, rect: OriginRect) => {
-    if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
     setProject(p);
     setOrigin(rect);
-    setPhase("opening");
-    // Double rAF: paint the "from" state first, then trigger transition to "open"
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => setPhase("open"));
-    });
+    setActiveId(p.id);
+    setIsVisible(true);
   }, []);
 
   const close = useCallback(() => {
-    setPhase("closing");
-    closeTimerRef.current = setTimeout(() => {
-      setPhase("closed");
-      setProject(null);
-      setOrigin(null);
-    }, 700);
+    setActiveId(null);
+    // actual hide happens after GSAP animation, signalled via onCloseComplete
   }, []);
 
-  useEffect(() => {
-    if (phase === "closed") return;
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") close();
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [phase, close]);
-
-  // Fade the page content, not with a backdrop layer
-  useEffect(() => {
-    const pageEl = document.getElementById("page-content");
-    if (!pageEl) return;
-    if (phase === "closed") {
-      pageEl.style.opacity = "";
-      pageEl.style.pointerEvents = "";
-    } else if (phase === "open") {
-      pageEl.style.opacity = "0";
-      pageEl.style.pointerEvents = "none";
-    } else if (phase === "opening") {
-      pageEl.style.opacity = "";
-      pageEl.style.pointerEvents = "none";
-    } else if (phase === "closing") {
-      pageEl.style.opacity = "";
-      pageEl.style.pointerEvents = "none";
-    }
-  }, [phase]);
+  const handleCloseComplete = useCallback(() => {
+    setIsVisible(false);
+    setProject(null);
+    setOrigin(null);
+  }, []);
 
   return (
-    <OverlayContext.Provider value={{ activeId: project?.id ?? null, open }}>
+    <OverlayContext.Provider value={{ activeId, open }}>
       {children}
-      {project && origin && phase !== "closed" && (
+      {isVisible && project && origin && (
         <MorphCard
           project={project}
           origin={origin}
-          phase={phase}
+          isOpen={activeId !== null}
           onClose={close}
+          onCloseComplete={handleCloseComplete}
         />
       )}
     </OverlayContext.Provider>
@@ -106,102 +81,206 @@ export function ProjectOverlayProvider({ children }: { children: React.ReactNode
 interface MorphCardProps {
   project: Project;
   origin: OriginRect;
-  phase: Phase;
+  isOpen: boolean;
   onClose: () => void;
+  onCloseComplete: () => void;
 }
 
-function MorphCard({ project, origin, phase, onClose }: MorphCardProps) {
-  // Target: centered card
-  const vw = typeof window !== "undefined" ? window.innerWidth : 800;
-  const vh = typeof window !== "undefined" ? window.innerHeight : 600;
+function MorphCard({
+  project,
+  origin,
+  isOpen,
+  onClose,
+  onCloseComplete,
+}: MorphCardProps) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const dimmerRef = useRef<HTMLDivElement>(null);
+  const prevIsOpen = useRef<boolean | null>(null);
 
-  const CARD_W = Math.min(600, vw * 0.9);
-  const CARD_H = Math.min(vh * 0.85, 700);
-  const targetTop = (vh - CARD_H) / 2;
-  const targetLeft = (vw - CARD_W) / 2;
+  // Stable ref for onCloseComplete to avoid stale closure in effect
+  const onCloseCompleteRef = useRef(onCloseComplete);
+  onCloseCompleteRef.current = onCloseComplete;
 
-  const isOpen = phase === "open";
-  const isClosing = phase === "closing";
-  const isOpening = phase === "opening";
+  useEffect(() => {
+    // Only import GSAP on client
+    let cancelled = false;
 
-  // In "opening" phase, start from origin. In "open", animate to target. In "closing", go back.
-  const fromState = isOpen;
-  const top = fromState ? targetTop : origin.top;
-  const left = fromState ? targetLeft : origin.left;
-  const width = fromState ? CARD_W : origin.width;
-  const height = fromState ? CARD_H : origin.height;
-  const borderRadius = fromState ? 6 : 2;
+    async function animate() {
+      const { gsap } = await import("gsap");
 
-  // Content visible only when open
-  const contentVisible = phase === "open";
+      const card = cardRef.current;
+      const content = contentRef.current;
+      const dimmer = dimmerRef.current;
+      const page = document.getElementById("page-content");
+      if (!card || !content || !dimmer) return;
 
-  const spring = "cubic-bezier(0.32, 0.72, 0, 1)";
-  const duration = "0.65s";
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const CARD_W = Math.min(600, vw * 0.9);
+      const CARD_H = Math.min(vh * 0.85, 680);
+      const targetTop = (vh - CARD_H) / 2;
+      const targetLeft = (vw - CARD_W) / 2;
 
-  const transition =
-    isOpening
-      ? "none" // no transition on first paint
-      : `top ${duration} ${spring}, left ${duration} ${spring}, width ${duration} ${spring}, height ${duration} ${spring}, border-radius ${duration} ${spring}, background ${duration} ${spring}, box-shadow ${duration} ${spring}`;
+      if (isOpen && prevIsOpen.current !== true) {
+        // ── OPEN animation ────────────────────────────────────────────────
+        prevIsOpen.current = true;
+
+        // Set card to ornament position immediately (no transition)
+        gsap.set(card, {
+          position: "fixed",
+          top: origin.top,
+          left: origin.left,
+          width: origin.width,
+          height: origin.height,
+          borderRadius: 2,
+          opacity: 1,
+          zIndex: 200,
+          overflow: "hidden",
+          background: "rgba(10,10,10,0)",
+        });
+
+        gsap.set(content, { opacity: 0, y: 8 });
+        gsap.set(dimmer, { opacity: 0, pointerEvents: "none" });
+
+        if (page) gsap.set(page, { opacity: 1 });
+
+        // Morph to target card
+        gsap.to(card, {
+          top: targetTop,
+          left: targetLeft,
+          width: CARD_W,
+          height: CARD_H,
+          borderRadius: 6,
+          background: "rgba(10,10,10,0.96)",
+          duration: 0.7,
+          ease: "power4.out",
+          onComplete: () => {
+            if (cancelled) return;
+            // Reveal content after morph completes
+            gsap.to(content, {
+              opacity: 1,
+              y: 0,
+              duration: 0.4,
+              ease: "power2.out",
+              stagger: 0.05,
+            });
+          },
+        });
+
+        // Fade page out and dimmer in simultaneously
+        if (page) {
+          gsap.to(page, {
+            opacity: 0.07,
+            duration: 0.55,
+            ease: "power2.out",
+          });
+        }
+        gsap.to(dimmer, {
+          opacity: 1,
+          duration: 0.4,
+          ease: "power2.out",
+          onStart: () => {
+            dimmer.style.pointerEvents = "auto";
+          },
+        });
+      } else if (!isOpen && prevIsOpen.current === true) {
+        // ── CLOSE animation ───────────────────────────────────────────────
+        prevIsOpen.current = false;
+
+        // Fade content out fast
+        gsap.to(content, {
+          opacity: 0,
+          y: 4,
+          duration: 0.18,
+          ease: "power2.in",
+        });
+
+        // Fade dimmer out
+        gsap.to(dimmer, {
+          opacity: 0,
+          duration: 0.45,
+          ease: "power2.inOut",
+          onStart: () => {
+            dimmer.style.pointerEvents = "none";
+          },
+        });
+
+        // Restore page
+        if (page) {
+          gsap.to(page, {
+            opacity: 1,
+            duration: 0.5,
+            ease: "power2.inOut",
+          });
+        }
+
+        // Morph back to ornament rect
+        gsap.to(card, {
+          top: origin.top,
+          left: origin.left,
+          width: origin.width,
+          height: origin.height,
+          borderRadius: 2,
+          background: "rgba(10,10,10,0)",
+          duration: 0.5,
+          delay: 0.12,
+          ease: "power3.inOut",
+          onComplete: () => {
+            if (cancelled) return;
+            // Restore page opacity fully in case it was still transitioning
+            if (page) gsap.set(page, { opacity: "" });
+            onCloseCompleteRef.current();
+          },
+        });
+      }
+    }
+
+    animate();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, origin]);
+
+  // Escape key
+  useEffect(() => {
+    if (!isOpen) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [isOpen, onClose]);
 
   return (
     <>
-      {/* Page dimmer - separate from the card so it doesn't move */}
+      {/* Dimmer — captures click-to-close, sits behind card */}
       <div
+        ref={dimmerRef}
         className="morph-dimmer"
-        data-phase={phase}
         onClick={onClose}
         aria-hidden="true"
+        style={{ opacity: 0 }}
       />
 
-      {/* The morphing card element */}
+      {/* Morphing card — GSAP controls all geometry */}
       <div
-        className="morph-card"
-        data-phase={phase}
+        ref={cardRef}
         role="dialog"
         aria-modal="true"
         aria-label={project.title}
-        style={{
-          position: "fixed",
-          top,
-          left,
-          width,
-          height,
-          borderRadius,
-          transition,
-          zIndex: 200,
-          overflow: "hidden",
-          background: isOpen
-            ? "rgba(10, 10, 10, 0.97)"
-            : "rgba(10, 10, 10, 0.0)",
-          boxShadow: isOpen
-            ? "0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.07)"
-            : "none",
-          willChange: "top, left, width, height",
-          cursor: isOpen ? "default" : "pointer",
-        }}
+        className="morph-card"
+        style={{ opacity: 0 }}
       >
         {/* Accent stripe */}
         <div
           className="morph-card__accent"
-          style={{
-            background: project.color,
-            opacity: isOpen ? 0.6 : 0,
-            transition: `opacity ${duration} ${spring}`,
-          }}
+          style={{ background: project.color }}
         />
 
-        {/* Inner content - fades in after morph */}
-        <div
-          className="morph-card__inner"
-          style={{
-            opacity: contentVisible ? 1 : 0,
-            transform: contentVisible ? "translateY(0)" : "translateY(6px)",
-            transition: contentVisible
-              ? "opacity 0.35s ease 0.25s, transform 0.35s ease 0.25s"
-              : "opacity 0.15s ease, transform 0.15s ease",
-          }}
-        >
-          {/* Close */}
+        {/* Content — fades in after morph */}
+        <div ref={contentRef} className="morph-card__inner">
           <button
             type="button"
             className="morph-card__close font-mono"
@@ -212,15 +291,12 @@ function MorphCard({ project, origin, phase, onClose }: MorphCardProps) {
           </button>
 
           <div className="morph-card__content">
-            {/* Year / tag */}
             {project.year && (
               <span className="morph-card__meta font-mono">{project.year}</span>
             )}
 
-            <h2 className="morph-card__title font-sans">{project.title}</h2>
-            <p className="morph-card__description font-sans">
-              {project.description}
-            </p>
+            <h2 className="morph-card__title">{project.title}</h2>
+            <p className="morph-card__description">{project.description}</p>
 
             {project.images && project.images.length > 0 && (
               <div
@@ -249,7 +325,13 @@ function MorphCard({ project, origin, phase, onClose }: MorphCardProps) {
                 className="morph-card__link font-mono"
               >
                 <span>Visit project</span>
-                <svg width="11" height="11" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                <svg
+                  width="11"
+                  height="11"
+                  viewBox="0 0 14 14"
+                  fill="none"
+                  aria-hidden="true"
+                >
                   <path
                     d="M4 1.5H12.5V10M12 2L1.5 12.5"
                     stroke="currentColor"

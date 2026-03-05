@@ -1,6 +1,8 @@
 /* ============================================================
    PROJECT ORNAMENTS & MORPH CARD
    Inline typographic ornaments that morph into project cards
+   GSAP owns all card geometry/opacity — CSS handles only
+   internal styling and the ornament button.
    ============================================================ */
 
 /* ─── Inline ornament button ─────────────────────────────────────────────── */
@@ -20,7 +22,7 @@
   vertical-align: baseline;
   position: relative;
   border-radius: 2px;
-  transition: opacity 0.2s ease;
+  transition: opacity 0.25s ease;
   white-space: nowrap;
 }
 
@@ -37,7 +39,7 @@
 }
 
 .project-ornament:hover::after {
-  opacity: 0.75;
+  opacity: 0.8;
 }
 
 .project-ornament:focus-visible {
@@ -46,7 +48,7 @@
 }
 
 .project-ornament__bracket {
-  opacity: 0.4;
+  opacity: 0.35;
   font-size: 0.85em;
   transition: opacity 0.2s ease;
 }
@@ -59,49 +61,36 @@
   letter-spacing: 0.01em;
 }
 
-/* When another ornament is active, dim this one */
+/* Dim other ornaments while one is active */
 .project-ornament[data-dimmed="true"] {
-  opacity: 0.2;
+  opacity: 0.15;
   pointer-events: none;
+  transition: opacity 0.4s ease;
 }
 
-/* ─── Page content fade ──────────────────────────────────────────────────── */
-
+/* ─── Page content fade — GSAP animates this, but set base transition */
 #page-content {
-  transition: opacity 0.55s cubic-bezier(0.32, 0.72, 0, 1);
+  will-change: opacity;
 }
 
-/* ─── Dimmer (sits behind morph card, dims page) ─────────────────────────── */
+/* ─── Dimmer ─────────────────────────────────────────────────────────────── */
 
 .morph-dimmer {
   position: fixed;
   inset: 0;
   z-index: 199;
-  background: rgba(0, 0, 0, 0);
-  transition: background 0.55s cubic-bezier(0.32, 0.72, 0, 1);
-  cursor: pointer;
-  pointer-events: none;
+  background: rgba(0, 0, 0, 0.75);
+  /* GSAP controls opacity */
 }
 
-.morph-dimmer[data-phase="open"] {
-  background: rgba(0, 0, 0, 0.82);
-  pointer-events: auto;
-}
-
-.morph-dimmer[data-phase="closing"] {
-  background: rgba(0, 0, 0, 0);
-  pointer-events: none;
-}
-
-.morph-dimmer[data-phase="opening"] {
-  background: rgba(0, 0, 0, 0);
-  pointer-events: none;
-}
-
-/* ─── Morph card ─────────────────────────────────────────────────────────── */
+/* ─── Morph card shell ───────────────────────────────────────────────────── */
 
 .morph-card {
-  /* Base — all geometry via inline style */
+  /* position: fixed and all geometry set imperatively by GSAP */
+  position: fixed;
+  z-index: 200;
+  overflow: hidden;
+  will-change: top, left, width, height;
 }
 
 /* Accent stripe on left edge */
@@ -112,18 +101,18 @@
   width: 2px;
   bottom: 0;
   pointer-events: none;
+  opacity: 0.5;
 }
 
-/* Inner content wrapper */
+/* Inner scroll container */
 .morph-card__inner {
   position: absolute;
   inset: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 36px 40px 40px;
-  /* Scrollbar */
+  padding: 40px 44px 44px;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+  scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
 }
 
 .morph-card__inner::-webkit-scrollbar {
@@ -135,7 +124,7 @@
 }
 
 .morph-card__inner::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 2px;
 }
 
@@ -146,13 +135,13 @@
   right: 14px;
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.28);
   cursor: pointer;
-  font-size: 15px;
+  font-size: 14px;
   padding: 6px 10px;
   line-height: 1;
   border-radius: 2px;
-  transition: color 0.2s ease;
+  transition: color 0.15s ease;
   z-index: 1;
 }
 
@@ -161,7 +150,7 @@
 }
 
 .morph-card__close:focus-visible {
-  outline: 1px solid rgba(255, 255, 255, 0.35);
+  outline: 1px solid rgba(255, 255, 255, 0.3);
   outline-offset: 2px;
 }
 
@@ -169,39 +158,40 @@
 .morph-card__content {
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  padding-top: 4px;
+  gap: 20px;
+  padding-top: 6px;
 }
 
 .morph-card__meta {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 400;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.25);
 }
 
 .morph-card__title {
   font-size: 22px;
   font-weight: 600;
-  line-height: 1.2;
-  letter-spacing: -0.025em;
-  color: rgba(255, 255, 255, 0.95);
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  color: rgba(255, 255, 255, 0.92);
   margin: 0;
 }
 
 .morph-card__description {
   font-size: 14px;
-  line-height: 1.7;
-  color: rgba(255, 255, 255, 0.48);
+  line-height: 1.75;
+  color: rgba(255, 255, 255, 0.42);
   margin: 0;
+  max-width: 52ch;
 }
 
 /* ─── Image grid ─────────────────────────────────────────────────────────── */
 
 .morph-card__images {
   display: grid;
-  gap: 6px;
+  gap: 5px;
 }
 
 .morph-card__images[data-count="1"] {
@@ -224,11 +214,11 @@
   border-radius: 3px;
   overflow: hidden;
   aspect-ratio: 16 / 9;
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .morph-card__images[data-count="3"] .morph-card__image-wrap:first-child {
-  aspect-ratio: 16 / 7;
+  aspect-ratio: 21 / 9;
 }
 
 .morph-card__image {
@@ -236,7 +226,7 @@
   height: 100%;
   object-fit: cover;
   display: block;
-  transition: transform 0.55s cubic-bezier(0.32, 0.72, 0, 1);
+  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .morph-card__image-wrap:hover .morph-card__image {
@@ -249,34 +239,29 @@
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 500;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.28);
+  color: rgba(255, 255, 255, 0.25);
   text-decoration: none;
   transition: color 0.2s ease, gap 0.2s ease;
   align-self: flex-start;
+  margin-top: 4px;
 }
 
 .morph-card__link:hover {
-  color: rgba(255, 255, 255, 0.82);
-  gap: 11px;
+  color: rgba(255, 255, 255, 0.8);
+  gap: 12px;
 }
 
 /* ─── Reduced motion ─────────────────────────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {
-  .morph-card {
-    transition: opacity 0.2s ease !important;
-  }
-
-  .morph-dimmer {
-    transition: background 0.2s ease !important;
-  }
-
-  #page-content {
-    transition: opacity 0.2s ease !important;
+  .project-ornament,
+  .project-ornament::after,
+  .project-ornament__bracket {
+    transition: none !important;
   }
 }
 
@@ -298,5 +283,6 @@
 
   .morph-card__images[data-count="3"] .morph-card__image-wrap:first-child {
     grid-column: auto;
+    aspect-ratio: 16 / 9;
   }
 }

@@ -29,7 +29,7 @@ export default function Home() {
           <Text render={<h1 />} size="6">
             <Hello />. I am Markus — <br />a <s>Berlin</s> Porto-based{" "}
             <Text size="5" weight="semibold">
-              Full-Stack Developer & Design Technologist
+              Senior Design Engineer & Full-Stack Developer
             </Text>
             .
           </Text>
@@ -66,7 +66,7 @@ export default function Home() {
           <Text>
             Since 2022, I’ve been a{" "}
             <Text size="1" weight="semibold">
-              Full-Stack Developer
+              Senior Full-Stack Developer
             </Text>{" "}
             at <ExternalLink href="///fxhash.xyz">fxhash</ExternalLink>,
             building the largest open platform for generative art across

@@ -14,9 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "m3000.io — Design engineering",
+  title: "m3000.io — Senior Design Engineer",
   description:
-    "Portfolio of Markus (m3000), developer & designer. Full-stack at fxhash (generative art, blockchain). Former Lead Design Technologist at Studio NAND and interaction designer at ART+COM Studios. Graduate in Interaction Design with a thesis on computer linguistics — years before the rise of LLMs and ChatGPT.",
+    "Portfolio of Markus (m3000), Senior Design Engineer. Senior Full-stack at fxhash (generative art, blockchain). Former Lead Design Technologist at Studio NAND and interaction designer at ART+COM Studios. Graduate in Interaction Design with a thesis on computer linguistics — years before the rise of LLMs and ChatGPT.",
   keywords: [
     "Markus",
     "Developer Berlin",
@@ -44,9 +44,9 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: "https://m3000.io",
-    title: "m3000.io — Design engineering",
+    title: "m3000.io — Senior Design Engineer",
     description:
-      "Developer & Designer. Building at fxhash, leading generative art across blockchains. Former Studio NAND & ART+COM. Graduate thesis on computer linguistics — years before the rise of before LLMS and ChatGPT.",
+      "Senior Design Engineering. Building at fxhash, leading generative art across blockchains. Former Studio NAND & ART+COM. Graduate thesis on computer linguistics — years before the rise of before LLMS and ChatGPT.",
     siteName: "m3000.io — Design engineering",
     images: [
       {
@@ -59,9 +59,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "m3000.io — Design engineering",
+    title: "m3000.io — Senior Design Engineer",
     description:
-      "Developer & Designer. Building at fxhash, leading generative art across blockchains. Former Studio NAND & ART+COM. Graduate thesis on computer linguistics — years before the rise of before LLMS and ChatGPT.",
+      "Senior Design Engineer. Building at fxhash, leading generative art across blockchains. Former Studio NAND & ART+COM. Graduate thesis on computer linguistics — years before the rise of before LLMS and ChatGPT.",
     images: ["https://m3000.io/og-image.jpg"],
     creator: "@maerzhase3000",
   },

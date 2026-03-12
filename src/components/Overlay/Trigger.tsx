@@ -15,7 +15,7 @@ export function OverlayTrigger({
   return (
     <motion.button
       layoutId={id}
-      className="text-1 bg-gray-900 px-2 py-0.5 border border-gray-800 rounded-sm inline-block align-baseline leading-1"
+      className="text-1 h-[20px] bg-gray-900 px-2 py-0.5 border border-gray-800 rounded-sm inline-block align-baseline leading-1"
       onClick={() => {
         setOpen(true);
         setId(id);

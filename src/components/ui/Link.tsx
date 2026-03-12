@@ -35,7 +35,7 @@ export const Link = React.forwardRef<LinkElement, LinkProps>(function Link(
       color={color}
       variant={variant}
       className={cn(
-        "inline px-1",
+        "inline-flex items-baseline px-1 text-1",
         "hover:text-secondary data-active:text-secondary",
         "focus-visible:rounded-xs focus-visible:ring-1 focus-visible:ring-primary focus-visible:outline-none",
         "[&_svg]:inline",

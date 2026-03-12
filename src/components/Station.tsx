@@ -1,9 +1,9 @@
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 import { Text } from "./ui/Text";
 
 interface StationProps {
   year: ReactNode;
-  name: ReactNode;
+  name?: ReactNode;
   title: ReactNode;
   children: ReactNode;
 }

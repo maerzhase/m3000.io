@@ -4,6 +4,11 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
+        source: "/market",
+        destination: "https://market.m3000.io",
+        permanent: false,
+      },
+      {
         source: "/symphonie-cinetique",
         destination: "https://artcom.de/en/?project=symphonie-cinetique",
         permanent: false,

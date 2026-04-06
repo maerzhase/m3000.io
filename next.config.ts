@@ -4,6 +4,11 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
+        source: "/ai11y",
+        destination: "https://ai11y.m3000.io",
+        permanent: false,
+      },
+      {
         source: "/gems",
         destination: "https://gems.m3000.io",
         permanent: false,

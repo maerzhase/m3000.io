@@ -9,6 +9,7 @@ import {
 import Image from "next/image";
 import BackgroundShader from "@/components/BackgroundShader";
 import { Hello } from "@/components/Hello";
+import { ShaderHighlight } from "@/components/ShaderHighlight";
 import { ExternalLink, Link } from "@/components/ui/Link";
 import { Text } from "@/components/ui/Text";
 import me from "../../public/me.png";
@@ -18,12 +19,14 @@ export default function Home() {
     <BackgroundShader>
       <div className="min-h-screen p-6 gap-16 sm:p-12 container m-auto">
         <main className="flex flex-col gap-[32px]">
-          <Image
-            src={me}
-            alt="avatar"
-            className="rounded-full size-20 object-cover shadow-2xl dither"
-            placeholder="blur"
-          />
+          <ShaderHighlight padding={4} radius={40}>
+            <Image
+              src={me}
+              alt="avatar"
+              className="rounded-full size-20 object-cover shadow-2xl dither"
+              placeholder="blur"
+            />
+          </ShaderHighlight>
           {/* biome-ignore lint: using render */}
           <Text render={<h1 />} size="6">
             <Hello />. I am Markus — <br />a <s>Berlin</s> Porto-based{" "}

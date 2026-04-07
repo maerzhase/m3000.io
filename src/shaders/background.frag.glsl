@@ -18,6 +18,7 @@ uniform float u_dither_levels;
 uniform float u_dither_strength;
 uniform float u_dither_coarseness;
 uniform float u_scroll_phase;
+uniform float u_noise_seed;
 uniform float u_displace_strength;
 uniform float u_rgb_split;
 uniform int u_highlight_count;
@@ -34,6 +35,12 @@ varying vec2 v_uv;
 
 float hash(vec2 p) {
   return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+}
+
+vec2 seedOffset(float phase) {
+  float angle = hash(vec2(u_noise_seed + phase, 13.7 + phase)) * 6.28318;
+  float radius = mix(3.5, 8.5, hash(vec2(29.1 - phase, u_noise_seed * 2.0 + phase)));
+  return vec2(cos(angle), sin(angle)) * radius;
 }
 
 float valueNoise(vec2 p) {
@@ -79,6 +86,8 @@ vec3 baseScene(vec2 p) {
   float minRes = min(u_resolution.x, u_resolution.y);
   float rScale = clamp(520.0 / minRes, 1.0, 1.6);
   float t = u_time * 1.2 + u_scroll_phase;
+  vec2 bandSeed = seedOffset(0.0);
+  vec2 detailSeed = seedOffset(7.3);
   vec2 c1 = vec2(0.25, 0.5) + 0.04 * vec2(sin(t * 0.1), cos(t * 0.12));
   vec2 c2 = vec2(0.5, 0.45) + 0.03 * vec2(cos(t * 0.08), sin(t * 0.1));
   vec2 c3 = vec2(0.75, 0.5) + 0.04 * vec2(sin(t * 0.11 + 1.0), cos(t * 0.09));
@@ -93,11 +102,16 @@ vec3 baseScene(vec2 p) {
   float vig = 1.0 - smoothstep(u_vignette_radius * 0.5, u_vignette_radius, d);
   vig = mix(1.0 - u_vignette_strength, 1.0, vig);
   col *= vig;
-  float bandX = p.x + u_noise_band_warp * valueNoise(p * 2.0 + t * 0.2);
+  float bandX =
+    p.x + u_noise_band_warp * valueNoise(p * 2.0 + bandSeed + vec2(t * 0.2));
   float band = sin(bandX * 6.28318 * 2.0 + t * 0.1) * 0.5 + 0.5;
-  band += (valueNoise(p * 4.0 + t * 0.15) - 0.5) * u_noise_band_strength;
+  band +=
+    (valueNoise(p * 4.0 + bandSeed * 1.35 + vec2(t * 0.15, -t * 0.08)) - 0.5)
+    * u_noise_band_strength;
   col += u_band_strength * band;
-  col += (valueNoise(p * 8.0 + t * 0.1) - 0.5) * u_noise_global_strength;
+  col +=
+    (valueNoise(p * 8.0 + detailSeed + vec2(t * 0.1, -t * 0.06)) - 0.5)
+    * u_noise_global_strength;
   return col;
 }
 
@@ -139,7 +153,10 @@ void main() {
 
   highlightMask *= u_highlight_strength;
   highlightEdge *= u_highlight_strength;
-  vec2 noiseUv = uv * vec2(26.0, 18.0) + vec2(u_time * 0.22, -u_time * 0.17);
+  vec2 noiseUv =
+    uv * vec2(26.0, 18.0)
+    + seedOffset(19.4)
+    + vec2(u_time * 0.22, -u_time * 0.17);
   float noiseA = valueNoise(noiseUv);
   float noiseB = valueNoise(noiseUv * 1.9 + 17.3);
   float edgeNoise = mix(noiseA, noiseB, 0.45) - 0.5;

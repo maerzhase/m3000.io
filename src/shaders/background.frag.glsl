@@ -20,6 +20,15 @@ uniform float u_dither_coarseness;
 uniform float u_scroll_phase;
 uniform float u_displace_strength;
 uniform float u_rgb_split;
+uniform int u_highlight_count;
+uniform vec2 u_highlight_centers[4];
+uniform vec2 u_highlight_sizes[4];
+uniform float u_highlight_radii[4];
+uniform float u_highlight_strength;
+uniform float u_highlight_edge_boost;
+uniform float u_highlight_dither_repel;
+uniform float u_highlight_noise;
+uniform float u_highlight_halo;
 
 varying vec2 v_uv;
 
@@ -92,23 +101,87 @@ vec3 baseScene(vec2 p) {
   return col;
 }
 
+float sdRoundedBox(vec2 p, vec2 b, float r) {
+  vec2 q = abs(p) - b + vec2(r);
+  return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r;
+}
+
 void main() {
   vec2 uv = v_uv;
   float trail = texture2D(u_trail, uv).r;
+  float highlightFeather = max(0.005, 12.0 / min(u_resolution.x, u_resolution.y));
+  float highlightMask = 0.0;
+  float highlightEdge = 0.0;
+  vec2 highlightDelta = vec2(1.0, 0.0);
+  float nearestRectDist = 1e5;
+
+  for (int i = 0; i < 4; i++) {
+    if (i >= u_highlight_count) break;
+    vec2 rectDelta = uv - u_highlight_centers[i];
+    vec2 rectSize = max(u_highlight_sizes[i], vec2(0.0001));
+    float rectRadius = min(
+      u_highlight_radii[i],
+      min(rectSize.x, rectSize.y)
+    );
+    float rectSdf = sdRoundedBox(rectDelta, rectSize, rectRadius);
+    float rectMask = 1.0 - smoothstep(0.0, highlightFeather, rectSdf);
+    float rectEdge =
+      1.0 - smoothstep(highlightFeather * 0.35, highlightFeather * 2.4, abs(rectSdf));
+
+    if (rectSdf < nearestRectDist) {
+      nearestRectDist = rectSdf;
+      highlightDelta = rectDelta;
+    }
+
+    highlightMask = max(highlightMask, rectMask);
+    highlightEdge = max(highlightEdge, rectEdge);
+  }
+
+  highlightMask *= u_highlight_strength;
+  highlightEdge *= u_highlight_strength;
+  vec2 noiseUv = uv * vec2(26.0, 18.0) + vec2(u_time * 0.22, -u_time * 0.17);
+  float noiseA = valueNoise(noiseUv);
+  float noiseB = valueNoise(noiseUv * 1.9 + 17.3);
+  float edgeNoise = mix(noiseA, noiseB, 0.45) - 0.5;
+  float edgeRipple =
+    sin((nearestRectDist * 1600.0) - u_time * 6.0 + noiseA * 8.0) * 0.5 + 0.5;
+  float noisyEdge =
+    highlightEdge * (1.0 + edgeNoise * 1.8 * u_highlight_noise)
+    + highlightEdge * edgeRipple * 0.45 * u_highlight_noise;
+  float halo =
+    u_highlight_strength
+    * (1.0 - smoothstep(highlightFeather * 1.6, highlightFeather * 8.0, abs(nearestRectDist)));
+  halo *= 0.45 + 0.55 * noiseB;
+  halo *= u_highlight_halo;
+  highlightMask = clamp(highlightMask, 0.0, 1.0);
+  highlightEdge = clamp(max(highlightEdge, noisyEdge), 0.0, 1.35);
+  halo = clamp(halo, 0.0, 1.0);
   // Boost trail for displacement/split so faint trail still shows effect (trail is often 0.1–0.3)
   float trailEff = pow(max(0.0, trail), 0.65);
 
   // Displacement: large UV offset so it's visible even at mid trail strength
   vec2 displaceDir = vec2(1.2, 0.35);
-  vec2 uv_d = uv + trailEff * u_displace_strength * displaceDir;
+  vec2 radialDir =
+    length(highlightDelta) > 0.0001 ? normalize(highlightDelta) : vec2(1.0, 0.0);
+  vec2 tangentDir = vec2(-radialDir.y, radialDir.x);
+  float displaceStrength = u_displace_strength * (1.0 + highlightEdge * 1.65 + halo * 0.6);
+  vec2 uv_d = uv + trailEff * displaceStrength * displaceDir;
+  uv_d += radialDir * highlightMask * u_highlight_edge_boost * 0.055;
+  uv_d += tangentDir * edgeNoise * highlightEdge * 0.03 * u_highlight_noise;
 
   vec3 col;
-  if (u_rgb_split > 0.0 && trail > 0.005) {
+  float rgbSplitStrength =
+    u_rgb_split
+    + highlightEdge * u_highlight_edge_boost * 0.075
+    + halo * u_highlight_halo * 0.04;
+  if (rgbSplitStrength > 0.0 && (trail > 0.005 || highlightEdge > 0.001)) {
     // RGB split along velocity direction (stored in trail.gb); fallback to horizontal if no velocity
     vec2 velDir = vec2(texture2D(u_trail, uv).g * 2.0 - 1.0, texture2D(u_trail, uv).b * 2.0 - 1.0);
     if (length(velDir) < 0.01) velDir = vec2(1.0, 0.0);
     else velDir = normalize(velDir);
-    float rs = trailEff * u_rgb_split * 4.0;
+    velDir = normalize(mix(velDir, tangentDir, min(1.0, highlightEdge * 1.4)));
+    velDir = normalize(mix(velDir, radialDir, min(1.0, halo * 0.8)));
+    float rs = max(trailEff, highlightEdge * 0.9 + halo * 0.75) * rgbSplitStrength * 4.8;
     vec3 cr = baseScene(uv_d - rs * velDir);
     vec3 cg = baseScene(uv_d);
     vec3 cb = baseScene(uv_d + rs * velDir);
@@ -117,13 +190,21 @@ void main() {
     col = baseScene(uv_d);
   }
   col += trail * u_color_intensity * 1.5 * u_mouse_glow_intensity * u_primary_color;
+  vec3 haloColor = vec3(0.9, 0.24, 0.08);
+  col += halo * haloColor * (0.35 + highlightEdge * 0.25);
+  col = mix(col, u_base_color * 0.72, highlightMask * 0.58);
+  col += edgeNoise * 0.06 * highlightEdge * u_highlight_noise;
 
   col = clamp(col, 0.0, 1.0);
 
   if (u_dither_strength > 0.0 && u_dither_levels > 1.0) {
     float bayer = bayer4(gl_FragCoord.xy * u_dither_coarseness);
     vec3 quantized = floor(col * u_dither_levels + bayer) / u_dither_levels;
-    col = mix(col, quantized, u_dither_strength);
+    float ditherStrength = max(
+      0.0,
+      u_dither_strength * (1.0 - highlightMask * u_highlight_dither_repel)
+    );
+    col = mix(col, quantized, ditherStrength);
   }
 
   gl_FragColor = vec4(col, 1.0);

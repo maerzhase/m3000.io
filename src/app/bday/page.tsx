@@ -1,12 +1,20 @@
 "use client";
 
-import Image from "next/image";
-import cakeOn from "./cake-on.png";
-import cakeOff from "./cake-off.png";
-import frame from "./frame.png";
-import { useState } from "react";
-import { cn } from "@/lib/cn";
 import confetti from "canvas-confetti";
+import Image from "next/image";
+import { type CSSProperties, useState } from "react";
+import { cn } from "@/lib/cn";
+import cakeOff from "./cake-off.png";
+import cakeOn from "./cake-on.png";
+import frame from "./frame.png";
+
+type FlameStyle = CSSProperties & {
+  "--x": string;
+  "--y": string;
+};
+
+const leftFlameStyle: FlameStyle = { "--x": "45.3%", "--y": "59%" };
+const rightFlameStyle: FlameStyle = { "--x": "54%", "--y": "59%" };
 
 function shootConfetti() {
   const rand = Math.random();
@@ -66,14 +74,8 @@ export default function BdayPage() {
         />
         {on && (
           <>
-            <div
-              className="flame"
-              style={{ "--x": "45.3%", "--y": "59%" } as any}
-            ></div>
-            <div
-              className="flame"
-              style={{ "--x": "54%", "--y": "59%" } as any}
-            ></div>
+            <div className="flame" style={leftFlameStyle}></div>
+            <div className="flame" style={rightFlameStyle}></div>
           </>
         )}
         {/* frame overlay */}

@@ -1,7 +1,6 @@
 export const dynamic = "force-dynamic";
 
 import {
-  IconBrandGithub,
   IconBrandGithubFilled,
   IconBrandLinkedinFilled,
   IconExternalLink,

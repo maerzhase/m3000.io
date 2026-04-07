@@ -14,6 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://m3000.io"),
   title: "m3000.io — Senior Design Engineer",
   description:
     "Portfolio of Markus (m3000), Senior Design Engineer. Senior Full-stack at fxhash (generative art, blockchain). Former Lead Design Technologist at Studio NAND and interaction designer at ART+COM Studios. Graduate in Interaction Design with a thesis on computer linguistics — years before the rise of LLMs and ChatGPT.",
@@ -50,7 +51,7 @@ export const metadata: Metadata = {
     siteName: "m3000.io — Design engineering",
     images: [
       {
-        url: "https://m3000.io/og-image.jpg",
+        url: "/opengraph-image",
         width: 1200,
         height: 630,
         alt: "m3000.io — Design engineering",
@@ -62,7 +63,7 @@ export const metadata: Metadata = {
     title: "m3000.io — Senior Design Engineer",
     description:
       "Senior Design Engineer. Building at fxhash, leading generative art across blockchains. Former Studio NAND & ART+COM. Graduate thesis on computer linguistics — years before the rise of before LLMS and ChatGPT.",
-    images: ["https://m3000.io/og-image.jpg"],
+    images: ["/opengraph-image"],
     creator: "@maerzhase3000",
   },
   category: "portfolio",

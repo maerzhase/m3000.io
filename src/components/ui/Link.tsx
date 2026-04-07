@@ -35,10 +35,10 @@ export const Link = React.forwardRef<LinkElement, LinkProps>(function Link(
       color={color}
       variant={variant}
       className={cn(
-        "inline-flex items-baseline px-1 text-1",
+        "inline-flex items-center px-1 text-1 align-middle",
         "hover:text-secondary data-active:text-secondary",
         "focus-visible:rounded-xs focus-visible:ring-1 focus-visible:ring-primary focus-visible:outline-none",
-        "[&_svg]:inline",
+        "[&_svg]:inline-block [&_svg]:shrink-0",
         className,
       )}
       data-state={active ? "active" : undefined}
@@ -58,7 +58,7 @@ export const ExternalLink = React.forwardRef<LinkElement, ExternalLinkProps>(
     return (
       <Link {...props} target="_blank" rel="noopener noreferrer" ref={ref}>
         {children}
-        {!noIcon && <IconExternalLink size="14" className="ml-1" />}
+        {!noIcon && <IconExternalLink size="14" className="ml-1 align-middle" />}
       </Link>
     );
   },

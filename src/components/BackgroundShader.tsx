@@ -785,7 +785,7 @@ const BackgroundShader: React.FC<{ children?: React.ReactNode }> = ({
           highlightStrength = 0.0;
         }
 
-        const highlightFollow = reduce ? 0.35 : 0.18;
+        const highlightFollow = reduce ? 0.14 : 0.03;
         for (let i = 0; i < MAX_HIGHLIGHT_RECTS; i += 1) {
           const rect = highlightTarget.rects[i];
           const centerIndex = i * 2;
@@ -814,10 +814,10 @@ const BackgroundShader: React.FC<{ children?: React.ReactNode }> = ({
 
         const strengthTarget = highlightTarget.active ? 1 : 0;
         const strengthFollow = reduce
-          ? 0.24
+          ? 0.08
           : highlightTarget.active
-            ? 0.16
-            : 0.1;
+            ? 0.045
+            : 0.012;
         highlightStrength +=
           (strengthTarget - highlightStrength) * strengthFollow;
 
@@ -826,12 +826,12 @@ const BackgroundShader: React.FC<{ children?: React.ReactNode }> = ({
         }
       } else {
         activeHighlightId = null;
-        highlightStrength += (0 - highlightStrength) * 0.12;
+        highlightStrength += (0 - highlightStrength) * 0.018;
         for (let i = 0; i < MAX_HIGHLIGHT_RECTS * 2; i += 1) {
-          highlightSizes[i] += (0.0001 - highlightSizes[i]) * 0.12;
+          highlightSizes[i] += (0.0001 - highlightSizes[i]) * 0.018;
         }
         for (let i = 0; i < MAX_HIGHLIGHT_RECTS; i += 1) {
-          highlightRadii[i] += (0 - highlightRadii[i]) * 0.12;
+          highlightRadii[i] += (0 - highlightRadii[i]) * 0.018;
         }
       }
 

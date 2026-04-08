@@ -80,7 +80,7 @@ export default function Home() {
               <Image
                 src={me}
                 alt="avatar"
-                className="rounded-full size-20 object-cover shadow-2xl dither"
+                className="rounded-full size-20 object-cover shadow-2xl dither select-none"
                 placeholder="blur"
               />
             </ShaderHighlight>

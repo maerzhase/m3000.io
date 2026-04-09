@@ -1,5 +1,3 @@
-export const dynamic = "force-dynamic";
-
 import {
   IconBrandGithubFilled,
   IconBrandLinkedinFilled,
@@ -77,12 +75,15 @@ export default function Home() {
         <div className="min-h-screen p-6 gap-16 sm:p-12 container m-auto">
           <main className="flex flex-col gap-[32px]">
             <ShaderHighlight padding={4} radius={40}>
-              <Image
-                src={me}
-                alt="avatar"
-                className="rounded-full size-20 object-cover shadow-2xl dither select-none"
-                placeholder="blur"
-              />
+              <span className="touch-safe-media inline-flex size-20 shrink-0 select-none align-top">
+                <Image
+                  src={me}
+                  alt="avatar"
+                  className="pointer-events-none rounded-full size-full object-cover shadow-2xl dither select-none"
+                  placeholder="blur"
+                  draggable={false}
+                />
+              </span>
             </ShaderHighlight>
             {/* biome-ignore lint: using render */}
             <Text render={<h1 />} size="6">

@@ -104,15 +104,20 @@ float blob(vec2 uv, vec2 center, float radius) {
   return exp(-(d * d) / (2.0 * radius * radius));
 }
 
-vec3 baseScene(vec2 p) {
+vec2 toWorld(vec2 uv) {
+  return (uv - 0.5) * vec2(u_resolution.x / u_resolution.y, 1.0);
+}
+
+vec3 baseScene(vec2 uv) {
+  vec2 p = toWorld(uv);
   float minRes = min(u_resolution.x, u_resolution.y);
   float rScale = clamp(520.0 / minRes, 1.0, 1.6);
   float t = u_time * 1.2 + u_scroll_phase;
   vec2 bandSeed = seedOffset(0.0);
   vec2 detailSeed = seedOffset(7.3);
-  vec2 c1 = vec2(0.25, 0.5) + 0.04 * vec2(sin(t * 0.1), cos(t * 0.12));
-  vec2 c2 = vec2(0.5, 0.45) + 0.03 * vec2(cos(t * 0.08), sin(t * 0.1));
-  vec2 c3 = vec2(0.75, 0.5) + 0.04 * vec2(sin(t * 0.11 + 1.0), cos(t * 0.09));
+  vec2 c1 = vec2(-0.34, 0.0) + 0.04 * vec2(sin(t * 0.1), cos(t * 0.12));
+  vec2 c2 = vec2(0.0, -0.05) + 0.03 * vec2(cos(t * 0.08), sin(t * 0.1));
+  vec2 c3 = vec2(0.34, 0.0) + 0.04 * vec2(sin(t * 0.11 + 1.0), cos(t * 0.09));
   vec3 b1 = vec3(0.09);
   vec3 b2 = vec3(0.14);
   vec3 b3 = vec3(0.08);
@@ -120,12 +125,12 @@ vec3 baseScene(vec2 p) {
   float rCenter = 0.55 * rScale;
   vec3 col = u_base_color;
   col += u_intensity * (blob(p, c1, r) * b1 + blob(p, c2, rCenter) * b2 + blob(p, c3, r) * b3);
-  float d = length(p - 0.5);
+  float d = length(p);
   float vig = 1.0 - smoothstep(u_vignette_radius * 0.5, u_vignette_radius, d);
   vig = mix(1.0 - u_vignette_strength, 1.0, vig);
   col *= vig;
   float bandX =
-    p.x + u_noise_band_warp * valueNoise(p * 2.0 + bandSeed + vec2(t * 0.2));
+    p.x + u_noise_band_warp * valueNoise(p * 2.0 + bandSeed + vec2(t * 0.2, 0.0));
   float band = sin(bandX * 6.28318 * 2.0 + t * 0.1) * 0.5 + 0.5;
   band +=
     (valueNoise(p * 4.0 + bandSeed * 1.35 + vec2(t * 0.15, -t * 0.08)) - 0.5)
@@ -145,6 +150,7 @@ float sdRoundedBox(vec2 p, vec2 b, float r) {
 void main() {
   vec2 uv = v_uv;
   float trail = texture2D(u_trail, uv).r;
+  vec2 worldUv = toWorld(uv);
   float highlightFeather = max(0.005, 12.0 / min(u_resolution.x, u_resolution.y));
   float highlightMask = 0.0;
   float highlightEdge = 0.0;
@@ -153,8 +159,11 @@ void main() {
 
   for (int i = 0; i < 4; i++) {
     if (i >= u_highlight_count) break;
-    vec2 rectDelta = uv - u_highlight_centers[i];
-    vec2 rectSize = max(u_highlight_sizes[i], vec2(0.0001));
+    vec2 rectDelta = worldUv - toWorld(u_highlight_centers[i]);
+    vec2 rectSize = max(
+      u_highlight_sizes[i] * vec2(u_resolution.x / u_resolution.y, 1.0),
+      vec2(0.0001)
+    );
     float rectRadius = min(
       u_highlight_radii[i],
       min(rectSize.x, rectSize.y)
@@ -220,7 +229,10 @@ void main() {
     else velDir = normalize(velDir);
     velDir = normalize(mix(velDir, tangentDir, min(1.0, highlightEdge * 1.4)));
     velDir = normalize(mix(velDir, radialDir, min(1.0, halo * 0.8)));
-    float rs = max(trailEff, highlightEdge * 0.9 + halo * 0.75) * rgbSplitStrength * 4.8;
+    float rs =
+      max(trailEff, highlightEdge * 0.9 + halo * 0.75)
+      * rgbSplitStrength
+      * 4.8;
     vec3 cr = baseScene(uv_d - rs * velDir);
     vec3 cg = baseScene(uv_d);
     vec3 cb = baseScene(uv_d + rs * velDir);
@@ -432,6 +444,7 @@ const BackgroundShader: React.FC<{ children?: React.ReactNode }> = ({
       depth: false,
       stencil: false,
       antialias: false,
+      powerPreference: "high-performance",
     });
     if (!gl) {
       console.warn("WebGL not available");
@@ -540,6 +553,8 @@ const BackgroundShader: React.FC<{ children?: React.ReactNode }> = ({
     let trailWidth = 0;
     let trailHeight = 0;
     let trailWriteIdx = 0;
+    let canvasWidth = 0;
+    let canvasHeight = 0;
     const TRAIL_DECAY = 0.92;
     const TRAIL_SPLAT = 0.22;
 
@@ -699,12 +714,12 @@ const BackgroundShader: React.FC<{ children?: React.ReactNode }> = ({
         canvas.height = h;
         gl.viewport(0, 0, w, h);
       }
+      canvasWidth = w;
+      canvasHeight = h;
       resizeTrailTargets(w, h);
     };
 
     const draw = () => {
-      setSize();
-
       const now = performance.now() * 0.001;
       const reduce = reducedMotionQuery.matches;
       const hidden = document.hidden;
@@ -861,7 +876,7 @@ const BackgroundShader: React.FC<{ children?: React.ReactNode }> = ({
       gl.drawArrays(gl.TRIANGLES, 0, 6);
 
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-      gl.viewport(0, 0, canvas.width, canvas.height);
+      gl.viewport(0, 0, canvasWidth, canvasHeight);
       // biome-ignore lint/correctness/useHookAtTopLevel: WebGL API, not a React hook
       gl.useProgram(program);
       gl.activeTexture(gl.TEXTURE0);
@@ -870,7 +885,7 @@ const BackgroundShader: React.FC<{ children?: React.ReactNode }> = ({
       gl.uniform1f(uTime, timeSeconds);
       gl.uniform1f(uScrollPhase, scrollPhase);
       gl.uniform1f(uNoiseSeed, noiseSeed);
-      gl.uniform2f(uResolution, canvas.width, canvas.height);
+      gl.uniform2f(uResolution, canvasWidth, canvasHeight);
       gl.uniform3f(uBaseColor, BASE_COLOR[0], BASE_COLOR[1], BASE_COLOR[2]);
       gl.uniform3f(
         uPrimaryColor,
@@ -923,11 +938,16 @@ const BackgroundShader: React.FC<{ children?: React.ReactNode }> = ({
     rafId = requestAnimationFrame(draw);
 
     const onResize = () => setSize();
+    const resizeObserver = new ResizeObserver(() => setSize());
+    resizeObserver.observe(canvas);
     window.addEventListener("resize", onResize);
+    window.visualViewport?.addEventListener("resize", onResize);
 
     return () => {
       cancelAnimationFrame(rafId);
+      resizeObserver.disconnect();
       window.removeEventListener("resize", onResize);
+      window.visualViewport?.removeEventListener("resize", onResize);
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("mouseleave", onMouseLeave);
       window.removeEventListener("scroll", onScroll);

@@ -22,9 +22,15 @@ export const metadata: Metadata = {
   },
   category: "portfolio",
   robots: {
-    index: true,
-    follow: true,
-    nocache: false,
+    index: false,
+    follow: false,
+    nocache: true,
+    googleBot: {
+      index: false,
+      follow: false,
+      noimageindex: true,
+      nosnippet: true,
+    },
   },
 };
 

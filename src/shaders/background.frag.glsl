@@ -18,13 +18,29 @@ uniform float u_dither_levels;
 uniform float u_dither_strength;
 uniform float u_dither_coarseness;
 uniform float u_scroll_phase;
+uniform float u_noise_seed;
 uniform float u_displace_strength;
 uniform float u_rgb_split;
+uniform int u_highlight_count;
+uniform vec2 u_highlight_centers[4];
+uniform vec2 u_highlight_sizes[4];
+uniform float u_highlight_radii[4];
+uniform float u_highlight_strength;
+uniform float u_highlight_edge_boost;
+uniform float u_highlight_dither_repel;
+uniform float u_highlight_noise;
+uniform float u_highlight_halo;
 
 varying vec2 v_uv;
 
 float hash(vec2 p) {
   return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+}
+
+vec2 seedOffset(float phase) {
+  float angle = hash(vec2(u_noise_seed + phase, 13.7 + phase)) * 6.28318;
+  float radius = mix(3.5, 8.5, hash(vec2(29.1 - phase, u_noise_seed * 2.0 + phase)));
+  return vec2(cos(angle), sin(angle)) * radius;
 }
 
 float valueNoise(vec2 p) {
@@ -66,13 +82,44 @@ float blob(vec2 uv, vec2 center, float radius) {
   return exp(-(d * d) / (2.0 * radius * radius));
 }
 
-vec3 baseScene(vec2 p) {
+vec2 toWorld(vec2 uv) {
+  return (uv - 0.5) * vec2(u_resolution.x / u_resolution.y, 1.0);
+}
+
+mat2 rotate2d(float angle) {
+  float s = sin(angle);
+  float c = cos(angle);
+  return mat2(c, -s, s, c);
+}
+
+vec3 baseScene(vec2 uv) {
+  vec2 p = toWorld(uv);
   float minRes = min(u_resolution.x, u_resolution.y);
   float rScale = clamp(520.0 / minRes, 1.0, 1.6);
   float t = u_time * 1.2 + u_scroll_phase;
-  vec2 c1 = vec2(0.25, 0.5) + 0.04 * vec2(sin(t * 0.1), cos(t * 0.12));
-  vec2 c2 = vec2(0.5, 0.45) + 0.03 * vec2(cos(t * 0.08), sin(t * 0.1));
-  vec2 c3 = vec2(0.75, 0.5) + 0.04 * vec2(sin(t * 0.11 + 1.0), cos(t * 0.09));
+  vec2 bandSeed = seedOffset(0.0);
+  vec2 detailSeed = seedOffset(7.3);
+  float sceneRotation = (hash(vec2(u_noise_seed, 41.0)) - 0.5) * 0.8;
+  mat2 sceneBasis = rotate2d(sceneRotation);
+  p = sceneBasis * p;
+  vec2 sceneOffsetA = sceneBasis * (seedOffset(31.4) * 0.028);
+  vec2 sceneOffsetB = sceneBasis * (seedOffset(47.2) * 0.022);
+  vec2 sceneOffsetC = sceneBasis * (seedOffset(59.8) * 0.028);
+  vec2 baseA = sceneBasis * vec2(-0.34, 0.0);
+  vec2 baseB = sceneBasis * vec2(0.0, -0.05);
+  vec2 baseC = sceneBasis * vec2(0.34, 0.0);
+  vec2 c1 =
+    baseA
+    + sceneOffsetA
+    + 0.04 * vec2(sin(t * 0.1), cos(t * 0.12));
+  vec2 c2 =
+    baseB
+    + sceneOffsetB
+    + 0.03 * vec2(cos(t * 0.08), sin(t * 0.1));
+  vec2 c3 =
+    baseC
+    + sceneOffsetC
+    + 0.04 * vec2(sin(t * 0.11 + 1.0), cos(t * 0.09));
   vec3 b1 = vec3(0.09);
   vec3 b2 = vec3(0.14);
   vec3 b3 = vec3(0.08);
@@ -80,35 +127,121 @@ vec3 baseScene(vec2 p) {
   float rCenter = 0.55 * rScale;
   vec3 col = u_base_color;
   col += u_intensity * (blob(p, c1, r) * b1 + blob(p, c2, rCenter) * b2 + blob(p, c3, r) * b3);
-  float d = length(p - 0.5);
+  float d = length(p);
   float vig = 1.0 - smoothstep(u_vignette_radius * 0.5, u_vignette_radius, d);
   vig = mix(1.0 - u_vignette_strength, 1.0, vig);
   col *= vig;
-  float bandX = p.x + u_noise_band_warp * valueNoise(p * 2.0 + t * 0.2);
+  float bandAngle = (hash(vec2(u_noise_seed, 67.0)) - 0.5) * 1.4;
+  mat2 bandBasis = rotate2d(bandAngle);
+  vec2 bandP = bandBasis * p;
+  float bandX =
+    bandP.x
+    + u_noise_band_warp
+      * valueNoise(bandP * 2.0 + bandSeed + vec2(t * 0.2, 0.0));
   float band = sin(bandX * 6.28318 * 2.0 + t * 0.1) * 0.5 + 0.5;
-  band += (valueNoise(p * 4.0 + t * 0.15) - 0.5) * u_noise_band_strength;
+  band +=
+    (valueNoise(
+      bandP * 4.0 + bandSeed * 1.35 + vec2(t * 0.15, -t * 0.08)
+    ) - 0.5)
+    * u_noise_band_strength;
   col += u_band_strength * band;
-  col += (valueNoise(p * 8.0 + t * 0.1) - 0.5) * u_noise_global_strength;
+  col +=
+    (valueNoise(bandP * 8.0 + detailSeed + vec2(t * 0.1, -t * 0.06)) - 0.5)
+    * u_noise_global_strength;
   return col;
+}
+
+float sdRoundedBox(vec2 p, vec2 b, float r) {
+  vec2 q = abs(p) - b + vec2(r);
+  return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r;
 }
 
 void main() {
   vec2 uv = v_uv;
   float trail = texture2D(u_trail, uv).r;
+  vec2 worldUv = toWorld(uv);
+  float highlightFeather = max(0.005, 12.0 / min(u_resolution.x, u_resolution.y));
+  float highlightMask = 0.0;
+  float highlightEdge = 0.0;
+  vec2 highlightDelta = vec2(1.0, 0.0);
+  float nearestRectDist = 1e5;
+
+  for (int i = 0; i < 4; i++) {
+    if (i >= u_highlight_count) break;
+    vec2 rectDelta = worldUv - toWorld(u_highlight_centers[i]);
+    vec2 rectSize = max(
+      u_highlight_sizes[i] * vec2(u_resolution.x / u_resolution.y, 1.0),
+      vec2(0.0001)
+    );
+    float rectRadius = min(
+      u_highlight_radii[i],
+      min(rectSize.x, rectSize.y)
+    );
+    float rectSdf = sdRoundedBox(rectDelta, rectSize, rectRadius);
+    float rectMask = 1.0 - smoothstep(0.0, highlightFeather, rectSdf);
+    float rectEdge =
+      1.0 - smoothstep(highlightFeather * 0.35, highlightFeather * 2.4, abs(rectSdf));
+
+    if (rectSdf < nearestRectDist) {
+      nearestRectDist = rectSdf;
+      highlightDelta = rectDelta;
+    }
+
+    highlightMask = max(highlightMask, rectMask);
+    highlightEdge = max(highlightEdge, rectEdge);
+  }
+
+  highlightMask *= u_highlight_strength;
+  highlightEdge *= u_highlight_strength;
+  vec2 noiseUv =
+    uv * vec2(26.0, 18.0)
+    + seedOffset(19.4)
+    + vec2(u_time * 0.22, -u_time * 0.17);
+  float noiseA = valueNoise(noiseUv);
+  float noiseB = valueNoise(noiseUv * 1.9 + 17.3);
+  float edgeNoise = mix(noiseA, noiseB, 0.45) - 0.5;
+  float edgeRipple =
+    sin((nearestRectDist * 1600.0) - u_time * 6.0 + noiseA * 8.0) * 0.5 + 0.5;
+  float noisyEdge =
+    highlightEdge * (1.0 + edgeNoise * 1.8 * u_highlight_noise)
+    + highlightEdge * edgeRipple * 0.45 * u_highlight_noise;
+  float halo =
+    u_highlight_strength
+    * (1.0 - smoothstep(highlightFeather * 1.6, highlightFeather * 8.0, abs(nearestRectDist)));
+  halo *= 0.45 + 0.55 * noiseB;
+  halo *= u_highlight_halo;
+  highlightMask = clamp(highlightMask, 0.0, 1.0);
+  highlightEdge = clamp(max(highlightEdge, noisyEdge), 0.0, 1.35);
+  halo = clamp(halo, 0.0, 1.0);
   // Boost trail for displacement/split so faint trail still shows effect (trail is often 0.1–0.3)
   float trailEff = pow(max(0.0, trail), 0.65);
 
   // Displacement: large UV offset so it's visible even at mid trail strength
   vec2 displaceDir = vec2(1.2, 0.35);
-  vec2 uv_d = uv + trailEff * u_displace_strength * displaceDir;
+  vec2 radialDir =
+    length(highlightDelta) > 0.0001 ? normalize(highlightDelta) : vec2(1.0, 0.0);
+  vec2 tangentDir = vec2(-radialDir.y, radialDir.x);
+  float displaceStrength = u_displace_strength * (1.0 + highlightEdge * 1.65 + halo * 0.6);
+  vec2 uv_d = uv + trailEff * displaceStrength * displaceDir;
+  uv_d += radialDir * highlightMask * u_highlight_edge_boost * 0.055;
+  uv_d += tangentDir * edgeNoise * highlightEdge * 0.03 * u_highlight_noise;
 
   vec3 col;
-  if (u_rgb_split > 0.0 && trail > 0.005) {
+  float rgbSplitStrength =
+    u_rgb_split
+    + highlightEdge * u_highlight_edge_boost * 0.075
+    + halo * u_highlight_halo * 0.04;
+  if (rgbSplitStrength > 0.0 && (trail > 0.005 || highlightEdge > 0.001)) {
     // RGB split along velocity direction (stored in trail.gb); fallback to horizontal if no velocity
     vec2 velDir = vec2(texture2D(u_trail, uv).g * 2.0 - 1.0, texture2D(u_trail, uv).b * 2.0 - 1.0);
     if (length(velDir) < 0.01) velDir = vec2(1.0, 0.0);
     else velDir = normalize(velDir);
-    float rs = trailEff * u_rgb_split * 4.0;
+    velDir = normalize(mix(velDir, tangentDir, min(1.0, highlightEdge * 1.4)));
+    velDir = normalize(mix(velDir, radialDir, min(1.0, halo * 0.8)));
+    float rs =
+      max(trailEff, highlightEdge * 0.9 + halo * 0.75)
+      * rgbSplitStrength
+      * 4.8;
     vec3 cr = baseScene(uv_d - rs * velDir);
     vec3 cg = baseScene(uv_d);
     vec3 cb = baseScene(uv_d + rs * velDir);
@@ -117,13 +250,21 @@ void main() {
     col = baseScene(uv_d);
   }
   col += trail * u_color_intensity * 1.5 * u_mouse_glow_intensity * u_primary_color;
+  vec3 haloColor = vec3(0.9, 0.24, 0.08);
+  col += halo * haloColor * (0.35 + highlightEdge * 0.25);
+  col = mix(col, u_base_color * 0.72, highlightMask * 0.58);
+  col += edgeNoise * 0.06 * highlightEdge * u_highlight_noise;
 
   col = clamp(col, 0.0, 1.0);
 
   if (u_dither_strength > 0.0 && u_dither_levels > 1.0) {
     float bayer = bayer4(gl_FragCoord.xy * u_dither_coarseness);
     vec3 quantized = floor(col * u_dither_levels + bayer) / u_dither_levels;
-    col = mix(col, quantized, u_dither_strength);
+    float ditherStrength = max(
+      0.0,
+      u_dither_strength * (1.0 - highlightMask * u_highlight_dither_repel)
+    );
+    col = mix(col, quantized, ditherStrength);
   }
 
   gl_FragColor = vec4(col, 1.0);

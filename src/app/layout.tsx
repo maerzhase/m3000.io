@@ -1,6 +1,6 @@
+import { Analytics } from "@vercel/analytics/next";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { Analytics } from "@vercel/analytics/next";
 import "./styles.css";
 
 const geistSans = Geist({
@@ -14,9 +14,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "m3000.io — Design engineering",
+  metadataBase: new URL("https://m3000.io"),
+  title: "m3000.io — Senior Design Engineer",
   description:
-    "Portfolio of Markus (m3000), developer & designer. Full-stack at fxhash (generative art, blockchain). Former Lead Design Technologist at Studio NAND and interaction designer at ART+COM Studios. Graduate in Interaction Design with a thesis on computer linguistics — years before the rise of LLMs and ChatGPT.",
+    "Portfolio of Markus (m3000), Senior Design Engineer. Senior Full-stack at fxhash (generative art, blockchain). Former Lead Design Technologist at Studio NAND and interaction designer at ART+COM Studios. Graduate in Interaction Design with a thesis on computer linguistics — years before the rise of LLMs and ChatGPT.",
   keywords: [
     "Markus",
     "Developer Berlin",
@@ -44,13 +45,13 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: "https://m3000.io",
-    title: "m3000.io — Design engineering",
+    title: "m3000.io — Senior Design Engineer",
     description:
-      "Developer & Designer. Building at fxhash, leading generative art across blockchains. Former Studio NAND & ART+COM. Graduate thesis on computer linguistics — years before the rise of before LLMS and ChatGPT.",
+      "Senior Design Engineering. Building at fxhash, leading generative art across blockchains. Former Studio NAND & ART+COM. Graduate thesis on computer linguistics — years before the rise of before LLMS and ChatGPT.",
     siteName: "m3000.io — Design engineering",
     images: [
       {
-        url: "https://m3000.io/og-image.jpg",
+        url: "/opengraph-image",
         width: 1200,
         height: 630,
         alt: "m3000.io — Design engineering",
@@ -59,10 +60,10 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "m3000.io — Design engineering",
+    title: "m3000.io — Senior Design Engineer",
     description:
-      "Developer & Designer. Building at fxhash, leading generative art across blockchains. Former Studio NAND & ART+COM. Graduate thesis on computer linguistics — years before the rise of before LLMS and ChatGPT.",
-    images: ["https://m3000.io/og-image.jpg"],
+      "Senior Design Engineer. Building at fxhash, leading generative art across blockchains. Former Studio NAND & ART+COM. Graduate thesis on computer linguistics — years before the rise of before LLMS and ChatGPT.",
+    images: ["/opengraph-image"],
     creator: "@maerzhase3000",
   },
   category: "portfolio",

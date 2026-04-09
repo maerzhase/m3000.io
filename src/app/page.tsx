@@ -110,8 +110,6 @@ export default function Home() {
                 quite fit, I build my own.
               </Text>
 
-              <CurrentProjects />
-
               <Timeline>
                 <Station
                   variant="timeline"

@@ -86,6 +86,12 @@ vec2 toWorld(vec2 uv) {
   return (uv - 0.5) * vec2(u_resolution.x / u_resolution.y, 1.0);
 }
 
+mat2 rotate2d(float angle) {
+  float s = sin(angle);
+  float c = cos(angle);
+  return mat2(c, -s, s, c);
+}
+
 vec3 baseScene(vec2 uv) {
   vec2 p = toWorld(uv);
   float minRes = min(u_resolution.x, u_resolution.y);
@@ -93,9 +99,27 @@ vec3 baseScene(vec2 uv) {
   float t = u_time * 1.2 + u_scroll_phase;
   vec2 bandSeed = seedOffset(0.0);
   vec2 detailSeed = seedOffset(7.3);
-  vec2 c1 = vec2(-0.34, 0.0) + 0.04 * vec2(sin(t * 0.1), cos(t * 0.12));
-  vec2 c2 = vec2(0.0, -0.05) + 0.03 * vec2(cos(t * 0.08), sin(t * 0.1));
-  vec2 c3 = vec2(0.34, 0.0) + 0.04 * vec2(sin(t * 0.11 + 1.0), cos(t * 0.09));
+  float sceneRotation = (hash(vec2(u_noise_seed, 41.0)) - 0.5) * 0.8;
+  mat2 sceneBasis = rotate2d(sceneRotation);
+  p = sceneBasis * p;
+  vec2 sceneOffsetA = sceneBasis * (seedOffset(31.4) * 0.028);
+  vec2 sceneOffsetB = sceneBasis * (seedOffset(47.2) * 0.022);
+  vec2 sceneOffsetC = sceneBasis * (seedOffset(59.8) * 0.028);
+  vec2 baseA = sceneBasis * vec2(-0.34, 0.0);
+  vec2 baseB = sceneBasis * vec2(0.0, -0.05);
+  vec2 baseC = sceneBasis * vec2(0.34, 0.0);
+  vec2 c1 =
+    baseA
+    + sceneOffsetA
+    + 0.04 * vec2(sin(t * 0.1), cos(t * 0.12));
+  vec2 c2 =
+    baseB
+    + sceneOffsetB
+    + 0.03 * vec2(cos(t * 0.08), sin(t * 0.1));
+  vec2 c3 =
+    baseC
+    + sceneOffsetC
+    + 0.04 * vec2(sin(t * 0.11 + 1.0), cos(t * 0.09));
   vec3 b1 = vec3(0.09);
   vec3 b2 = vec3(0.14);
   vec3 b3 = vec3(0.08);
@@ -107,15 +131,22 @@ vec3 baseScene(vec2 uv) {
   float vig = 1.0 - smoothstep(u_vignette_radius * 0.5, u_vignette_radius, d);
   vig = mix(1.0 - u_vignette_strength, 1.0, vig);
   col *= vig;
+  float bandAngle = (hash(vec2(u_noise_seed, 67.0)) - 0.5) * 1.4;
+  mat2 bandBasis = rotate2d(bandAngle);
+  vec2 bandP = bandBasis * p;
   float bandX =
-    p.x + u_noise_band_warp * valueNoise(p * 2.0 + bandSeed + vec2(t * 0.2, 0.0));
+    bandP.x
+    + u_noise_band_warp
+      * valueNoise(bandP * 2.0 + bandSeed + vec2(t * 0.2, 0.0));
   float band = sin(bandX * 6.28318 * 2.0 + t * 0.1) * 0.5 + 0.5;
   band +=
-    (valueNoise(p * 4.0 + bandSeed * 1.35 + vec2(t * 0.15, -t * 0.08)) - 0.5)
+    (valueNoise(
+      bandP * 4.0 + bandSeed * 1.35 + vec2(t * 0.15, -t * 0.08)
+    ) - 0.5)
     * u_noise_band_strength;
   col += u_band_strength * band;
   col +=
-    (valueNoise(p * 8.0 + detailSeed + vec2(t * 0.1, -t * 0.06)) - 0.5)
+    (valueNoise(bandP * 8.0 + detailSeed + vec2(t * 0.1, -t * 0.06)) - 0.5)
     * u_noise_global_strength;
   return col;
 }

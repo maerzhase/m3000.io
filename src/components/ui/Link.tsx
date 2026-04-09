@@ -1,5 +1,6 @@
 import { IconExternalLink } from "@tabler/icons-react";
 import * as React from "react";
+import { ShaderHighlight } from "@/components/ShaderHighlight";
 import { cn } from "@/lib/cn";
 import { Text, type TextProps } from "./Text";
 
@@ -8,6 +9,7 @@ export type LinkElement = React.ElementRef<"a">;
 interface OwnProps {
   active?: boolean;
   external?: boolean;
+  shaderHighlight?: boolean;
 }
 
 export type LinkProps = OwnProps &
@@ -23,11 +25,12 @@ export const Link = React.forwardRef<LinkElement, LinkProps>(function Link(
     render,
     children,
     external,
+    shaderHighlight = true,
     ...props
   },
   ref,
 ) {
-  return (
+  const element = (
     <Text
       // biome-ignore lint: using render
       render={render ?? <a />}
@@ -47,6 +50,12 @@ export const Link = React.forwardRef<LinkElement, LinkProps>(function Link(
       {children}
     </Text>
   );
+
+  if (!shaderHighlight) {
+    return element;
+  }
+
+  return <ShaderHighlight>{element}</ShaderHighlight>;
 });
 
 Link.displayName = "Link";

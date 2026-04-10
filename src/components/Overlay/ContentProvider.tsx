@@ -129,7 +129,5 @@ interface ContentProviderProps {
 }
 
 export function ContentProvider({ children }: ContentProviderProps) {
-  return (
-    <OverlayProvider content={overlayContent}>{children}</OverlayProvider>
-  );
+  return <OverlayProvider content={overlayContent}>{children}</OverlayProvider>;
 }

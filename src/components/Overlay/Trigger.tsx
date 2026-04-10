@@ -1,6 +1,6 @@
 "use client";
-import { motion } from "motion/react";
 import type { HTMLMotionProps } from "motion/react";
+import { motion } from "motion/react";
 import { useOverlay } from "./Context";
 
 type OverlayTriggerProps = Omit<HTMLMotionProps<"button">, "onClick"> & {
@@ -28,7 +28,9 @@ export function OverlayTrigger({
       transition={{ duration: 0.15 }}
       onClick={(e) => {
         // Capture the exact viewport position of the clicked element right now
-        const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
+        const rect = (
+          e.currentTarget as HTMLButtonElement
+        ).getBoundingClientRect();
         setTriggerPoint({
           x: rect.left + rect.width / 2,
           y: rect.top + rect.height / 2,

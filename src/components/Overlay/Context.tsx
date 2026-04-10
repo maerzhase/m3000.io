@@ -1,5 +1,10 @@
 "use client";
-import { AnimatePresence, LayoutGroup, motion, MotionConfig } from "motion/react";
+import {
+  AnimatePresence,
+  LayoutGroup,
+  MotionConfig,
+  motion,
+} from "motion/react";
 import {
   createContext,
   type ReactNode,
@@ -22,7 +27,9 @@ const OverlayContext = createContext<OverlayContextValue | null>(null);
 
 export function useOverlay() {
   const context = useContext(OverlayContext);
-  if (!context) throw new Error("useOverlay must be used within an OverlayProvider");
+  if (!context) {
+    throw new Error("useOverlay must be used within an OverlayProvider");
+  }
   return context;
 }
 
@@ -34,14 +41,19 @@ interface OverlayProviderProps {
 export function OverlayProvider({ children, content }: OverlayProviderProps) {
   const [open, setOpen] = useState(false);
   const [id, setId] = useState<string | undefined>(undefined);
-  const [triggerPoint, setTriggerPoint] = useState<TriggerPoint>({ x: 0, y: 0 });
+  const [triggerPoint, setTriggerPoint] = useState<TriggerPoint>({
+    x: 0,
+    y: 0,
+  });
   const viewportWidth = typeof window === "undefined" ? 0 : window.innerWidth;
   const viewportHeight = typeof window === "undefined" ? 0 : window.innerHeight;
 
   // Lock body scroll while open so the exit target doesn't drift
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, [open]);
 
   // Pixel offset from viewport centre → where the animation originates
@@ -51,7 +63,9 @@ export function OverlayProvider({ children, content }: OverlayProviderProps) {
   return (
     <MotionConfig transition={{ type: "spring", stiffness: 280, damping: 26 }}>
       <LayoutGroup>
-        <OverlayContext.Provider value={{ open, setOpen, id, setId, setTriggerPoint }}>
+        <OverlayContext.Provider
+          value={{ open, setOpen, id, setId, setTriggerPoint }}
+        >
           {/* Always mounted — scroll position never lost */}
           <motion.div
             animate={{ opacity: open ? 0 : 1 }}

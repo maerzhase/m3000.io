@@ -66,6 +66,7 @@ const GRAPH_MARGIN_RIGHT = 20;
 const LINE_COLOR = "rgba(160, 160, 168, 0.68)";
 const DURATION_OFFSET = 7;
 const DURATION_COLOR = "rgba(228, 228, 232, 0.34)";
+const DURATION_BRANCH_LEAD = 22;
 const MAX_SHADER_PATH_POINTS = 24;
 const TIMEFRAME_HIGHLIGHT_WIDTH = 5;
 
@@ -134,6 +135,53 @@ function cubicPoint(
     t ** 3 * end.y;
 
   return { x, y };
+}
+
+function appendCurvePoints(
+  points: Point[],
+  end: Point,
+  sameLane: boolean,
+  sampleCount = 7,
+) {
+  if (points.length === 0) {
+    return points;
+  }
+
+  const start = points[points.length - 1];
+  if (distance(start, end) <= 0.1) {
+    points[points.length - 1] = end;
+    return points;
+  }
+
+  if (sameLane) {
+    points.push(end);
+    return points;
+  }
+
+  const deltaY = Math.max(end.y - start.y, 24);
+  const controlOffset = Math.min(deltaY * 0.45, 40);
+  const control1 = {
+    x: start.x,
+    y: start.y + controlOffset,
+  };
+  const control2 = {
+    x: end.x,
+    y: end.y - controlOffset,
+  };
+
+  points.push(
+    ...Array.from({ length: sampleCount }, (_, pointIndex) =>
+      cubicPoint(
+        start,
+        control1,
+        control2,
+        end,
+        (pointIndex + 1) / sampleCount,
+      ),
+    ),
+  );
+
+  return points;
 }
 
 function distance(a: Point, b: Point) {
@@ -220,6 +268,21 @@ function slicePoints(
   }
 
   return nextPoints;
+}
+
+function trimPointsEnd(points: Point[], trimLength: number) {
+  if (points.length <= 1 || trimLength <= 0) {
+    return points.slice();
+  }
+
+  const lengths = buildLengths(points);
+  const totalLength = lengths[lengths.length - 1] ?? 0;
+
+  if (totalLength <= trimLength) {
+    return [points[0]];
+  }
+
+  return slicePoints(points, lengths, 0, totalLength - trimLength);
 }
 
 function offsetPoints(points: Point[], offset: number): Point[] {
@@ -560,10 +623,25 @@ export function Timeline({ children }: TimelineProps) {
       }
 
       if (shiftedPoints.length > 0) {
-        shiftedPoints[shiftedPoints.length - 1] = {
+        const trimmedPoints = trimPointsEnd(
+          shiftedPoints,
+          DURATION_BRANCH_LEAD,
+        );
+        shiftedPoints.splice(0, shiftedPoints.length, ...trimmedPoints);
+
+        appendCurvePoints(
+          shiftedPoints,
+          {
+            x: laneXFor(station.layout.lane),
+            y: stationNodeY(metric),
+          },
+          false,
+        );
+      } else {
+        shiftedPoints.push({
           x: laneXFor(station.layout.lane) + offset,
           y: stationNodeY(metric),
-        };
+        });
       }
 
       return {

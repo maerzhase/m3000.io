@@ -67,7 +67,9 @@ export const ExternalLink = React.forwardRef<LinkElement, ExternalLinkProps>(
     return (
       <Link {...props} target="_blank" rel="noopener noreferrer" ref={ref}>
         {children}
-        {!noIcon && <IconExternalLink size="14" className="ml-1 align-middle" />}
+        {!noIcon && (
+          <IconExternalLink size="14" className="ml-1 align-middle" />
+        )}
       </Link>
     );
   },

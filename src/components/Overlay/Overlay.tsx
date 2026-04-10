@@ -1,4 +1,4 @@
-import { HTMLMotionProps, motion } from "motion/react";
+import { motion } from "motion/react";
 import type { ComponentProps } from "react";
 
 type OverlayComponentProps = ComponentProps<"div">;

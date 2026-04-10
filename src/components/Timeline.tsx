@@ -209,6 +209,20 @@ function slicePoints(
   return nextPoints;
 }
 
+function offsetPoints(points: Point[], offset: number): Point[] {
+  return points.map((point, index) => {
+    const prev = points[Math.max(0, index - 1)];
+    const next = points[Math.min(points.length - 1, index + 1)];
+    const dx = next.x - prev.x;
+    const dy = next.y - prev.y;
+    const len = Math.hypot(dx, dy);
+    if (len === 0) return { x: point.x + offset, y: point.y };
+    const tx = dx / len;
+    const ty = dy / len;
+    return { x: point.x + offset * ty, y: point.y - offset * tx };
+  });
+}
+
 function pointsToPath(points: Point[]) {
   if (points.length === 0) {
     return "";
@@ -479,15 +493,15 @@ export function Timeline({ children }: TimelineProps) {
           ((interval.yearStart - topYear) / yearSpan) * interval.totalLength;
         const endLength =
           ((interval.yearStart - bottomYear) / yearSpan) * interval.totalLength;
-        const points = slicePoints(
-          interval.points,
-          interval.lengths,
-          startLength,
-          endLength,
-        ).map((point) => ({
-          x: point.x + offset,
-          y: point.y,
-        }));
+        const points = offsetPoints(
+          slicePoints(
+            interval.points,
+            interval.lengths,
+            startLength,
+            endLength,
+          ),
+          offset,
+        );
 
         if (points.length === 0) {
           continue;

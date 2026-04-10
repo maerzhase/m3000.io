@@ -722,7 +722,6 @@ export function Timeline({ children }: TimelineProps) {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     fill="none"
-                    className="cursor-pointer"
                     pointerEvents="stroke"
                     onPointerEnter={() => activateTimeframe(index)}
                     onPointerLeave={() => deactivateTimeframe(index)}

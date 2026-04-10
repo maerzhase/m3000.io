@@ -197,14 +197,15 @@ void main() {
   vec2 uv = v_uv;
   float trail = texture2D(u_trail, uv).r;
   vec2 worldUv = toWorld(uv);
+  vec2 pixelUv = uv * u_resolution;
   float highlightFeather = max(0.005, 12.0 / min(u_resolution.x, u_resolution.y));
   float highlightMask = 0.0;
   float highlightEdge = 0.0;
   vec2 highlightDelta = vec2(1.0, 0.0);
   float nearestRectDist = 1e5;
-  float pathDistance = 1e5;
-  float pathTravel = 0.0;
-  float accumulatedPathLength = 0.0;
+  float pathDistancePx = 1e5;
+  float pathTravelPx = 0.0;
+  float accumulatedPathLengthPx = 0.0;
 
   for (int i = 0; i < 4; i++) {
     if (i >= u_highlight_count) break;
@@ -233,22 +234,22 @@ void main() {
 
   for (int i = 0; i < 23; i++) {
     if (i >= u_path_point_count - 1) break;
-    vec2 pathStart = toWorld(u_path_points[i]);
-    vec2 pathEnd = toWorld(u_path_points[i + 1]);
+    vec2 pathStart = u_path_points[i] * u_resolution;
+    vec2 pathEnd = u_path_points[i + 1] * u_resolution;
     float segmentTravel = 0.0;
     float segmentDistance = sdSegment(
-      worldUv,
+      pixelUv,
       pathStart,
       pathEnd,
       segmentTravel
     );
 
-    if (segmentDistance < pathDistance) {
-      pathDistance = segmentDistance;
-      pathTravel = accumulatedPathLength + segmentTravel;
+    if (segmentDistance < pathDistancePx) {
+      pathDistancePx = segmentDistance;
+      pathTravelPx = accumulatedPathLengthPx + segmentTravel;
     }
 
-    accumulatedPathLength += length(pathEnd - pathStart);
+    accumulatedPathLengthPx += length(pathEnd - pathStart);
   }
 
   highlightMask *= u_highlight_strength;
@@ -266,11 +267,11 @@ void main() {
     highlightEdge * (1.0 + edgeNoise * 1.8 * u_highlight_noise)
     + highlightEdge * edgeRipple * 0.45 * u_highlight_noise;
   float minRes = min(u_resolution.x, u_resolution.y);
-  float pathHalfWidth = max(0.5, u_path_width * 0.5) / minRes;
-  float pathFeather = max(0.8 / minRes, pathHalfWidth * 0.55);
-  float pathLength = max(accumulatedPathLength, 0.0001);
+  float pathHalfWidth = max(0.5, u_path_width * 0.5);
+  float pathFeather = max(0.8, pathHalfWidth * 0.55);
+  float pathLength = max(accumulatedPathLengthPx, 0.0001);
   float directionHead = pathLength - mod(u_time * pathLength * 0.22, pathLength);
-  float wrappedDistanceToHead = abs(pathTravel - directionHead);
+  float wrappedDistanceToHead = abs(pathTravelPx - directionHead);
   wrappedDistanceToHead = min(
     wrappedDistanceToHead,
     pathLength - wrappedDistanceToHead
@@ -280,23 +281,42 @@ void main() {
     1.0 - smoothstep(0.0, directionTrailLength, wrappedDistanceToHead);
   float pathCore =
     u_path_strength
-    * (1.0 - smoothstep(pathHalfWidth, pathHalfWidth + pathFeather, pathDistance));
+    * (1.0 - smoothstep(pathHalfWidth, pathHalfWidth + pathFeather, pathDistancePx));
   float pathRim =
     u_path_strength
-    * (1.0 - smoothstep(pathHalfWidth * 0.1, pathHalfWidth * 1.7, pathDistance));
+    * (1.0 - smoothstep(pathHalfWidth * 0.1, pathHalfWidth * 1.7, pathDistancePx));
   float pathGlow =
     u_path_strength
-    * (1.0 - smoothstep(pathHalfWidth * 0.4, pathHalfWidth * 3.0, pathDistance));
+    * (1.0 - smoothstep(pathHalfWidth * 0.4, pathHalfWidth * 3.0, pathDistancePx));
   float pathFlowNoise =
-    valueNoise(vec2(pathTravel * 0.9 - u_time * 0.95, pathDistance * 220.0 + noiseA * 2.0));
+    valueNoise(vec2(pathTravelPx * 0.012 - u_time * 0.95, pathDistancePx * 0.85 + noiseA * 2.0));
   float pathFlowDetail =
-    valueNoise(vec2(pathTravel * 1.7 - u_time * 1.45 + 13.7, pathDistance * 340.0 - noiseB * 3.0));
+    valueNoise(vec2(pathTravelPx * 0.02 - u_time * 1.45 + 13.7, pathDistancePx * 1.2 - noiseB * 3.0));
   float pathShimmer = mix(pathFlowNoise, pathFlowDetail, 0.42);
   pathShimmer = smoothstep(0.18, 0.88, pathShimmer);
   pathShimmer *= 0.82 + 0.18 * noiseB;
   pathShimmer = mix(pathShimmer, 1.0, directionPulse * 0.35);
+  float pathBodyNoise =
+    mix(pathFlowNoise - 0.5, pathFlowDetail - 0.5, 0.5);
+  float pathEdgeNoise = mix(edgeNoise, pathBodyNoise, 0.75);
+  float warpedPathDistance =
+    pathDistancePx
+    + pathBodyNoise
+      * pathHalfWidth
+      * (0.55 + pathCore * 0.9 + pathGlow * 0.45)
+      * u_highlight_noise
+    + pathEdgeNoise * pathHalfWidth * 0.45 * u_highlight_noise;
+  pathCore =
+    u_path_strength
+    * (1.0 - smoothstep(pathHalfWidth, pathHalfWidth + pathFeather, warpedPathDistance));
+  pathRim =
+    u_path_strength
+    * (1.0 - smoothstep(pathHalfWidth * 0.1, pathHalfWidth * 1.8, abs(warpedPathDistance)));
+  pathGlow =
+    u_path_strength
+    * (1.0 - smoothstep(pathHalfWidth * 0.35, pathHalfWidth * 3.2, abs(warpedPathDistance)));
   float pathWave =
-    0.5 + 0.5 * sin(pathTravel * 18.0 - u_time * 3.1 + noiseA * 4.0);
+    0.5 + 0.5 * sin(pathTravelPx * 0.018 - u_time * 3.1 + noiseA * 4.0);
   pathWave = mix(0.72, 1.0, pathWave);
   float halo =
     u_highlight_strength
@@ -326,6 +346,8 @@ void main() {
   uv_d += radialDir * highlightMask * u_highlight_edge_boost * 0.055;
   uv_d += tangentDir * edgeNoise * highlightEdge * 0.03 * u_highlight_noise;
   uv_d += tangentDir * (pathShimmer - 0.5) * pathCore * 0.014;
+  uv_d += radialDir * pathBodyNoise * pathCore * 0.012;
+  uv_d += radialDir * pathEdgeNoise * pathGlow * 0.01;
 
   vec3 col;
   float pathRgbBoost =
@@ -383,6 +405,8 @@ void main() {
   col = mix(col, u_base_color * 0.72, highlightMask * 0.58);
   col += edgeNoise * 0.06 * highlightEdge * u_highlight_noise;
   col += edgeNoise * 0.055 * pathGlow * u_highlight_noise * pathWave;
+  col += pathBodyNoise * 0.06 * pathCore * u_highlight_noise;
+  col += pathEdgeNoise * 0.045 * pathRim * u_highlight_noise;
 
   col = clamp(col, 0.0, 1.0);
 

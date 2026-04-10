@@ -12,6 +12,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useShaderHighlightController } from "./ShaderHighlight";
 
 interface TimelineProps {
   children: ReactNode;
@@ -27,6 +28,11 @@ interface TimelineStationProps {
   timelinePadding?: number;
   timelineNodeOffset?: number;
   timelineNodeY?: number;
+  timeframeActive?: boolean;
+  onTimeframeEnter?: () => void;
+  onTimeframeLeave?: () => void;
+  onMarkerEnter?: () => void;
+  onMarkerLeave?: () => void;
 }
 
 interface StationMetrics {
@@ -47,6 +53,11 @@ interface RouteInterval {
   totalLength: number;
 }
 
+interface DurationGeometry {
+  path: string;
+  points: Point[];
+}
+
 const NODE_OFFSET_Y = 14;
 const NODE_END_INSET = 16;
 const LANE_GAP = 20;
@@ -55,6 +66,8 @@ const GRAPH_MARGIN_RIGHT = 20;
 const LINE_COLOR = "rgba(160, 160, 168, 0.68)";
 const DURATION_OFFSET = 7;
 const DURATION_COLOR = "rgba(228, 228, 232, 0.34)";
+const MAX_SHADER_PATH_POINTS = 24;
+const TIMEFRAME_HIGHLIGHT_WIDTH = 5;
 
 function parseYearValue(value: ReactNode, fallback: number) {
   if (typeof value !== "string") {
@@ -240,10 +253,32 @@ function pointsToPath(points: Point[]) {
     .join(" ");
 }
 
+function samplePoints(points: Point[], maxPoints: number) {
+  if (points.length <= maxPoints) {
+    return points;
+  }
+
+  return Array.from({ length: maxPoints }, (_, index) => {
+    const ratio = maxPoints === 1 ? 0 : index / (maxPoints - 1);
+    const pointIndex = Math.round(ratio * (points.length - 1));
+    return points[pointIndex] ?? points[points.length - 1];
+  });
+}
+
 export function Timeline({ children }: TimelineProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const itemRefs = useRef<Array<HTMLDivElement | null>>([]);
   const [metrics, setMetrics] = useState<StationMetrics[]>([]);
+  const [activeTimeframeIndex, setActiveTimeframeIndex] = useState<
+    number | null
+  >(null);
+  const shaderHighlightController = useShaderHighlightController();
+
+  const activateTimeframe = (index: number) => setActiveTimeframeIndex(index);
+  const deactivateTimeframe = (index: number) =>
+    setActiveTimeframeIndex((currentIndex) =>
+      currentIndex === index ? null : currentIndex,
+    );
 
   const stations = useMemo(() => {
     const childArray = Children.toArray(children).filter(
@@ -465,11 +500,14 @@ export function Timeline({ children }: TimelineProps) {
     });
   }, [metrics, stations]);
 
-  const durationPaths = useMemo(() => {
+  const durationGeometries = useMemo(() => {
     return stations.map((station) => {
       const metric = metrics[station.index];
       if (!metric) {
-        return "";
+        return {
+          path: "",
+          points: [],
+        } satisfies DurationGeometry;
       }
 
       const shiftedPoints: Point[] = [];
@@ -528,9 +566,86 @@ export function Timeline({ children }: TimelineProps) {
         };
       }
 
-      return pointsToPath(shiftedPoints);
+      return {
+        path: pointsToPath(shiftedPoints),
+        points: shiftedPoints,
+      } satisfies DurationGeometry;
     });
   }, [metrics, routeIntervals, stations]);
+
+  useEffect(() => {
+    if (
+      activeTimeframeIndex === null ||
+      !shaderHighlightController ||
+      !containerRef.current
+    ) {
+      return;
+    }
+
+    const durationGeometry = durationGeometries[activeTimeframeIndex];
+    if (!durationGeometry || durationGeometry.points.length < 2) {
+      return;
+    }
+
+    const highlightId = `timeframe-${activeTimeframeIndex}`;
+
+    const publish = (method: "activatePath" | "updatePath") => {
+      const containerRect = containerRef.current?.getBoundingClientRect();
+      if (!containerRect) {
+        return;
+      }
+
+      const viewportWidth = window.innerWidth || 1;
+      const viewportHeight = window.innerHeight || 1;
+      const graphLeft = containerRect.right - graphWidth;
+      const graphTop = containerRect.top;
+
+      shaderHighlightController[method]({
+        id: highlightId,
+        width: TIMEFRAME_HIGHLIGHT_WIDTH,
+        points: samplePoints(durationGeometry.points, MAX_SHADER_PATH_POINTS)
+          .filter((point, index, points) => {
+            if (index === 0) {
+              return true;
+            }
+
+            const previousPoint = points[index - 1];
+            return (
+              Math.abs(point.x - previousPoint.x) > 0.05 ||
+              Math.abs(point.y - previousPoint.y) > 0.05
+            );
+          })
+          .map((point) => ({
+            x: (graphLeft + point.x) / viewportWidth,
+            y: 1 - (graphTop + point.y) / viewportHeight,
+          })),
+      });
+    };
+
+    publish("activatePath");
+
+    const handleViewportChange = () => publish("updatePath");
+    window.addEventListener("scroll", handleViewportChange, { passive: true });
+    window.addEventListener("resize", handleViewportChange);
+
+    const observer =
+      typeof ResizeObserver === "undefined"
+        ? null
+        : new ResizeObserver(handleViewportChange);
+    observer?.observe(containerRef.current);
+
+    return () => {
+      window.removeEventListener("scroll", handleViewportChange);
+      window.removeEventListener("resize", handleViewportChange);
+      observer?.disconnect();
+      shaderHighlightController.deactivatePath(highlightId);
+    };
+  }, [
+    activeTimeframeIndex,
+    durationGeometries,
+    graphWidth,
+    shaderHighlightController,
+  ]);
 
   return (
     <div ref={containerRef} className="relative flex flex-col gap-[32px]">
@@ -551,7 +666,7 @@ export function Timeline({ children }: TimelineProps) {
       )}
       {graphHeight > 0 && (
         <svg
-          className="pointer-events-none absolute right-0 top-0 overflow-visible"
+          className="absolute right-0 top-0 z-10 overflow-visible"
           width={graphWidth}
           height={graphHeight}
           aria-hidden="true"
@@ -570,6 +685,7 @@ export function Timeline({ children }: TimelineProps) {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   fill="none"
+                  pointerEvents="none"
                 />
                 <path
                   d={railPath}
@@ -578,25 +694,40 @@ export function Timeline({ children }: TimelineProps) {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   fill="none"
+                  pointerEvents="none"
                 />
               </>
             ) : null}
             {stations.map(({ index }) => {
-              const path = durationPaths[index];
+              const path = durationGeometries[index]?.path;
               if (!path) {
                 return null;
               }
 
               return (
-                <path
-                  key={`duration-${index}`}
-                  d={path}
-                  stroke={DURATION_COLOR}
-                  strokeWidth="1.25"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  fill="none"
-                />
+                <g key={`duration-${index}`}>
+                  <path
+                    d={path}
+                    stroke={DURATION_COLOR}
+                    strokeWidth="1.25"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    fill="none"
+                    pointerEvents="none"
+                  />
+                  <path
+                    d={path}
+                    stroke="transparent"
+                    strokeWidth="16"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    fill="none"
+                    className="cursor-pointer"
+                    pointerEvents="stroke"
+                    onPointerEnter={() => activateTimeframe(index)}
+                    onPointerLeave={() => deactivateTimeframe(index)}
+                  />
+                </g>
               );
             })}
           </motion.g>
@@ -617,6 +748,11 @@ export function Timeline({ children }: TimelineProps) {
               (metrics[index]?.height ?? NODE_OFFSET_Y) - NODE_END_INSET,
               NODE_OFFSET_Y,
             ),
+            onTimeframeEnter: () => activateTimeframe(index),
+            onTimeframeLeave: () => deactivateTimeframe(index),
+            onMarkerEnter: () => activateTimeframe(index),
+            onMarkerLeave: () => deactivateTimeframe(index),
+            timeframeActive: activeTimeframeIndex === index,
           })}
         </div>
       ))}

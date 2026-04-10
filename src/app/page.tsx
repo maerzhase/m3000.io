@@ -9,7 +9,6 @@ import {
 import Image from "next/image";
 import BackgroundShader from "@/components/BackgroundShader";
 import { CardDeck } from "@/components/CardDeck";
-import { CurrentProjects } from "@/components/CurrentProjects";
 import { Hello } from "@/components/Hello";
 import { ContentProvider } from "@/components/Overlay/ContentProvider";
 import { OverlayTrigger } from "@/components/Overlay/Trigger";
@@ -115,6 +114,8 @@ export default function Home() {
                   variant="timeline"
                   current
                   dotIndex={0}
+                  startYear={2022}
+                  endYear={new Date().getFullYear()}
                   year={"2022-Present"}
                   name="fxhash"
                   title="Senior Design Engineer (Full-Stack)"
@@ -140,6 +141,8 @@ export default function Home() {
                 <Station
                   variant="timeline"
                   dotIndex={1}
+                  startYear={2015}
+                  endYear={2023}
                   year={"2015-2023"}
                   name="Studio NAND"
                   title="Lead Design Technologist"
@@ -167,6 +170,8 @@ export default function Home() {
                 <Station
                   variant="timeline"
                   dotIndex={2}
+                  startYear={2013}
+                  endYear={2015}
                   year={"2013-2015"}
                   name="ART+COM Studios"
                   title="RND Developer"
@@ -202,6 +207,8 @@ export default function Home() {
                 <Station
                   variant="timeline"
                   dotIndex={3}
+                  startYear={2010}
+                  endYear={2015}
                   year={"2010-2015"}
                   name=""
                   title="Education"

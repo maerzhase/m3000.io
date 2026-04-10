@@ -1062,20 +1062,17 @@ const BackgroundShader: React.FC<{ children?: React.ReactNode }> = ({
           pathHighlightWidth = pathHighlightTarget.width ?? 3;
         }
 
-        const pointFollow = reduce ? 0.16 : 0.08;
         for (let i = 0; i < MAX_PATH_POINTS; i += 1) {
           const point = pathHighlightTarget.points[i];
           const pointIndex = i * 2;
-          const targetX = point?.x ?? pathPoints[pointIndex];
-          const targetY = point?.y ?? pathPoints[pointIndex + 1];
-          pathPoints[pointIndex] +=
-            (targetX - pathPoints[pointIndex]) * pointFollow;
-          pathPoints[pointIndex + 1] +=
-            (targetY - pathPoints[pointIndex + 1]) * pointFollow;
+          if (point) {
+            pathPoints[pointIndex] = point.x;
+            pathPoints[pointIndex + 1] = point.y;
+          }
         }
 
         const targetWidth = pathHighlightTarget.width ?? 3;
-        pathHighlightWidth += (targetWidth - pathHighlightWidth) * pointFollow;
+        pathHighlightWidth = targetWidth;
 
         const pathStrengthTarget = pathHighlightTarget.active ? 1 : 0;
         const pathStrengthFollow = reduce

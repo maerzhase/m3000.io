@@ -211,6 +211,10 @@ function slicePoints(
 
 function offsetPoints(points: Point[], offset: number): Point[] {
   return points.map((point, index) => {
+    if (index === 0 || index === points.length - 1) {
+      return { x: point.x + offset, y: point.y };
+    }
+
     const prev = points[Math.max(0, index - 1)];
     const next = points[Math.min(points.length - 1, index + 1)];
     const dx = next.x - prev.x;
@@ -589,7 +593,7 @@ export function Timeline({ children }: TimelineProps) {
                   d={path}
                   stroke={DURATION_COLOR}
                   strokeWidth="1.25"
-                  strokeLinecap="butt"
+                  strokeLinecap="round"
                   strokeLinejoin="round"
                   fill="none"
                 />

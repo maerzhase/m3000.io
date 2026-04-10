@@ -6,9 +6,11 @@ import {
   type ShaderHighlightController,
   type ShaderHighlightPayload,
   ShaderHighlightProvider,
+  type ShaderPathHighlightPayload,
 } from "./ShaderHighlight";
 
 const MAX_HIGHLIGHT_RECTS = 4;
+const MAX_PATH_POINTS = 24;
 
 const VERTEX_SHADER_SOURCE = `
 attribute vec2 a_position;
@@ -52,6 +54,10 @@ uniform float u_highlight_edge_boost;
 uniform float u_highlight_dither_repel;
 uniform float u_highlight_noise;
 uniform float u_highlight_halo;
+uniform int u_path_point_count;
+uniform vec2 u_path_points[24];
+uniform float u_path_width;
+uniform float u_path_strength;
 
 varying vec2 v_uv;
 
@@ -178,6 +184,15 @@ float sdRoundedBox(vec2 p, vec2 b, float r) {
   return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r;
 }
 
+float sdSegment(vec2 p, vec2 a, vec2 b, out float projectedLength) {
+  vec2 pa = p - a;
+  vec2 ba = b - a;
+  float baDot = max(dot(ba, ba), 0.000001);
+  float h = clamp(dot(pa, ba) / baDot, 0.0, 1.0);
+  projectedLength = length(ba) * h;
+  return length(pa - ba * h);
+}
+
 void main() {
   vec2 uv = v_uv;
   float trail = texture2D(u_trail, uv).r;
@@ -187,6 +202,9 @@ void main() {
   float highlightEdge = 0.0;
   vec2 highlightDelta = vec2(1.0, 0.0);
   float nearestRectDist = 1e5;
+  float pathDistance = 1e5;
+  float pathTravel = 0.0;
+  float accumulatedPathLength = 0.0;
 
   for (int i = 0; i < 4; i++) {
     if (i >= u_highlight_count) break;
@@ -213,6 +231,26 @@ void main() {
     highlightEdge = max(highlightEdge, rectEdge);
   }
 
+  for (int i = 0; i < 23; i++) {
+    if (i >= u_path_point_count - 1) break;
+    vec2 pathStart = toWorld(u_path_points[i]);
+    vec2 pathEnd = toWorld(u_path_points[i + 1]);
+    float segmentTravel = 0.0;
+    float segmentDistance = sdSegment(
+      worldUv,
+      pathStart,
+      pathEnd,
+      segmentTravel
+    );
+
+    if (segmentDistance < pathDistance) {
+      pathDistance = segmentDistance;
+      pathTravel = accumulatedPathLength + segmentTravel;
+    }
+
+    accumulatedPathLength += length(pathEnd - pathStart);
+  }
+
   highlightMask *= u_highlight_strength;
   highlightEdge *= u_highlight_strength;
   vec2 noiseUv =
@@ -227,6 +265,39 @@ void main() {
   float noisyEdge =
     highlightEdge * (1.0 + edgeNoise * 1.8 * u_highlight_noise)
     + highlightEdge * edgeRipple * 0.45 * u_highlight_noise;
+  float minRes = min(u_resolution.x, u_resolution.y);
+  float pathHalfWidth = max(0.5, u_path_width * 0.5) / minRes;
+  float pathFeather = max(0.8 / minRes, pathHalfWidth * 0.55);
+  float pathLength = max(accumulatedPathLength, 0.0001);
+  float directionHead = pathLength - mod(u_time * pathLength * 0.22, pathLength);
+  float wrappedDistanceToHead = abs(pathTravel - directionHead);
+  wrappedDistanceToHead = min(
+    wrappedDistanceToHead,
+    pathLength - wrappedDistanceToHead
+  );
+  float directionTrailLength = max(pathLength * 0.16, pathHalfWidth * 18.0);
+  float directionPulse =
+    1.0 - smoothstep(0.0, directionTrailLength, wrappedDistanceToHead);
+  float pathCore =
+    u_path_strength
+    * (1.0 - smoothstep(pathHalfWidth, pathHalfWidth + pathFeather, pathDistance));
+  float pathRim =
+    u_path_strength
+    * (1.0 - smoothstep(pathHalfWidth * 0.1, pathHalfWidth * 1.7, pathDistance));
+  float pathGlow =
+    u_path_strength
+    * (1.0 - smoothstep(pathHalfWidth * 0.4, pathHalfWidth * 3.0, pathDistance));
+  float pathFlowNoise =
+    valueNoise(vec2(pathTravel * 0.9 - u_time * 0.95, pathDistance * 220.0 + noiseA * 2.0));
+  float pathFlowDetail =
+    valueNoise(vec2(pathTravel * 1.7 - u_time * 1.45 + 13.7, pathDistance * 340.0 - noiseB * 3.0));
+  float pathShimmer = mix(pathFlowNoise, pathFlowDetail, 0.42);
+  pathShimmer = smoothstep(0.18, 0.88, pathShimmer);
+  pathShimmer *= 0.82 + 0.18 * noiseB;
+  pathShimmer = mix(pathShimmer, 1.0, directionPulse * 0.35);
+  float pathWave =
+    0.5 + 0.5 * sin(pathTravel * 18.0 - u_time * 3.1 + noiseA * 4.0);
+  pathWave = mix(0.72, 1.0, pathWave);
   float halo =
     u_highlight_strength
     * (1.0 - smoothstep(highlightFeather * 1.6, highlightFeather * 8.0, abs(nearestRectDist)));
@@ -235,6 +306,9 @@ void main() {
   highlightMask = clamp(highlightMask, 0.0, 1.0);
   highlightEdge = clamp(max(highlightEdge, noisyEdge), 0.0, 1.35);
   halo = clamp(halo, 0.0, 1.0);
+  pathCore = clamp(pathCore, 0.0, 1.0);
+  pathRim = clamp(pathRim, 0.0, 1.0);
+  pathGlow = clamp(pathGlow, 0.0, 1.0);
   // Boost trail for displacement/split so faint trail still shows effect (trail is often 0.1–0.3)
   float trailEff = pow(max(0.0, trail), 0.65);
 
@@ -243,25 +317,40 @@ void main() {
   vec2 radialDir =
     length(highlightDelta) > 0.0001 ? normalize(highlightDelta) : vec2(1.0, 0.0);
   vec2 tangentDir = vec2(-radialDir.y, radialDir.x);
-  float displaceStrength = u_displace_strength * (1.0 + highlightEdge * 1.65 + halo * 0.6);
+  float pathDisplace =
+    pathCore * (0.72 + directionPulse * 0.9) + pathGlow * 0.35;
+  float displaceStrength =
+    u_displace_strength
+    * (1.0 + highlightEdge * 1.65 + halo * 0.6 + pathDisplace * 0.85);
   vec2 uv_d = uv + trailEff * displaceStrength * displaceDir;
   uv_d += radialDir * highlightMask * u_highlight_edge_boost * 0.055;
   uv_d += tangentDir * edgeNoise * highlightEdge * 0.03 * u_highlight_noise;
+  uv_d += tangentDir * (pathShimmer - 0.5) * pathCore * 0.014;
 
   vec3 col;
+  float pathRgbBoost =
+    pathCore * (0.65 + directionPulse * 1.25) + pathGlow * 0.22;
   float rgbSplitStrength =
     u_rgb_split
     + highlightEdge * u_highlight_edge_boost * 0.075
-    + halo * u_highlight_halo * 0.04;
-  if (rgbSplitStrength > 0.0 && (trail > 0.005 || highlightEdge > 0.001)) {
+    + halo * u_highlight_halo * 0.04
+    + pathRgbBoost * 0.09;
+  if (
+    rgbSplitStrength > 0.0 &&
+    (trail > 0.005 || highlightEdge > 0.001 || pathCore > 0.001)
+  ) {
     // RGB split along velocity direction (stored in trail.gb); fallback to horizontal if no velocity
     vec2 velDir = vec2(texture2D(u_trail, uv).g * 2.0 - 1.0, texture2D(u_trail, uv).b * 2.0 - 1.0);
     if (length(velDir) < 0.01) velDir = vec2(1.0, 0.0);
     else velDir = normalize(velDir);
     velDir = normalize(mix(velDir, tangentDir, min(1.0, highlightEdge * 1.4)));
     velDir = normalize(mix(velDir, radialDir, min(1.0, halo * 0.8)));
+    velDir = normalize(mix(velDir, tangentDir, min(1.0, pathCore * 1.6)));
     float rs =
-      max(trailEff, highlightEdge * 0.9 + halo * 0.75)
+      max(
+        trailEff,
+        highlightEdge * 0.9 + halo * 0.75 + pathRgbBoost * (0.45 + directionPulse * 0.9)
+      )
       * rgbSplitStrength
       * 4.8;
     vec3 cr = baseScene(uv_d - rs * velDir);
@@ -273,9 +362,27 @@ void main() {
   }
   col += trail * u_color_intensity * 1.5 * u_mouse_glow_intensity * u_primary_color;
   vec3 haloColor = vec3(0.9, 0.24, 0.08);
+  vec3 pathHotColor = mix(
+    u_primary_color * 3.0,
+    vec3(0.98, 0.56, 0.22),
+    min(1.0, pathShimmer + directionPulse * 0.4)
+  );
+  col +=
+    pathHotColor
+    * pathCore
+    * (0.28 + 0.24 * pathShimmer + directionPulse * 0.38)
+    * pathWave;
+  col += haloColor * pathRim * (0.22 + 0.12 * pathShimmer);
+  col +=
+    u_primary_color
+    * pathGlow
+    * (0.16 + directionPulse * 0.12)
+    * u_color_intensity
+    * pathWave;
   col += halo * haloColor * (0.35 + highlightEdge * 0.25);
   col = mix(col, u_base_color * 0.72, highlightMask * 0.58);
   col += edgeNoise * 0.06 * highlightEdge * u_highlight_noise;
+  col += edgeNoise * 0.055 * pathGlow * u_highlight_noise * pathWave;
 
   col = clamp(col, 0.0, 1.0);
 
@@ -418,6 +525,9 @@ const BackgroundShader: React.FC<{ children?: React.ReactNode }> = ({
   const highlightTargetRef = useRef<
     (ShaderHighlightPayload & { active: boolean }) | null
   >(null);
+  const pathHighlightTargetRef = useRef<
+    (ShaderPathHighlightPayload & { active: boolean }) | null
+  >(null);
   const highlightControllerRef = useRef<ShaderHighlightController | null>(null);
 
   if (!highlightControllerRef.current) {
@@ -436,6 +546,23 @@ const BackgroundShader: React.FC<{ children?: React.ReactNode }> = ({
         if (highlightTargetRef.current?.id !== id) return;
         highlightTargetRef.current = {
           ...highlightTargetRef.current,
+          active: false,
+        };
+      },
+      activatePath(payload) {
+        pathHighlightTargetRef.current = { ...payload, active: true };
+      },
+      updatePath(payload) {
+        if (pathHighlightTargetRef.current?.id !== payload.id) return;
+        pathHighlightTargetRef.current = {
+          ...payload,
+          active: pathHighlightTargetRef.current.active,
+        };
+      },
+      deactivatePath(id) {
+        if (pathHighlightTargetRef.current?.id !== id) return;
+        pathHighlightTargetRef.current = {
+          ...pathHighlightTargetRef.current,
           active: false,
         };
       },
@@ -554,6 +681,13 @@ const BackgroundShader: React.FC<{ children?: React.ReactNode }> = ({
     );
     const uHighlightNoise = gl.getUniformLocation(program, "u_highlight_noise");
     const uHighlightHalo = gl.getUniformLocation(program, "u_highlight_halo");
+    const uPathPointCount = gl.getUniformLocation(
+      program,
+      "u_path_point_count",
+    );
+    const uPathPoints = gl.getUniformLocation(program, "u_path_points");
+    const uPathWidth = gl.getUniformLocation(program, "u_path_width");
+    const uPathStrength = gl.getUniformLocation(program, "u_path_strength");
 
     const trailProgram = createProgram(
       gl,
@@ -691,6 +825,10 @@ const BackgroundShader: React.FC<{ children?: React.ReactNode }> = ({
     const highlightCenters = new Float32Array(MAX_HIGHLIGHT_RECTS * 2);
     const highlightSizes = new Float32Array(MAX_HIGHLIGHT_RECTS * 2);
     const highlightRadii = new Float32Array(MAX_HIGHLIGHT_RECTS);
+    let activePathHighlightId: string | null = null;
+    let pathHighlightStrength = 0.0;
+    let pathHighlightWidth = 0.0;
+    const pathPoints = new Float32Array(MAX_PATH_POINTS * 2);
 
     const onMouseMove = (e: MouseEvent) => {
       mouse.x = e.clientX / window.innerWidth;
@@ -881,6 +1019,57 @@ const BackgroundShader: React.FC<{ children?: React.ReactNode }> = ({
         }
       }
 
+      const pathHighlightTarget = pathHighlightTargetRef.current;
+      if (pathHighlightTarget) {
+        if (pathHighlightTarget.id !== activePathHighlightId) {
+          activePathHighlightId = pathHighlightTarget.id;
+          pathPoints.fill(0);
+          for (let i = 0; i < MAX_PATH_POINTS; i += 1) {
+            const point = pathHighlightTarget.points[i];
+            const pointIndex = i * 2;
+            if (!point) {
+              continue;
+            }
+
+            pathPoints[pointIndex] = point.x;
+            pathPoints[pointIndex + 1] = point.y;
+          }
+          pathHighlightStrength = 0.0;
+          pathHighlightWidth = pathHighlightTarget.width ?? 3;
+        }
+
+        const pointFollow = reduce ? 0.16 : 0.08;
+        for (let i = 0; i < MAX_PATH_POINTS; i += 1) {
+          const point = pathHighlightTarget.points[i];
+          const pointIndex = i * 2;
+          const targetX = point?.x ?? pathPoints[pointIndex];
+          const targetY = point?.y ?? pathPoints[pointIndex + 1];
+          pathPoints[pointIndex] +=
+            (targetX - pathPoints[pointIndex]) * pointFollow;
+          pathPoints[pointIndex + 1] +=
+            (targetY - pathPoints[pointIndex + 1]) * pointFollow;
+        }
+
+        const targetWidth = pathHighlightTarget.width ?? 3;
+        pathHighlightWidth += (targetWidth - pathHighlightWidth) * pointFollow;
+
+        const pathStrengthTarget = pathHighlightTarget.active ? 1 : 0;
+        const pathStrengthFollow = reduce
+          ? 0.14
+          : pathHighlightTarget.active
+            ? 0.075
+            : 0.05;
+        pathHighlightStrength +=
+          (pathStrengthTarget - pathHighlightStrength) * pathStrengthFollow;
+
+        if (!pathHighlightTarget.active && pathHighlightStrength < 0.001) {
+          pathHighlightTargetRef.current = null;
+        }
+      } else {
+        activePathHighlightId = null;
+        pathHighlightStrength += (0 - pathHighlightStrength) * 0.05;
+      }
+
       const p = paramsRef.current;
       const readIdx = 1 - trailWriteIdx;
       const writeFbo = trailWriteIdx === 0 ? trailFboA : trailFboB;
@@ -951,6 +1140,16 @@ const BackgroundShader: React.FC<{ children?: React.ReactNode }> = ({
       gl.uniform1f(uHighlightDitherRepel, p.highlightDitherRepel);
       gl.uniform1f(uHighlightNoise, p.highlightNoise);
       gl.uniform1f(uHighlightHalo, p.highlightHalo);
+      gl.uniform1i(
+        uPathPointCount,
+        Math.min(
+          pathHighlightTargetRef.current?.points.length ?? 0,
+          MAX_PATH_POINTS,
+        ),
+      );
+      gl.uniform2fv(uPathPoints, pathPoints);
+      gl.uniform1f(uPathWidth, pathHighlightWidth);
+      gl.uniform1f(uPathStrength, pathHighlightStrength);
       gl.uniform1f(uMouseGlowIntensity, p.mouseGlowIntensity);
       gl.uniform1f(uColorIntensity, p.colorIntensity);
 

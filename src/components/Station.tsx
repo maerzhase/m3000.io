@@ -18,6 +18,11 @@ interface StationProps {
   timelinePadding?: number;
   timelineNodeOffset?: number;
   timelineNodeY?: number;
+  timeframeActive?: boolean;
+  onTimeframeEnter?: () => void;
+  onTimeframeLeave?: () => void;
+  onMarkerEnter?: () => void;
+  onMarkerLeave?: () => void;
   className?: string;
   style?: CSSProperties;
 }
@@ -33,6 +38,11 @@ export function Station({
   timelinePadding = 24,
   timelineNodeOffset = 0,
   timelineNodeY = 11,
+  timeframeActive = false,
+  onTimeframeEnter,
+  onTimeframeLeave,
+  onMarkerEnter,
+  onMarkerLeave,
   className,
   style,
 }: StationProps) {
@@ -56,16 +66,18 @@ export function Station({
     >
       {isTimeline && (
         <>
-          {current && (
+          {current && timeframeActive && (
             <span
-              className="absolute size-[9px] rounded-full bg-gray-300 animate-ping opacity-20"
+              className="absolute z-20 size-[9px] rounded-full bg-gray-300 animate-ping opacity-20"
               style={{ right: dotRight, top: timelineNodeY }}
             />
           )}
-          <motion.div
+          <motion.button
+            type="button"
+            aria-label={`Highlight ${typeof title === "string" ? title : "timeline station"}`}
             className={cn(
-              "absolute size-[9px] rounded-full border border-white/20 shadow-[0_0_0_3px_rgba(10,10,10,0.85)]",
-              current ? "bg-gray-100" : "bg-gray-500",
+              "absolute z-20 size-[9px] rounded-full border border-white/20 shadow-[0_0_0_3px_rgba(10,10,10,0.85)] transition-colors duration-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/30",
+              timeframeActive ? "bg-gray-100" : "bg-gray-500",
             )}
             style={{ right: dotRight, top: timelineNodeY }}
             initial={{ scale: 0, opacity: 0 }}
@@ -76,6 +88,10 @@ export function Station({
               stiffness: 300,
               damping: 20,
             }}
+            onPointerEnter={onMarkerEnter}
+            onPointerLeave={onMarkerLeave}
+            onFocus={onMarkerEnter}
+            onBlur={onMarkerLeave}
           />
         </>
       )}
@@ -91,9 +107,22 @@ export function Station({
           ) : null}
         </div>
         <Text size="1" color="dim" className="ml-auto">
-          <span className="inline-flex rounded-full border border-white/10 bg-white/6 px-2 py-1 font-mono text-[11px] leading-none tracking-[0.12em] text-white/70 uppercase">
+          <button
+            type="button"
+            className={cn(
+              "inline-flex rounded-full border border-white/10 bg-white/6 px-2 py-1 font-mono text-[11px] leading-none tracking-[0.12em] text-white/70 uppercase transition-colors duration-200",
+              isTimeline &&
+                "cursor-default focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/30",
+              timeframeActive && "border-white/20 bg-white/10 text-white/92",
+            )}
+            onPointerEnter={onTimeframeEnter}
+            onPointerLeave={onTimeframeLeave}
+            onFocus={onTimeframeEnter}
+            onBlur={onTimeframeLeave}
+            tabIndex={isTimeline ? 0 : -1}
+          >
             {year}
-          </span>
+          </button>
         </Text>
       </div>
       <div className="pr-6 text-white/88">{children}</div>

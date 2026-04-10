@@ -1,0 +1,11 @@
+export const NODE_OFFSET_Y = 14;
+export const NODE_END_INSET = 16;
+export const LANE_GAP = 20;
+export const GRAPH_INSET = 8;
+export const GRAPH_MARGIN_RIGHT = 20;
+export const LINE_COLOR = "rgba(160, 160, 168, 0.68)";
+export const DURATION_OFFSET = 7;
+export const DURATION_COLOR = "rgba(228, 228, 232, 0.34)";
+export const DURATION_BRANCH_LEAD = 22;
+export const MAX_SHADER_PATH_POINTS = 24;
+export const TIMEFRAME_HIGHLIGHT_WIDTH = 5;

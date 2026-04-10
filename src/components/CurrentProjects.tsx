@@ -1,6 +1,6 @@
 import { CardDeck } from "@/components/CardDeck";
 import { OverlayTrigger } from "@/components/Overlay/Trigger";
-import { Station } from "@/components/Station";
+import { Station } from "@/components/Timeline";
 import { Text } from "@/components/ui/Text";
 
 export function CurrentProjects() {

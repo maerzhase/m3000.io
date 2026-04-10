@@ -115,7 +115,7 @@ export default function Home() {
                   dotIndex={0}
                   startYear={2022}
                   endYear={new Date().getFullYear()}
-                  year={"2022-Present"}
+                  year={"2022-2026"}
                   name="fxhash"
                   title="Senior Design Engineer (Full-Stack)"
                 >

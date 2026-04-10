@@ -3,9 +3,9 @@
 import { motion } from "motion/react";
 import type { CSSProperties, ReactNode } from "react";
 import { cn } from "@/lib/cn";
-import { Text } from "./ui/Text";
+import { Text } from "../ui/Text";
 
-interface StationProps {
+export interface StationProps {
   year: ReactNode;
   name?: ReactNode;
   title: ReactNode;

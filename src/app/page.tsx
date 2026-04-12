@@ -170,11 +170,13 @@ export default function Home() {
                     <Text render={<p />}>
                       Building the largest open cross-chain generative art
                       platform, I focused on UI and UX for complex onchain
-                      flows. The goal was to make these systems clear and
-                      intuitive without hiding their mechanics. I focused on
-                      performance and consistency, shaping reusable UI patterns
-                      that scaled with the product, and migrated the codebase
-                      from a distributed system to a unified monorepo.
+                      flows. The goal was to make these interactions clear and
+                      intuitive without hiding their mechanics. With a strong
+                      focus on performance and consistency, I shaped reusable UI
+                      patterns that scaled with the product, and migrated the
+                      codebase from a distributed microservice architecture to a
+                      unified monorepo to improve developer experience, shared
+                      code, and maintainability.
                     </Text>
                   </Station>
 
@@ -200,7 +202,8 @@ export default function Home() {
                       systems. I shaped technical architecture and
                       implementation together with designers and engineers, and
                       built custom tools, data pipelines, and design systems
-                      used in both installations and criticial decision-making software.
+                      used in both installations and criticial decision-making
+                      software.
                     </Text>
                   </Station>
 
@@ -219,10 +222,10 @@ export default function Home() {
                   >
                     <Text render={<p />}>
                       Working across software, hardware, and spatial design, I
-                      designed and build interactive installations and kinetic sculptures for
-                      public exhibitions. The work was hands-on and
-                      experimental, turning conceptual ideas into technically
-                      viable systems. I developed real-time,
+                      designed and build interactive installations and kinetic
+                      sculptures for public exhibitions. The work was hands-on
+                      and experimental, turning conceptual ideas into
+                      technically viable systems. I developed real-time,
                       performance-sensitive software driving physical
                       installations, and built pipelines connecting sensors,
                       kinetic modules, and rendering systems, in close

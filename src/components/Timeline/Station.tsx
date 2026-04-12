@@ -31,6 +31,7 @@ export interface StationProps {
   timelineNodeOffset?: number;
   timelineNodeY?: number;
   hideTimelinePoint?: boolean;
+  hoverEnabled?: boolean;
   timeframeActive?: boolean;
   onTimeframeEnter?: () => void;
   onTimeframeLeave?: () => void;
@@ -55,6 +56,7 @@ export function Station({
   timelineNodeOffset = 0,
   timelineNodeY = 11,
   hideTimelinePoint = false,
+  hoverEnabled = true,
   timeframeActive = false,
   onTimeframeEnter,
   onTimeframeLeave,
@@ -170,11 +172,12 @@ export function Station({
   const inlineContextValue = useMemo(
     () => ({
       activePointId,
+      hoverEnabled,
       registerPoint,
       unregisterPoint,
       setActivePointId,
     }),
-    [activePointId, registerPoint, unregisterPoint],
+    [activePointId, hoverEnabled, registerPoint, unregisterPoint],
   );
 
   useEffect(() => {
@@ -211,14 +214,31 @@ export function Station({
   }, [hasCustomTimelinePoints, measurePoints, registeredPoints]);
 
   const handleStationPointerEnter = useCallback(() => {
+    if (!hoverEnabled) {
+      return;
+    }
+
     setStationHovered(true);
     onTimeframeEnter?.();
-  }, [onTimeframeEnter]);
+  }, [hoverEnabled, onTimeframeEnter]);
 
   const handleStationPointerLeave = useCallback(() => {
+    if (!hoverEnabled) {
+      return;
+    }
+
     setStationHovered(false);
     onTimeframeLeave?.();
-  }, [onTimeframeLeave]);
+  }, [hoverEnabled, onTimeframeLeave]);
+
+  useEffect(() => {
+    if (hoverEnabled) {
+      return;
+    }
+
+    setStationHovered(false);
+    setActivePointId(null);
+  }, [hoverEnabled]);
 
   return (
     <div
@@ -293,8 +313,12 @@ export function Station({
                 stiffness: 300,
                 damping: 20,
               }}
-              onPointerEnter={() => setActivePointId(point.id)}
-              onPointerLeave={() => setActivePointId(null)}
+              onPointerEnter={
+                hoverEnabled ? () => setActivePointId(point.id) : undefined
+              }
+              onPointerLeave={
+                hoverEnabled ? () => setActivePointId(null) : undefined
+              }
               onFocus={() => setActivePointId(point.id)}
               onBlur={() => setActivePointId(null)}
             />

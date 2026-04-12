@@ -47,7 +47,6 @@ export function Station({
   name,
   children,
   variant = "plain",
-  timelineMode = "range",
   timelinePointShape = "circle",
   current = false,
   dotIndex = 0,
@@ -349,9 +348,7 @@ export function Station({
       >
         {isTimeline ? (
           <>
-            <div className="sm:hidden">
-              {timeframeLabel}
-            </div>
+            <div className="sm:hidden">{timeframeLabel}</div>
             {name && (
               <div
                 className={cn(

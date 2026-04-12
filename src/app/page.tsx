@@ -199,7 +199,7 @@ export default function Home() {
                       data-heavy interfaces into scalable, production-ready
                       systems. I shaped technical architecture and
                       implementation together with designers and engineers, and
-                      built custom tools, data pipelines, and visual systems
+                      built custom tools, data pipelines, and design systems
                       used in both installations and decision-making software.
                     </Text>
                   </Station>

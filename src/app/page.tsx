@@ -271,7 +271,7 @@ export default function Home() {
                 </Timeline>
               </div>
             </main>
-            <footer className="mt-8 flex flex-col gap-4">
+            <footer className="mt-16 flex flex-col gap-4">
               {/* biome-ignore lint: using render */}
               <Text size="3" render={<h3 />}>
                 Interested to collaborate?

@@ -1,6 +1,9 @@
 import { IconExternalLink } from "@tabler/icons-react";
 import * as React from "react";
-import { ShaderHighlight } from "@/components/ShaderHighlight";
+import {
+  ShaderHighlight,
+  type ShaderHighlightPadding,
+} from "@/components/ShaderHighlight";
 import { cn } from "@/lib/cn";
 import { Text, type TextProps } from "./Text";
 
@@ -10,6 +13,7 @@ interface OwnProps {
   active?: boolean;
   external?: boolean;
   shaderHighlight?: boolean;
+  shaderHighlightPadding?: ShaderHighlightPadding;
 }
 
 export type LinkProps = OwnProps &
@@ -26,6 +30,7 @@ export const Link = React.forwardRef<LinkElement, LinkProps>(function Link(
     children,
     external,
     shaderHighlight = true,
+    shaderHighlightPadding = { x: 0, y: 1 },
     ...props
   },
   ref,
@@ -55,7 +60,11 @@ export const Link = React.forwardRef<LinkElement, LinkProps>(function Link(
     return element;
   }
 
-  return <ShaderHighlight>{element}</ShaderHighlight>;
+  return (
+    <ShaderHighlight padding={shaderHighlightPadding}>
+      {element}
+    </ShaderHighlight>
+  );
 });
 
 Link.displayName = "Link";
@@ -68,7 +77,7 @@ export const ExternalLink = React.forwardRef<LinkElement, ExternalLinkProps>(
       <Link {...props} target="_blank" rel="noopener noreferrer" ref={ref}>
         {children}
         {!noIcon && (
-          <IconExternalLink size="14" className="ml-1 align-middle" />
+          <IconExternalLink size="14" className="ml-1 align-baseline" />
         )}
       </Link>
     );

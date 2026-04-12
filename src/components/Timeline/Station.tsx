@@ -51,9 +51,9 @@ export function Station({
   const dotRight = timelineNodeOffset - 4.5;
   const contentStyle = isTimeline
     ? {
-        ...style,
-        paddingRight: timelinePadding,
-      }
+      ...style,
+      paddingRight: timelinePadding,
+    }
     : style;
 
   return (
@@ -95,37 +95,76 @@ export function Station({
           />
         </>
       )}
-      <div className="relative mb-3 flex w-full flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1 pr-6">
-          <Text weight="semibold" size="3" className="tracking-[-0.01em]">
-            {title}
-          </Text>
-          {name ? (
-            <Text color="dim" className="text-white/70">
-              {name}
+      <div className="relative mb-3 flex w-full min-w-0 flex-col pr-3 sm:pr-4 gap-0.5">
+        {isTimeline ? (
+          <>
+            {name && <div className="min-w-0">{name}</div>}
+            <div className="flex min-w-0 gap-3">
+              <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">
+                <Text weight="semibold" size="3">
+                  {title}
+                </Text>
+              </div>
+              <Text
+                size="1"
+                color="dim"
+                className="ml-auto shrink-0 whitespace-nowrap"
+              >
+                <button
+                  type="button"
+                  className={cn(
+                    "inline-flex rounded-full border border-white/10 bg-white/6 px-2 py-1 font-mono text-[11px] leading-none tracking-[0.12em] text-white/70 uppercase transition-colors duration-200",
+                    isTimeline &&
+                    "cursor-default focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/30",
+                    timeframeActive && "border-white/20 bg-white/10 text-white/92",
+                  )}
+                  onPointerEnter={onTimeframeEnter}
+                  onPointerLeave={onTimeframeLeave}
+                  onFocus={onTimeframeEnter}
+                  onBlur={onTimeframeLeave}
+                  tabIndex={isTimeline ? 0 : -1}
+                >
+                  {year}
+                </button>
+              </Text>
+            </div>
+          </>
+        ) : (
+          <div className="flex min-w-0 gap-3">
+            <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">
+              <Text weight="semibold" size="3">
+                {title}
+              </Text>
+              {name ? <span>{name}</span> : null}
+            </div>
+            <Text
+              size="1"
+              color="dim"
+              className="ml-auto shrink-0 whitespace-nowrap"
+            >
+              <button
+                type="button"
+                className={cn(
+                  "inline-flex rounded-full border border-white/10 bg-white/6 px-2 py-1 font-mono text-[11px] leading-none tracking-[0.12em] text-white/70 uppercase transition-colors duration-200",
+                  isTimeline &&
+                  "cursor-default focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/30",
+                  timeframeActive && "border-white/20 bg-white/10 text-white/92",
+                )}
+                onPointerEnter={onTimeframeEnter}
+                onPointerLeave={onTimeframeLeave}
+                onFocus={onTimeframeEnter}
+                onBlur={onTimeframeLeave}
+                tabIndex={isTimeline ? 0 : -1}
+              >
+                {year}
+              </button>
             </Text>
-          ) : null}
-        </div>
-        <Text size="1" color="dim" className="ml-auto">
-          <button
-            type="button"
-            className={cn(
-              "inline-flex rounded-full border border-white/10 bg-white/6 px-2 py-1 font-mono text-[11px] leading-none tracking-[0.12em] text-white/70 uppercase transition-colors duration-200",
-              isTimeline &&
-                "cursor-default focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/30",
-              timeframeActive && "border-white/20 bg-white/10 text-white/92",
-            )}
-            onPointerEnter={onTimeframeEnter}
-            onPointerLeave={onTimeframeLeave}
-            onFocus={onTimeframeEnter}
-            onBlur={onTimeframeLeave}
-            tabIndex={isTimeline ? 0 : -1}
-          >
-            {year}
-          </button>
-        </Text>
+          </div>
+        )}
       </div>
-      <div className="pr-6 text-white/88">{children}</div>
+      <div className="pr-3 text-white/88 sm:pr-4 [&_p]:text-pretty">
+        {children}
+      </div>
     </div>
   );
 }

@@ -994,30 +994,51 @@ const BackgroundShader: React.FC<{ children?: React.ReactNode }> = ({
         }
 
         const highlightFollow = reduce ? 0.14 : 0.03;
+        const snapHighlight = Boolean(highlightTarget.snap);
         for (let i = 0; i < MAX_HIGHLIGHT_RECTS; i += 1) {
           const rect = highlightTarget.rects[i];
           const centerIndex = i * 2;
 
           if (rect) {
-            highlightCenters[centerIndex] +=
-              (rect.centerX - highlightCenters[centerIndex]) * highlightFollow;
-            highlightCenters[centerIndex + 1] +=
-              (rect.centerY - highlightCenters[centerIndex + 1]) *
-              highlightFollow;
-            highlightSizes[centerIndex] +=
-              (rect.halfWidth - highlightSizes[centerIndex]) * highlightFollow;
-            highlightSizes[centerIndex + 1] +=
-              (rect.halfHeight - highlightSizes[centerIndex + 1]) *
-              highlightFollow;
-            highlightRadii[i] +=
-              (rect.radius - highlightRadii[i]) * highlightFollow;
+            if (snapHighlight) {
+              highlightCenters[centerIndex] = rect.centerX;
+              highlightCenters[centerIndex + 1] = rect.centerY;
+              highlightSizes[centerIndex] = rect.halfWidth;
+              highlightSizes[centerIndex + 1] = rect.halfHeight;
+              highlightRadii[i] = rect.radius;
+            } else {
+              highlightCenters[centerIndex] +=
+                (rect.centerX - highlightCenters[centerIndex]) *
+                highlightFollow;
+              highlightCenters[centerIndex + 1] +=
+                (rect.centerY - highlightCenters[centerIndex + 1]) *
+                highlightFollow;
+              highlightSizes[centerIndex] +=
+                (rect.halfWidth - highlightSizes[centerIndex]) *
+                highlightFollow;
+              highlightSizes[centerIndex + 1] +=
+                (rect.halfHeight - highlightSizes[centerIndex + 1]) *
+                highlightFollow;
+              highlightRadii[i] +=
+                (rect.radius - highlightRadii[i]) * highlightFollow;
+            }
           } else {
-            highlightSizes[centerIndex] +=
-              (0.0001 - highlightSizes[centerIndex]) * highlightFollow;
-            highlightSizes[centerIndex + 1] +=
-              (0.0001 - highlightSizes[centerIndex + 1]) * highlightFollow;
-            highlightRadii[i] += (0 - highlightRadii[i]) * highlightFollow;
+            if (snapHighlight) {
+              highlightSizes[centerIndex] = 0.0001;
+              highlightSizes[centerIndex + 1] = 0.0001;
+              highlightRadii[i] = 0;
+            } else {
+              highlightSizes[centerIndex] +=
+                (0.0001 - highlightSizes[centerIndex]) * highlightFollow;
+              highlightSizes[centerIndex + 1] +=
+                (0.0001 - highlightSizes[centerIndex + 1]) * highlightFollow;
+              highlightRadii[i] += (0 - highlightRadii[i]) * highlightFollow;
+            }
           }
+        }
+
+        if (snapHighlight) {
+          highlightTargetRef.current = { ...highlightTarget, snap: false };
         }
 
         const strengthTarget = highlightTarget.active ? 1 : 0;

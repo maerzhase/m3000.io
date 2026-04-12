@@ -106,125 +106,126 @@ export default function Home() {
                 quite fit, I build my own.
               </Text>
 
-              <Timeline>
-                <Station
-                  variant="timeline"
-                  current
-                  dotIndex={0}
-                  startYear={2022}
-                  endYear={new Date().getFullYear()}
-                  year={"2022-2026"}
-                  name="fxhash"
-                  title="Senior Design Engineer (Full-Stack)"
-                >
-                  <Text render={<p />}>
-                    Since 2022, I've been a{" "}
-                    <Text size="1" weight="semibold">
-                      Full-Stack Developer
-                    </Text>{" "}
-                    at <ExternalLink href="///fxhash.xyz">fxhash</ExternalLink>,
-                    building the largest open platform for generative art across
-                    multiple blockchains. fxhash is known for its open,
-                    uncurated model that lets artists mint generative works
-                    freely, and for pioneering ways to connect code, community,
-                    and art in a blockchain-based environment.
-                  </Text>
-                </Station>
-
-                <Station
-                  variant="timeline"
-                  dotIndex={1}
-                  startYear={2015}
-                  endYear={2023}
-                  year={"2015-2023"}
-                  name="Studio NAND"
-                  title="Lead Design Technologist"
-                >
-                  <Text render={<p />}>
-                    From 2015 to 2023 I was{" "}
-                    <Text size="1" weight="semibold">
-                      Lead Design Technologist
-                    </Text>{" "}
-                    at&nbsp;
-                    <ExternalLink href="///nand.io">Studio NAND</ExternalLink> —
-                    a studio specialized in data visualization, UX, and
-                    interactive digital products. I led the design technology
-                    team in conceiving and realizing projects that ranged from
-                    user-facing digital products to large-scale exhibitions and
-                    interactive installations, bridging the gap between concept,
-                    design, and implementation.
-                  </Text>
-                </Station>
-
-                <Station
-                  variant="timeline"
-                  dotIndex={2}
-                  startYear={2013}
-                  endYear={2015}
-                  year={"2013-2015"}
-                  name="ART+COM Studios"
-                  title="RND Developer"
-                >
-                  <Text render={<p />}>
-                    Designed and built prototypes for{" "}
-                    <ExternalLink
-                      href="///artcom.de/en/project/symphonie-cinetique/"
-                      noIcon
-                    >
-                      kinetic{" "}
-                      <span className="whitespace-nowrap">
-                        sculptures
-                        <IconExternalLink size="14" className="ml-1" />
-                      </span>
-                    </ExternalLink>{" "}
-                    and interactive exhibitions. ART+COM uses new media as
-                    artistic expression and designs{" "}
-                    <ExternalLink href="///artcom.de/?project=river-is" noIcon>
-                      immersive spaces and{" "}
-                      <span className="whitespace-nowrap">
-                        installations
-                        <IconExternalLink size="14" className="ml-1" />
-                      </span>
-                    </ExternalLink>{" "}
-                    that engage senses and environments.{" "}
-                  </Text>
-                </Station>
-
-                <Station
-                  variant="timeline"
-                  dotIndex={3}
-                  startYear={2010}
-                  endYear={2015}
-                  year={"2010-2015"}
-                  name=""
-                  title="Education"
-                >
-                  <Text render={<p />}>
-                    I studied{" "}
-                    <Text weight="semibold" size="1">
-                      interaction design
-                    </Text>{" "}
-                    at{" "}
-                    <ExternalLink href="///fh-potsdam.de/">
-                      University of Applied Science Potsdam
-                    </ExternalLink>{" "}
-                    and{" "}
-                    <ExternalLink href="///zhdk.ch">
-                      University of Arts Zürich
-                    </ExternalLink>
-                    , graduating in 2015 with a thesis on computer linguistics{" "}
-                    <Text
-                      weight="semibold"
-                      className="dither whitespace-nowrap rounded-md bg-black px-1 text-white"
-                    >
-                      (Sprache / Algorithmen)
+              <div className="-mt-2">
+                <Timeline>
+                  <Station
+                    variant="timeline"
+                    current
+                    dotIndex={0}
+                    startYear={2022}
+                    endYear={new Date().getFullYear()}
+                    year={"2022-2026"}
+                    name={
+                      <ExternalLink
+                        href="///fxhash.xyz"
+                        className="px-0"
+                        size="2"
+                      >
+                        fxhash
+                      </ExternalLink>
+                    }
+                    title={
+                      <>
+                        Senior Design Engineer{" "}
+                        <span className="whitespace-nowrap">(Full-Stack)</span>
+                      </>
+                    }
+                  >
+                    <Text render={<p />}>
+                      Building the largest open cross-chain generative art platform, I focused on UI and UX for complex onchain flows. The goal was to make these systems clear and intuitive without hiding their mechanics. I focused on performance and consistency, shaping reusable UI patterns that scaled with the product, and migrated the codebase from a distributed system to a unified monorepo.
                     </Text>
-                    , exploring how algorithmic logic interacts with natural
-                    language — a topic that has since become central to modern
-                    AI systems such as ChatGPT.
-                  </Text>
-                </Station>
-              </Timeline>
+                  </Station>
+
+                  <Station
+                    variant="timeline"
+                    dotIndex={1}
+                    startYear={2015}
+                    endYear={2023}
+                    year={"2015-2023"}
+                    name={
+                      <ExternalLink
+                        href="///nand.io"
+                        className="px-0"
+                        size="2"
+                      >
+                        Studio NAND
+                      </ExternalLink>
+                    }
+                    title="Lead Design Technologist"
+                  >
+                    <Text render={<p />}>
+                      Building at the intersection of design and engineering, I developed interactive web applications, tools, and real-time systems for cultural and enterprise clients. The work focused on translating complex UX concepts and data-heavy interfaces into scalable, production-ready systems. I shaped technical architecture and implementation together with designers and engineers, and built custom tools, data pipelines, and visual systems used in both installations and decision-making software.
+                    </Text>
+                  </Station>
+
+                  <Station
+                    variant="timeline"
+                    dotIndex={2}
+                    startYear={2013}
+                    endYear={2015}
+                    year={"2013-2015"}
+                    name={
+                      <ExternalLink
+                        href="///artcom.de"
+                        className="px-0"
+                        size="2"
+                      >
+                        ART+COM Studios
+                      </ExternalLink>
+                    }
+                    title="RND Developer"
+                  >
+                    <Text render={<p />}>
+                      Working across software, hardware, and spatial design, I built interactive installations and kinetic systems for public exhibitions. The work was hands-on and experimental, turning conceptual ideas into technically viable systems. I developed real-time, performance-sensitive software driving physical installations, and built pipelines connecting sensors, motion tracking, and rendering systems, in close collaboration with designers and engineers.
+                    </Text>
+                  </Station>
+
+                  <Station
+                    variant="timeline"
+                    dotIndex={3}
+                    startYear={2010}
+                    endYear={2015}
+                    year={"2010-2015"}
+                    name={
+                      <>
+                        <ExternalLink
+                          href="///fh-potsdam.de/"
+                          className="px-0"
+                          size="2"
+                        >
+                          FHP
+                        </ExternalLink><Text size="1" className="px-2">and</Text>
+                        <ExternalLink
+                          href="///zhdk.ch"
+                          className="px-0"
+                          size="2"
+                        >
+                          ZHdK
+                        </ExternalLink>
+                      </>
+                    }
+                    title="Education: Interaction Design"
+                  >
+                    <Text render={<p />}>
+                      Graduating in 2015 in Interaction Design, I focused on
+                      designing interfaces and user experiences for complex
+                      systems, creating interfaces for solving complex problems
+                      and shaping how people understand and navigate technical
+                      environments. My thesis{" "}
+                      <Text
+                        weight="semibold"
+                        className="dither whitespace-nowrap rounded-md bg-black px-1 text-white"
+                      >
+                        (Sprache / Algorithmen)
+                      </Text>
+                      {" "}
+                      explored how algorithmic logic shapes natural language — a
+                      line of thinking that has since become central to modern
+                      AI systems.
+                    </Text>
+                  </Station>
+                </Timeline>
+              </div>
             </main>
             <footer className="mt-8 flex flex-col gap-4">
               {/* biome-ignore lint: using render */}

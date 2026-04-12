@@ -8,10 +8,8 @@ import {
 } from "@tabler/icons-react";
 import Image from "next/image";
 import BackgroundShader from "@/components/BackgroundShader";
-import { CardDeck } from "@/components/CardDeck";
 import { Hello } from "@/components/Hello";
 import { ContentProvider } from "@/components/Overlay/ContentProvider";
-import { OverlayTrigger } from "@/components/Overlay/Trigger";
 import { ShaderHighlight } from "@/components/ShaderHighlight";
 import { Station, Timeline } from "@/components/Timeline";
 import { ExternalLink, Link } from "@/components/ui/Link";
@@ -126,14 +124,10 @@ export default function Home() {
                     </Text>{" "}
                     at <ExternalLink href="///fxhash.xyz">fxhash</ExternalLink>,
                     building the largest open platform for generative art across
-                    multiple blockchains.{" "}
-                    <OverlayTrigger id="fxhash" variant="plain">
-                      <CardDeck />
-                    </OverlayTrigger>{" "}
-                    fxhash is known for its open, uncurated model that lets
-                    artists mint generative works freely, and for pioneering
-                    ways to connect code, community, and art in a
-                    blockchain-based environment.
+                    multiple blockchains. fxhash is known for its open,
+                    uncurated model that lets artists mint generative works
+                    freely, and for pioneering ways to connect code, community,
+                    and art in a blockchain-based environment.
                   </Text>
                 </Station>
 
@@ -154,15 +148,11 @@ export default function Home() {
                     at&nbsp;
                     <ExternalLink href="///nand.io">Studio NAND</ExternalLink> —
                     a studio specialized in data visualization, UX, and
-                    interactive digital products.{" "}
-                    <OverlayTrigger id="nand" variant="plain">
-                      <CardDeck />
-                    </OverlayTrigger>{" "}
-                    I led the design technology team in conceiving and realizing
-                    projects that ranged from user-facing digital products to
-                    large-scale exhibitions and interactive installations,
-                    bridging the gap between concept, design, and
-                    implementation.
+                    interactive digital products. I led the design technology
+                    team in conceiving and realizing projects that ranged from
+                    user-facing digital products to large-scale exhibitions and
+                    interactive installations, bridging the gap between concept,
+                    design, and implementation.
                   </Text>
                 </Station>
 
@@ -197,9 +187,6 @@ export default function Home() {
                       </span>
                     </ExternalLink>{" "}
                     that engage senses and environments.{" "}
-                    <OverlayTrigger id="artcom" variant="plain">
-                      <CardDeck />
-                    </OverlayTrigger>
                   </Text>
                 </Station>
 

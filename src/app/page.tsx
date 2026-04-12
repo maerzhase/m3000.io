@@ -200,7 +200,7 @@ export default function Home() {
                       systems. I shaped technical architecture and
                       implementation together with designers and engineers, and
                       built custom tools, data pipelines, and design systems
-                      used in both installations and decision-making software.
+                      used in both installations and criticial decision-making software.
                     </Text>
                   </Station>
 

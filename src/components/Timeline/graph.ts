@@ -172,6 +172,13 @@ export function buildDurationGeometries(
   routeIntervals: RouteInterval[],
 ) {
   return stations.map((station) => {
+    if (station.timelineMode === "release") {
+      return {
+        path: "",
+        points: [],
+      } satisfies DurationGeometry;
+    }
+
     const metric = metrics[station.index];
     if (!metric) {
       return {

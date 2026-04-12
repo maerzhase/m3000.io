@@ -6,6 +6,7 @@ export interface ShaderHighlightPayload {
   id: string;
   rects: ShaderHighlightRect[];
   snap?: boolean;
+  haloSpread?: number;
 }
 
 export interface ShaderHighlightPoint {
@@ -74,6 +75,7 @@ type ShaderHighlightProps = {
   active?: boolean;
   padding?: ShaderHighlightPadding;
   radius?: number;
+  haloSpread?: number;
 };
 
 function mergeRefs<T>(
@@ -168,6 +170,7 @@ export function ShaderHighlight({
   active: forcedActive,
   padding = 2,
   radius = 16,
+  haloSpread,
 }: ShaderHighlightProps) {
   const controller = React.useContext(ShaderHighlightContext);
   const id = React.useId();
@@ -182,8 +185,9 @@ export function ShaderHighlight({
       id,
       rects: getNormalizedRects(element, padding, radius),
       snap: true,
+      haloSpread,
     });
-  }, [controller, id, padding, radius]);
+  }, [controller, haloSpread, id, padding, radius]);
 
   const activate = React.useCallback(() => {
     const element = elementRef.current;
@@ -192,9 +196,10 @@ export function ShaderHighlight({
     controller.activate({
       id,
       rects: getNormalizedRects(element, padding, radius),
+      haloSpread,
     });
     setActive(true);
-  }, [controller, id, padding, radius]);
+  }, [controller, haloSpread, id, padding, radius]);
 
   const deactivate = React.useCallback(() => {
     if (!controller) return;

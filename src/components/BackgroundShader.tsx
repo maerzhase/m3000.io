@@ -54,6 +54,7 @@ uniform float u_highlight_edge_boost;
 uniform float u_highlight_dither_repel;
 uniform float u_highlight_noise;
 uniform float u_highlight_halo;
+uniform float u_highlight_halo_spread;
 uniform int u_path_point_count;
 uniform vec2 u_path_points[24];
 uniform float u_path_width;
@@ -320,7 +321,11 @@ void main() {
   pathWave = mix(0.76, 1.06, pathWave);
   float halo =
     u_highlight_strength
-    * (1.0 - smoothstep(highlightFeather * 1.6, highlightFeather * 8.0, abs(nearestRectDist)));
+    * (1.0 - smoothstep(
+      highlightFeather * 1.6,
+      highlightFeather * u_highlight_halo_spread,
+      abs(nearestRectDist)
+    ));
   halo *= 0.38 + 0.62 * noiseB;
   halo *= u_highlight_halo;
   highlightMask = clamp(highlightMask, 0.0, 1.0);
@@ -529,6 +534,7 @@ const DEFAULT_PARAMS = {
   highlightDitherRepel: 1,
   highlightNoise: 1.15,
   highlightHalo: 1.08,
+  highlightHaloSpread: 5.8,
 } as const;
 
 type ShaderParams = Record<keyof typeof DEFAULT_PARAMS, number>;
@@ -705,6 +711,10 @@ const BackgroundShader: React.FC<{ children?: React.ReactNode }> = ({
     );
     const uHighlightNoise = gl.getUniformLocation(program, "u_highlight_noise");
     const uHighlightHalo = gl.getUniformLocation(program, "u_highlight_halo");
+    const uHighlightHaloSpread = gl.getUniformLocation(
+      program,
+      "u_highlight_halo_spread",
+    );
     const uPathPointCount = gl.getUniformLocation(
       program,
       "u_path_point_count",
@@ -846,6 +856,7 @@ const BackgroundShader: React.FC<{ children?: React.ReactNode }> = ({
     let lastScrollTime = 0;
     let activeHighlightId: string | null = null;
     let highlightStrength = 0.0;
+    let highlightHaloSpread = DEFAULT_PARAMS.highlightHaloSpread;
     const highlightCenters = new Float32Array(MAX_HIGHLIGHT_RECTS * 2);
     const highlightSizes = new Float32Array(MAX_HIGHLIGHT_RECTS * 2);
     const highlightRadii = new Float32Array(MAX_HIGHLIGHT_RECTS);
@@ -994,6 +1005,10 @@ const BackgroundShader: React.FC<{ children?: React.ReactNode }> = ({
         }
 
         const highlightFollow = reduce ? 0.14 : 0.03;
+        const haloSpreadTarget =
+          highlightTarget.haloSpread ?? paramsRef.current.highlightHaloSpread;
+        highlightHaloSpread +=
+          (haloSpreadTarget - highlightHaloSpread) * (reduce ? 0.18 : 0.08);
         const snapHighlight = Boolean(highlightTarget.snap);
         for (let i = 0; i < MAX_HIGHLIGHT_RECTS; i += 1) {
           const rect = highlightTarget.rects[i];
@@ -1056,6 +1071,8 @@ const BackgroundShader: React.FC<{ children?: React.ReactNode }> = ({
       } else {
         activeHighlightId = null;
         highlightStrength += (0 - highlightStrength) * 0.018;
+        highlightHaloSpread +=
+          (paramsRef.current.highlightHaloSpread - highlightHaloSpread) * 0.05;
         for (let i = 0; i < MAX_HIGHLIGHT_RECTS * 2; i += 1) {
           highlightSizes[i] += (0.0001 - highlightSizes[i]) * 0.018;
         }
@@ -1182,6 +1199,7 @@ const BackgroundShader: React.FC<{ children?: React.ReactNode }> = ({
       gl.uniform1f(uHighlightDitherRepel, p.highlightDitherRepel);
       gl.uniform1f(uHighlightNoise, p.highlightNoise);
       gl.uniform1f(uHighlightHalo, p.highlightHalo);
+      gl.uniform1f(uHighlightHaloSpread, highlightHaloSpread);
       gl.uniform1i(
         uPathPointCount,
         Math.min(
@@ -1570,6 +1588,28 @@ const BackgroundShader: React.FC<{ children?: React.ReactNode }> = ({
                     />
                     <span className="text-xs text-white/50">
                       {params.opacity.toFixed(2)}
+                    </span>
+                  </label>
+                  <label className="block">
+                    <span className="block text-xs text-white/70">
+                      Highlight halo spread
+                    </span>
+                    <input
+                      type="range"
+                      min={3}
+                      max={8}
+                      step={0.1}
+                      value={params.highlightHaloSpread}
+                      onChange={(e) =>
+                        updateParam(
+                          "highlightHaloSpread",
+                          Number(e.target.value),
+                        )
+                      }
+                      className="w-full accent-[#ff2f00]"
+                    />
+                    <span className="text-xs text-white/50">
+                      {params.highlightHaloSpread.toFixed(1)}
                     </span>
                   </label>
                 </div>

@@ -3,7 +3,6 @@ export const dynamic = "force-dynamic";
 import {
   IconBrandGithubFilled,
   IconBrandLinkedinFilled,
-  IconExternalLink,
   IconMailFilled,
 } from "@tabler/icons-react";
 import Image from "next/image";
@@ -132,7 +131,13 @@ export default function Home() {
                     }
                   >
                     <Text render={<p />}>
-                      Building the largest open cross-chain generative art platform, I focused on UI and UX for complex onchain flows. The goal was to make these systems clear and intuitive without hiding their mechanics. I focused on performance and consistency, shaping reusable UI patterns that scaled with the product, and migrated the codebase from a distributed system to a unified monorepo.
+                      Building the largest open cross-chain generative art
+                      platform, I focused on UI and UX for complex onchain
+                      flows. The goal was to make these systems clear and
+                      intuitive without hiding their mechanics. I focused on
+                      performance and consistency, shaping reusable UI patterns
+                      that scaled with the product, and migrated the codebase
+                      from a distributed system to a unified monorepo.
                     </Text>
                   </Station>
 
@@ -143,18 +148,22 @@ export default function Home() {
                     endYear={2023}
                     year={"2015-2023"}
                     name={
-                      <ExternalLink
-                        href="///nand.io"
-                        className="px-0"
-                        size="2"
-                      >
+                      <ExternalLink href="///nand.io" className="px-0" size="2">
                         Studio NAND
                       </ExternalLink>
                     }
                     title="Lead Design Technologist"
                   >
                     <Text render={<p />}>
-                      Building at the intersection of design and engineering, I developed interactive web applications, tools, and real-time systems for cultural and enterprise clients. The work focused on translating complex UX concepts and data-heavy interfaces into scalable, production-ready systems. I shaped technical architecture and implementation together with designers and engineers, and built custom tools, data pipelines, and visual systems used in both installations and decision-making software.
+                      Building at the intersection of design and engineering, I
+                      developed interactive web applications, tools, and
+                      real-time systems for cultural and enterprise clients. The
+                      work focused on translating complex UX concepts and
+                      data-heavy interfaces into scalable, production-ready
+                      systems. I shaped technical architecture and
+                      implementation together with designers and engineers, and
+                      built custom tools, data pipelines, and visual systems
+                      used in both installations and decision-making software.
                     </Text>
                   </Station>
 
@@ -176,7 +185,15 @@ export default function Home() {
                     title="RND Developer"
                   >
                     <Text render={<p />}>
-                      Working across software, hardware, and spatial design, I built interactive installations and kinetic systems for public exhibitions. The work was hands-on and experimental, turning conceptual ideas into technically viable systems. I developed real-time, performance-sensitive software driving physical installations, and built pipelines connecting sensors, motion tracking, and rendering systems, in close collaboration with designers and engineers.
+                      Working across software, hardware, and spatial design, I
+                      built interactive installations and kinetic systems for
+                      public exhibitions. The work was hands-on and
+                      experimental, turning conceptual ideas into technically
+                      viable systems. I developed real-time,
+                      performance-sensitive software driving physical
+                      installations, and built pipelines connecting sensors,
+                      motion tracking, and rendering systems, in close
+                      collaboration with designers and engineers.
                     </Text>
                   </Station>
 
@@ -194,7 +211,10 @@ export default function Home() {
                           size="2"
                         >
                           FHP
-                        </ExternalLink><Text size="1" className="px-2">and</Text>
+                        </ExternalLink>
+                        <Text size="1" className="px-2">
+                          and
+                        </Text>
                         <ExternalLink
                           href="///zhdk.ch"
                           className="px-0"
@@ -217,8 +237,7 @@ export default function Home() {
                         className="dither whitespace-nowrap rounded-md bg-black px-1 text-white"
                       >
                         (Sprache / Algorithmen)
-                      </Text>
-                      {" "}
+                      </Text>{" "}
                       explored how algorithmic logic shapes natural language — a
                       line of thinking that has since become central to modern
                       AI systems.

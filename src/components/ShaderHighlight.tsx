@@ -229,30 +229,35 @@ export function ShaderHighlight({
     return children;
   }
 
-  const child = React.Children.only(children) as React.ReactElement<
+  const child = React.Children.toArray(children)[0];
+  if (React.Children.count(children) !== 1 || !React.isValidElement(child)) {
+    return children;
+  }
+
+  const element = child as React.ReactElement<
     React.HTMLAttributes<HTMLElement> & {
       ref?: React.Ref<HTMLElement>;
     }
   >;
 
-  return React.cloneElement(child, {
-    ref: mergeRefs(child.props.ref, (node: HTMLElement | null) => {
+  return React.cloneElement(element, {
+    ref: mergeRefs(element.props.ref, (node: HTMLElement | null) => {
       elementRef.current = node;
     }),
     onPointerEnter: composeEventHandlers(
-      child.props.onPointerEnter,
+      element.props.onPointerEnter,
       activate as (event: React.PointerEvent<HTMLElement>) => void,
     ),
     onPointerLeave: composeEventHandlers(
-      child.props.onPointerLeave,
+      element.props.onPointerLeave,
       deactivate as (event: React.PointerEvent<HTMLElement>) => void,
     ),
     onFocus: composeEventHandlers(
-      child.props.onFocus,
+      element.props.onFocus,
       activate as (event: React.FocusEvent<HTMLElement>) => void,
     ),
     onBlur: composeEventHandlers(
-      child.props.onBlur,
+      element.props.onBlur,
       deactivate as (event: React.FocusEvent<HTMLElement>) => void,
     ),
   });

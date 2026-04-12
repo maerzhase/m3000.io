@@ -22,7 +22,12 @@ import {
   NODE_OFFSET_Y,
   TIMEFRAME_HIGHLIGHT_WIDTH,
 } from "./constants";
-import { laneXFor, parseYearValue, samplePoints } from "./geometry";
+import {
+  laneXFor,
+  parseYearValue,
+  pointsToPath,
+  samplePoints,
+} from "./geometry";
 import {
   buildDurationGeometries,
   buildRailPath,
@@ -34,7 +39,16 @@ import type {
   TimelineStationData,
 } from "./types";
 
-export function Timeline({ children }: TimelineProps) {
+export function Timeline({
+  children,
+  hideStationPoints = false,
+}: TimelineProps) {
+  const ROOT_DRAW_DURATION = 0.55;
+  const ROOT_DRAW_DELAY = 0.05;
+  const STATION_STAGGER = 0.15;
+  const BRANCH_DRAW_DURATION = 0.55;
+  const BRANCH_STAGGER = 0.14;
+
   const containerRef = useRef<HTMLDivElement | null>(null);
   const itemRefs = useRef<Array<HTMLDivElement | null>>([]);
   const [metrics, setMetrics] = useState<StationMetrics[]>([]);
@@ -146,6 +160,7 @@ export function Timeline({ children }: TimelineProps) {
     return buildDurationGeometries(stations, metrics, routeIntervals);
   }, [metrics, routeIntervals, stations]);
 
+  const stationDotStart = ROOT_DRAW_DELAY + ROOT_DRAW_DURATION;
   useEffect(() => {
     if (
       activeTimeframeIndex === null ||
@@ -251,7 +266,7 @@ export function Timeline({ children }: TimelineProps) {
           >
             {railPath ? (
               <>
-                <path
+                <motion.path
                   d={railPath}
                   stroke="rgba(255,255,255,0.08)"
                   strokeWidth="5"
@@ -259,8 +274,15 @@ export function Timeline({ children }: TimelineProps) {
                   strokeLinejoin="round"
                   fill="none"
                   pointerEvents="none"
+                  initial={{ pathLength: 0, opacity: 0 }}
+                  animate={{ pathLength: 1, opacity: 1 }}
+                  transition={{
+                    delay: ROOT_DRAW_DELAY,
+                    duration: ROOT_DRAW_DURATION,
+                    ease: [0.22, 1, 0.36, 1],
+                  }}
                 />
-                <path
+                <motion.path
                   d={railPath}
                   stroke={LINE_COLOR}
                   strokeWidth="1.75"
@@ -268,18 +290,27 @@ export function Timeline({ children }: TimelineProps) {
                   strokeLinejoin="round"
                   fill="none"
                   pointerEvents="none"
+                  initial={{ pathLength: 0, opacity: 0 }}
+                  animate={{ pathLength: 1, opacity: 1 }}
+                  transition={{
+                    delay: ROOT_DRAW_DELAY,
+                    duration: ROOT_DRAW_DURATION,
+                    ease: [0.22, 1, 0.36, 1],
+                  }}
                 />
               </>
             ) : null}
             {stations.map(({ index }) => {
-              const path = durationGeometries[index]?.path;
-              if (!path) {
+              const geometry = durationGeometries[index];
+              if (!geometry?.path) {
                 return null;
               }
 
+              const path = pointsToPath([...geometry.points].reverse());
+
               return (
                 <g key={`duration-${index}`}>
-                  <path
+                  <motion.path
                     d={path}
                     stroke={DURATION_COLOR}
                     strokeWidth="1.25"
@@ -287,9 +318,19 @@ export function Timeline({ children }: TimelineProps) {
                     strokeLinejoin="round"
                     fill="none"
                     pointerEvents="none"
+                    initial={{ pathLength: 0, opacity: 0 }}
+                    animate={{ pathLength: 1, opacity: 1 }}
+                    transition={{
+                      delay:
+                        stationDotStart +
+                        index * STATION_STAGGER +
+                        index * BRANCH_STAGGER,
+                      duration: BRANCH_DRAW_DURATION,
+                      ease: [0.22, 1, 0.36, 1],
+                    }}
                   />
                   <path
-                    d={path}
+                    d={geometry.path}
                     stroke="transparent"
                     strokeWidth="16"
                     strokeLinecap="round"
@@ -320,6 +361,8 @@ export function Timeline({ children }: TimelineProps) {
               (metrics[index]?.height ?? NODE_OFFSET_Y) - NODE_END_INSET,
               NODE_OFFSET_Y,
             ),
+            hideTimelinePoint: hideStationPoints,
+            dotDelay: stationDotStart + index * STATION_STAGGER,
             onTimeframeEnter: () => activateTimeframe(index),
             onTimeframeLeave: () => deactivateTimeframe(index),
             onMarkerEnter: () => activateTimeframe(index),

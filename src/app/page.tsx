@@ -219,13 +219,13 @@ export default function Home() {
                   >
                     <Text render={<p />}>
                       Working across software, hardware, and spatial design, I
-                      built interactive installations and kinetic systems for
+                      designed and build interactive installations and kinetic sculptures for
                       public exhibitions. The work was hands-on and
                       experimental, turning conceptual ideas into technically
                       viable systems. I developed real-time,
                       performance-sensitive software driving physical
                       installations, and built pipelines connecting sensors,
-                      motion tracking, and rendering systems, in close
+                      kinetic modules, and rendering systems, in close
                       collaboration with designers and engineers.
                     </Text>
                   </Station>

@@ -14,9 +14,9 @@ export function InlineImage({
   className,
 }: InlineImageProps) {
   return (
-    <div
+    <span
       className={cn(
-        "dither bg-gray-800 rounded-sm shrink-0",
+        "dither inline-block shrink-0 rounded-sm bg-gray-800",
         float === "right" && "float-right ml-4 mb-2",
         float === "left" && "float-left mr-4 mb-2",
         className,

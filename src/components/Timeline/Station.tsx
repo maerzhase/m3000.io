@@ -257,7 +257,7 @@ export function Station({
   );
 
   return (
-    <div
+    <article
       ref={stationRef}
       className={cn(
         isTimeline && "relative min-h-[92px] py-1 sm:min-h-[104px]",
@@ -349,47 +349,49 @@ export function Station({
         {isTimeline ? (
           <>
             <div className="sm:hidden">{timeframeLabel}</div>
-            {name && (
-              <div
-                className={cn(
-                  "min-w-0 transition-colors duration-200",
-                  stationActive ? "text-white" : "text-white/72",
-                )}
-              >
-                {name}
-              </div>
-            )}
-            <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-baseline sm:gap-3">
-              <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">
-                <Text
-                  weight="semibold"
-                  size="3"
+            <header className="flex min-w-0 flex-col gap-0.5">
+              {name && (
+                <div
                   className={cn(
-                    "transition-colors duration-200",
-                    stationActive ? "text-white" : "text-white/82",
+                    "min-w-0 transition-colors duration-200",
+                    stationActive ? "text-white" : "text-white/72",
                   )}
                 >
-                  {title}
+                  {name}
+                </div>
+              )}
+              <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-baseline sm:gap-3">
+                <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">
+                  <Text
+                    weight="semibold"
+                    size="3"
+                    className={cn(
+                      "transition-colors duration-200",
+                      stationActive ? "text-white" : "text-white/82",
+                    )}
+                  >
+                    {title}
+                  </Text>
+                </div>
+                <Text
+                  size="1"
+                  color="dim"
+                  className="hidden shrink-0 whitespace-nowrap sm:ml-auto sm:block"
+                >
+                  <span
+                    className={cn(
+                      "inline-flex font-mono text-[11px] leading-none tracking-[0.12em] text-white/70 uppercase transition-colors duration-200",
+                      stationActive && "text-white/92",
+                    )}
+                  >
+                    {year}
+                  </span>
                 </Text>
               </div>
-              <Text
-                size="1"
-                color="dim"
-                className="hidden shrink-0 whitespace-nowrap sm:ml-auto sm:block"
-              >
-                <span
-                  className={cn(
-                    "inline-flex font-mono text-[11px] leading-none tracking-[0.12em] text-white/70 uppercase transition-colors duration-200",
-                    stationActive && "text-white/92",
-                  )}
-                >
-                  {year}
-                </span>
-              </Text>
-            </div>
+            </header>
           </>
         ) : (
-          <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:gap-3">
+          <header className="flex min-w-0 flex-col gap-2 sm:flex-row sm:gap-3">
             {timeframeLabel}
             <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">
               <Text
@@ -404,7 +406,7 @@ export function Station({
               </Text>
               {name ? <span>{name}</span> : null}
             </div>
-          </div>
+          </header>
         )}
         <StationInlineContext value={inlineContextValue}>
           <div
@@ -417,6 +419,6 @@ export function Station({
           </div>
         </StationInlineContext>
       </div>
-    </div>
+    </article>
   );
 }

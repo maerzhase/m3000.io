@@ -12,5 +12,5 @@ const HELLOS = [
 
 export function Hello() {
   const hello = HELLOS[Math.floor(Math.random() * HELLOS.length)];
-  return <span>{hello}</span>;
+  return hello;
 }

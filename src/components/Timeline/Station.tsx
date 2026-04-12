@@ -240,6 +240,23 @@ export function Station({
     setActivePointId(null);
   }, [hoverEnabled]);
 
+  const timeframeLabel = (
+    <Text
+      size="1"
+      color="dim"
+      className="order-first shrink-0 whitespace-nowrap"
+    >
+      <span
+        className={cn(
+          "inline-flex font-mono text-[11px] leading-none tracking-[0.12em] text-white/70 uppercase transition-colors duration-200",
+          stationActive && "text-white/92",
+        )}
+      >
+        {year}
+      </span>
+    </Text>
+  );
+
   return (
     <div
       ref={stationRef}
@@ -332,6 +349,9 @@ export function Station({
       >
         {isTimeline ? (
           <>
+            <div className="sm:hidden">
+              {timeframeLabel}
+            </div>
             {name && (
               <div
                 className={cn(
@@ -342,7 +362,7 @@ export function Station({
                 {name}
               </div>
             )}
-            <div className="flex min-w-0 gap-3">
+            <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-baseline sm:gap-3">
               <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">
                 <Text
                   weight="semibold"
@@ -358,31 +378,22 @@ export function Station({
               <Text
                 size="1"
                 color="dim"
-                className="ml-auto shrink-0 whitespace-nowrap"
+                className="hidden shrink-0 whitespace-nowrap sm:ml-auto sm:block"
               >
-                <button
-                  type="button"
+                <span
                   className={cn(
-                    "inline-flex rounded-full border border-white/10 bg-white/6 px-2 py-1 font-mono text-[11px] leading-none tracking-[0.12em] text-white/70 uppercase transition-colors duration-200",
-                    isTimeline &&
-                      "cursor-default focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/30",
-                    timelineMode === "release" && "cursor-default",
-                    stationActive &&
-                      "border-white/20 bg-white/10 text-white/92",
+                    "inline-flex font-mono text-[11px] leading-none tracking-[0.12em] text-white/70 uppercase transition-colors duration-200",
+                    stationActive && "text-white/92",
                   )}
-                  onPointerEnter={onTimeframeEnter}
-                  onPointerLeave={onTimeframeLeave}
-                  onFocus={onTimeframeEnter}
-                  onBlur={onTimeframeLeave}
-                  tabIndex={isTimeline ? 0 : -1}
                 >
                   {year}
-                </button>
+                </span>
               </Text>
             </div>
           </>
         ) : (
-          <div className="flex min-w-0 gap-3">
+          <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:gap-3">
+            {timeframeLabel}
             <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">
               <Text
                 weight="semibold"
@@ -396,29 +407,6 @@ export function Station({
               </Text>
               {name ? <span>{name}</span> : null}
             </div>
-            <Text
-              size="1"
-              color="dim"
-              className="ml-auto shrink-0 whitespace-nowrap"
-            >
-              <button
-                type="button"
-                className={cn(
-                  "inline-flex rounded-full border border-white/10 bg-white/6 px-2 py-1 font-mono text-[11px] leading-none tracking-[0.12em] text-white/70 uppercase transition-colors duration-200",
-                  isTimeline &&
-                    "cursor-default focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/30",
-                  timelineMode === "release" && "cursor-default",
-                  stationActive && "border-white/20 bg-white/10 text-white/92",
-                )}
-                onPointerEnter={onTimeframeEnter}
-                onPointerLeave={onTimeframeLeave}
-                onFocus={onTimeframeEnter}
-                onBlur={onTimeframeLeave}
-                tabIndex={isTimeline ? 0 : -1}
-              >
-                {year}
-              </button>
-            </Text>
           </div>
         )}
         <StationInlineContext value={inlineContextValue}>

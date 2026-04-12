@@ -264,8 +264,8 @@ void main() {
   float edgeRipple =
     sin((nearestRectDist * 1600.0) - u_time * 6.0 + noiseA * 8.0) * 0.5 + 0.5;
   float noisyEdge =
-    highlightEdge * (1.0 + edgeNoise * 1.8 * u_highlight_noise)
-    + highlightEdge * edgeRipple * 0.45 * u_highlight_noise;
+    highlightEdge * (1.0 + edgeNoise * 2.15 * u_highlight_noise)
+    + highlightEdge * edgeRipple * 0.58 * u_highlight_noise;
   float minRes = min(u_resolution.x, u_resolution.y);
   float pathHalfWidth = max(0.5, u_path_width * 0.5);
   float pathFeather = max(0.8, pathHalfWidth * 0.55);
@@ -294,7 +294,7 @@ void main() {
     valueNoise(vec2(pathTravelPx * 0.02 - u_time * 1.45 + 13.7, pathDistancePx * 1.2 - noiseB * 3.0));
   float pathShimmer = mix(pathFlowNoise, pathFlowDetail, 0.42);
   pathShimmer = smoothstep(0.18, 0.88, pathShimmer);
-  pathShimmer *= 0.82 + 0.18 * noiseB;
+  pathShimmer *= 0.78 + 0.22 * noiseB;
   pathShimmer = mix(pathShimmer, 1.0, directionPulse * 0.35);
   float pathBodyNoise =
     mix(pathFlowNoise - 0.5, pathFlowDetail - 0.5, 0.5);
@@ -303,9 +303,9 @@ void main() {
     pathDistancePx
     + pathBodyNoise
       * pathHalfWidth
-      * (0.55 + pathCore * 0.9 + pathGlow * 0.45)
+      * (0.7 + pathCore * 1.05 + pathGlow * 0.6)
       * u_highlight_noise
-    + pathEdgeNoise * pathHalfWidth * 0.45 * u_highlight_noise;
+    + pathEdgeNoise * pathHalfWidth * 0.6 * u_highlight_noise;
   pathCore =
     u_path_strength
     * (1.0 - smoothstep(pathHalfWidth, pathHalfWidth + pathFeather, warpedPathDistance));
@@ -317,14 +317,14 @@ void main() {
     * (1.0 - smoothstep(pathHalfWidth * 0.35, pathHalfWidth * 3.2, abs(warpedPathDistance)));
   float pathWave =
     0.5 + 0.5 * sin(pathTravelPx * 0.018 - u_time * 3.1 + noiseA * 4.0);
-  pathWave = mix(0.72, 1.0, pathWave);
+  pathWave = mix(0.76, 1.06, pathWave);
   float halo =
     u_highlight_strength
     * (1.0 - smoothstep(highlightFeather * 1.6, highlightFeather * 8.0, abs(nearestRectDist)));
-  halo *= 0.45 + 0.55 * noiseB;
+  halo *= 0.38 + 0.62 * noiseB;
   halo *= u_highlight_halo;
   highlightMask = clamp(highlightMask, 0.0, 1.0);
-  highlightEdge = clamp(max(highlightEdge, noisyEdge), 0.0, 1.35);
+  highlightEdge = clamp(max(highlightEdge, noisyEdge), 0.0, 1.5);
   halo = clamp(halo, 0.0, 1.0);
   pathCore = clamp(pathCore, 0.0, 1.0);
   pathRim = clamp(pathRim, 0.0, 1.0);
@@ -345,18 +345,18 @@ void main() {
   vec2 uv_d = uv + trailEff * displaceStrength * displaceDir;
   uv_d += radialDir * highlightMask * u_highlight_edge_boost * 0.055;
   uv_d += tangentDir * edgeNoise * highlightEdge * 0.03 * u_highlight_noise;
-  uv_d += tangentDir * (pathShimmer - 0.5) * pathCore * 0.014;
-  uv_d += radialDir * pathBodyNoise * pathCore * 0.012;
-  uv_d += radialDir * pathEdgeNoise * pathGlow * 0.01;
+  uv_d += tangentDir * (pathShimmer - 0.5) * pathCore * 0.019;
+  uv_d += radialDir * pathBodyNoise * pathCore * 0.016;
+  uv_d += radialDir * pathEdgeNoise * pathGlow * 0.014;
 
   vec3 col;
   float pathRgbBoost =
-    pathCore * (0.65 + directionPulse * 1.25) + pathGlow * 0.22;
+    pathCore * (0.78 + directionPulse * 1.45) + pathGlow * 0.34;
   float rgbSplitStrength =
     u_rgb_split
-    + highlightEdge * u_highlight_edge_boost * 0.075
-    + halo * u_highlight_halo * 0.04
-    + pathRgbBoost * 0.09;
+    + highlightEdge * u_highlight_edge_boost * 0.09
+    + halo * u_highlight_halo * 0.055
+    + pathRgbBoost * 0.13;
   if (
     rgbSplitStrength > 0.0 &&
     (trail > 0.005 || highlightEdge > 0.001 || pathCore > 0.001)
@@ -374,7 +374,7 @@ void main() {
         highlightEdge * 0.9 + halo * 0.75 + pathRgbBoost * (0.45 + directionPulse * 0.9)
       )
       * rgbSplitStrength
-      * 4.8;
+      * 5.8;
     vec3 cr = baseScene(uv_d - rs * velDir);
     vec3 cg = baseScene(uv_d);
     vec3 cb = baseScene(uv_d + rs * velDir);
@@ -392,21 +392,21 @@ void main() {
   col +=
     pathHotColor
     * pathCore
-    * (0.28 + 0.24 * pathShimmer + directionPulse * 0.38)
+    * (0.34 + 0.28 * pathShimmer + directionPulse * 0.44)
     * pathWave;
-  col += haloColor * pathRim * (0.22 + 0.12 * pathShimmer);
+  col += haloColor * pathRim * (0.26 + 0.15 * pathShimmer);
   col +=
     u_primary_color
     * pathGlow
-    * (0.16 + directionPulse * 0.12)
+    * (0.2 + directionPulse * 0.16)
     * u_color_intensity
     * pathWave;
-  col += halo * haloColor * (0.35 + highlightEdge * 0.25);
-  col = mix(col, u_base_color * 0.72, highlightMask * 0.58);
-  col += edgeNoise * 0.06 * highlightEdge * u_highlight_noise;
-  col += edgeNoise * 0.055 * pathGlow * u_highlight_noise * pathWave;
-  col += pathBodyNoise * 0.06 * pathCore * u_highlight_noise;
-  col += pathEdgeNoise * 0.045 * pathRim * u_highlight_noise;
+  col += halo * haloColor * (0.42 + highlightEdge * 0.3);
+  col = mix(col, u_base_color * 0.68, highlightMask * 0.5);
+  col += edgeNoise * 0.075 * highlightEdge * u_highlight_noise;
+  col += edgeNoise * 0.07 * pathGlow * u_highlight_noise * pathWave;
+  col += pathBodyNoise * 0.08 * pathCore * u_highlight_noise;
+  col += pathEdgeNoise * 0.06 * pathRim * u_highlight_noise;
 
   col = clamp(col, 0.0, 1.0);
 
@@ -523,12 +523,12 @@ const DEFAULT_PARAMS = {
   ditherStrength: 0.35,
   ditherCoarseness: 0.5,
   displaceStrength: 0.14,
-  rgbSplit: 0.1,
+  rgbSplit: 0.125,
   opacity: 0.56,
-  highlightEdgeBoost: 1.35,
+  highlightEdgeBoost: 1.55,
   highlightDitherRepel: 1,
-  highlightNoise: 0.95,
-  highlightHalo: 0.95,
+  highlightNoise: 1.15,
+  highlightHalo: 1.08,
 } as const;
 
 type ShaderParams = Record<keyof typeof DEFAULT_PARAMS, number>;

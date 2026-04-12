@@ -133,9 +133,9 @@ export default function Home() {
                       >
                         market-ui
                       </InlineStationLink>
-                      , declarative components for interfaces shaped by price,
-                      time, and competition, built for transactions, auctions,
-                      and dynamic marketplace logic; and{" "}
+                      , design-system with declarative components for interfaces
+                      shaped by price, time, and competition, built for
+                      transactions, auctions, and dynamic marketplace logic; and{" "}
                       <InlineStationLink
                         href="https://gems.m3000.io"
                         pointId="gems"

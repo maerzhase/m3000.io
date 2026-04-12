@@ -252,11 +252,11 @@ export default function Home() {
                     title="Education: Interface + Interaction Design"
                   >
                     <Text render={<p />}>
-                      Graduating in 2015 in Interface + Interaction Design, I focused on
-                      designing interfaces and user experiences for complex
-                      systems, creating interfaces for solving complex problems
-                      and shaping how people understand and navigate technical
-                      environments. My thesis{" "}
+                      Graduating in 2015 in Interface + Interaction Design, I
+                      focused on designing interfaces and user experiences for
+                      complex systems, creating interfaces for solving complex
+                      problems and shaping how people understand and navigate
+                      technical environments. My thesis{" "}
                       <Text
                         weight="semibold"
                         className="dither whitespace-nowrap rounded-md bg-black px-1 text-white"

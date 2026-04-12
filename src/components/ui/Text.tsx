@@ -31,6 +31,7 @@ const textVariants = cva("", {
       primary: "text-text-primary",
       secondary: "text-text-secondary",
       tertiary: "text-text-tertiary",
+      dim: "text-gray-300",
       current: "text-current",
     },
     variant: {

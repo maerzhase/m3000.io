@@ -249,10 +249,10 @@ export default function Home() {
                         </ExternalLink>
                       </>
                     }
-                    title="Education: Interaction Design"
+                    title="Education: Interface + Interaction Design"
                   >
                     <Text render={<p />}>
-                      Graduating in 2015 in Interaction Design, I focused on
+                      Graduating in 2015 in Interface + Interaction Design, I focused on
                       designing interfaces and user experiences for complex
                       systems, creating interfaces for solving complex problems
                       and shaping how people understand and navigate technical

@@ -8,7 +8,6 @@ import {
   useEffect,
   useRef,
 } from "react";
-import { cn } from "@/lib/cn";
 import { ExternalLink } from "../ui/Link";
 
 interface StationInlineContextValue {
@@ -61,8 +60,8 @@ export function InlineStationLink({
     <ExternalLink
       href={href}
       ref={setRef}
-      shaderHighlight={false}
-      className={cn("px-1", active && "text-white")}
+      active={active}
+      className="px-1"
       onPointerEnter={() => setActivePointId?.(pointId)}
       onPointerLeave={() => setActivePointId?.(null)}
       onFocus={() => setActivePointId?.(pointId)}

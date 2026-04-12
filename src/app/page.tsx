@@ -76,8 +76,8 @@ export default function Home() {
       </script>
       <BackgroundShader>
         <ContentProvider>
-          <div className="container m-auto min-h-screen gap-16 p-6 sm:p-12">
-            <main className="flex flex-col gap-[32px]">
+          <main className="container m-auto flex min-h-screen flex-col gap-16 p-6 sm:p-12">
+            <section className="flex flex-col gap-[32px]">
               <ShaderHighlight padding={4} radius={40}>
                 <span className="touch-safe-media inline-flex size-20 shrink-0 select-none align-top">
                   <Image
@@ -270,7 +270,7 @@ export default function Home() {
                   </Station>
                 </Timeline>
               </div>
-            </main>
+            </section>
             <footer className="mt-16 flex flex-col gap-4">
               {/* biome-ignore lint: using render */}
               <Text size="3" render={<h3 />}>
@@ -299,7 +299,7 @@ export default function Home() {
                 </ExternalLink>
               </Text>
             </footer>
-          </div>
+          </main>
         </ContentProvider>
       </BackgroundShader>
     </>

@@ -5,6 +5,7 @@ import * as React from "react";
 export interface ShaderHighlightPayload {
   id: string;
   rects: ShaderHighlightRect[];
+  snap?: boolean;
 }
 
 export interface ShaderHighlightPoint {
@@ -25,6 +26,17 @@ export interface ShaderHighlightRect {
   halfHeight: number;
   radius: number;
 }
+
+export type ShaderHighlightPadding =
+  | number
+  | {
+      top?: number;
+      right?: number;
+      bottom?: number;
+      left?: number;
+      x?: number;
+      y?: number;
+    };
 
 export interface ShaderHighlightController {
   activate: (payload: ShaderHighlightPayload) => void;
@@ -59,7 +71,7 @@ export function useShaderHighlightController() {
 type ShaderHighlightProps = {
   children: React.ReactElement;
   disabled?: boolean;
-  padding?: number;
+  padding?: ShaderHighlightPadding;
   radius?: number;
 };
 
@@ -89,18 +101,40 @@ function composeEventHandlers<E>(
   };
 }
 
+function resolvePadding(padding: ShaderHighlightPadding) {
+  if (typeof padding === "number") {
+    return {
+      top: padding,
+      right: padding,
+      bottom: padding,
+      left: padding,
+    };
+  }
+
+  const x = padding.x ?? 0;
+  const y = padding.y ?? 0;
+
+  return {
+    top: padding.top ?? y,
+    right: padding.right ?? x,
+    bottom: padding.bottom ?? y,
+    left: padding.left ?? x,
+  };
+}
+
 function normalizeRect(
   rect: DOMRect,
-  padding: number,
+  padding: ShaderHighlightPadding,
   radius: number,
 ): ShaderHighlightRect {
   const viewportWidth = window.innerWidth || 1;
   const viewportHeight = window.innerHeight || 1;
   const minViewport = Math.max(1, Math.min(viewportWidth, viewportHeight));
-  const left = rect.left - padding;
-  const top = rect.top - padding;
-  const width = rect.width + padding * 2;
-  const height = rect.height + padding * 2;
+  const inset = resolvePadding(padding);
+  const left = rect.left - inset.left;
+  const top = rect.top - inset.top;
+  const width = rect.width + inset.left + inset.right;
+  const height = rect.height + inset.top + inset.bottom;
 
   return {
     centerX: (left + width * 0.5) / viewportWidth,
@@ -113,7 +147,7 @@ function normalizeRect(
 
 function getNormalizedRects(
   element: HTMLElement,
-  padding: number,
+  padding: ShaderHighlightPadding,
   radius: number,
 ): ShaderHighlightRect[] {
   const rectList = Array.from(element.getClientRects())
@@ -137,19 +171,22 @@ export function ShaderHighlight({
   const id = React.useId();
   const elementRef = React.useRef<HTMLElement | null>(null);
   const [active, setActive] = React.useState(false);
+  const activeRef = React.useRef(false);
 
   const updateBounds = React.useCallback(() => {
     const element = elementRef.current;
-    if (!controller || !element) return;
+    if (!controller || !element || !activeRef.current) return;
     controller.update({
       id,
       rects: getNormalizedRects(element, padding, radius),
+      snap: true,
     });
   }, [controller, id, padding, radius]);
 
   const activate = React.useCallback(() => {
     const element = elementRef.current;
     if (!controller || !element) return;
+    activeRef.current = true;
     controller.activate({
       id,
       rects: getNormalizedRects(element, padding, radius),
@@ -159,6 +196,7 @@ export function ShaderHighlight({
 
   const deactivate = React.useCallback(() => {
     if (!controller) return;
+    activeRef.current = false;
     controller.deactivate(id);
     setActive(false);
   }, [controller, id]);

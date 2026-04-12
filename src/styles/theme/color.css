@@ -16,6 +16,18 @@
   --color-text-primary: var(--color-white);
   --color-text-secondary: var(--color-primary);
   --color-text-tertiary: var(--color-secondary);
+
+  /* warm grayscale matching the primary tone */
+  --color-gray-50: #faf7f6;
+  --color-gray-100: #f0e9e6;
+  --color-gray-200: #ded2cd;
+  --color-gray-300: #c4b1ab;
+  --color-gray-400: #a48b84;
+  --color-gray-500: #846c66;
+  --color-gray-600: #66534e;
+  --color-gray-700: #4a3c39;
+  --color-gray-800: #1f1a19;
+  --color-gray-900: #110e0e;
 }
 
 @layer base {

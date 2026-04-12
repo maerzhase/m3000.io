@@ -3,6 +3,7 @@ import type { StationProps } from "./Station";
 
 export interface TimelineProps {
   children: ReactNode;
+  hideStationPoints?: boolean;
 }
 
 export interface StationMetrics {

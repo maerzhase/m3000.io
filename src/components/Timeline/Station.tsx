@@ -13,11 +13,13 @@ export interface StationProps {
   variant?: "plain" | "timeline";
   current?: boolean;
   dotIndex?: number;
+  dotDelay?: number;
   startYear?: number;
   endYear?: number;
   timelinePadding?: number;
   timelineNodeOffset?: number;
   timelineNodeY?: number;
+  hideTimelinePoint?: boolean;
   timeframeActive?: boolean;
   onTimeframeEnter?: () => void;
   onTimeframeLeave?: () => void;
@@ -35,9 +37,11 @@ export function Station({
   variant = "plain",
   current = false,
   dotIndex = 0,
+  dotDelay = dotIndex * 0.15,
   timelinePadding = 24,
   timelineNodeOffset = 0,
   timelineNodeY = 11,
+  hideTimelinePoint = false,
   timeframeActive = false,
   onTimeframeEnter,
   onTimeframeLeave,
@@ -51,9 +55,9 @@ export function Station({
   const dotRight = timelineNodeOffset - 4.5;
   const contentStyle = isTimeline
     ? {
-      ...style,
-      paddingRight: timelinePadding,
-    }
+        ...style,
+        paddingRight: timelinePadding,
+      }
     : style;
 
   return (
@@ -64,7 +68,7 @@ export function Station({
       )}
       style={contentStyle}
     >
-      {isTimeline && (
+      {isTimeline && !hideTimelinePoint && (
         <>
           {current && timeframeActive && (
             <span
@@ -83,7 +87,7 @@ export function Station({
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{
-              delay: dotIndex * 0.15,
+              delay: dotDelay,
               type: "spring",
               stiffness: 300,
               damping: 20,
@@ -115,8 +119,9 @@ export function Station({
                   className={cn(
                     "inline-flex rounded-full border border-white/10 bg-white/6 px-2 py-1 font-mono text-[11px] leading-none tracking-[0.12em] text-white/70 uppercase transition-colors duration-200",
                     isTimeline &&
-                    "cursor-default focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/30",
-                    timeframeActive && "border-white/20 bg-white/10 text-white/92",
+                      "cursor-default focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/30",
+                    timeframeActive &&
+                      "border-white/20 bg-white/10 text-white/92",
                   )}
                   onPointerEnter={onTimeframeEnter}
                   onPointerLeave={onTimeframeLeave}
@@ -147,8 +152,9 @@ export function Station({
                 className={cn(
                   "inline-flex rounded-full border border-white/10 bg-white/6 px-2 py-1 font-mono text-[11px] leading-none tracking-[0.12em] text-white/70 uppercase transition-colors duration-200",
                   isTimeline &&
-                  "cursor-default focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/30",
-                  timeframeActive && "border-white/20 bg-white/10 text-white/92",
+                    "cursor-default focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/30",
+                  timeframeActive &&
+                    "border-white/20 bg-white/10 text-white/92",
                 )}
                 onPointerEnter={onTimeframeEnter}
                 onPointerLeave={onTimeframeLeave}

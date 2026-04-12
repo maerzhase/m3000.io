@@ -1,3 +1,4 @@
+export { InlineStationLink } from "./InlineStationLink";
 export type { StationProps } from "./Station";
 export { Station } from "./Station";
 export { Timeline } from "./Timeline";

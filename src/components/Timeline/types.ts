@@ -34,6 +34,7 @@ export interface TimelineStationData {
   index: number;
   startYear: number;
   endYear: number;
+  timelineMode: NonNullable<StationProps["timelineMode"]>;
   layout: {
     index: number;
     lane: number;

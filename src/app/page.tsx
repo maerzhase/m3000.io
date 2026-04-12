@@ -10,7 +10,7 @@ import BackgroundShader from "@/components/BackgroundShader";
 import { Hello } from "@/components/Hello";
 import { ContentProvider } from "@/components/Overlay/ContentProvider";
 import { ShaderHighlight } from "@/components/ShaderHighlight";
-import { Station, Timeline } from "@/components/Timeline";
+import { InlineStationLink, Station, Timeline } from "@/components/Timeline";
 import { ExternalLink, Link } from "@/components/ui/Link";
 import { Text } from "@/components/ui/Text";
 import me from "../../public/me.png";
@@ -109,17 +109,54 @@ export default function Home() {
                 <Timeline>
                   <Station
                     variant="timeline"
-                    current
+                    timelineMode="release"
                     dotIndex={0}
+                    startYear={2026}
+                    endYear={2026}
+                    year="2026"
+                    title="Open Source Projects"
+                  >
+                    <Text render={<p />} className="max-w-[70ch]">
+                      In 2026 I started releasing a growing set of open source
+                      projects, including{" "}
+                      <InlineStationLink
+                        href="https://ai11y.m3000.io"
+                        pointId="ai11y"
+                      >
+                        ai11y
+                      </InlineStationLink>
+                      , a structured UI context layer for AI agents that makes
+                      existing user interfaces understandable and actionable;{" "}
+                      <InlineStationLink
+                        href="https://market.m3000.io"
+                        pointId="market"
+                      >
+                        market-ui
+                      </InlineStationLink>
+                      , declarative components for interfaces shaped by price,
+                      time, and competition, built for transactions, auctions,
+                      and dynamic marketplace logic; and{" "}
+                      <InlineStationLink
+                        href="https://gems.m3000.io"
+                        pointId="gems"
+                      >
+                        hashed-gems
+                      </InlineStationLink>
+                      , a React avatar component and hosted image API for
+                      generating deterministic gemstone avatars from any string
+                      seed.
+                    </Text>
+                  </Station>
+
+                  <Station
+                    variant="timeline"
+                    current
+                    dotIndex={1}
                     startYear={2022}
                     endYear={new Date().getFullYear()}
                     year={"2022-2026"}
                     name={
-                      <ExternalLink
-                        href="///fxhash.xyz"
-                        className="px-0"
-                        size="2"
-                      >
+                      <ExternalLink href="///fxhash.xyz" size="2">
                         fxhash
                       </ExternalLink>
                     }
@@ -143,12 +180,12 @@ export default function Home() {
 
                   <Station
                     variant="timeline"
-                    dotIndex={1}
+                    dotIndex={2}
                     startYear={2015}
                     endYear={2023}
                     year={"2015-2023"}
                     name={
-                      <ExternalLink href="///nand.io" className="px-0" size="2">
+                      <ExternalLink href="///nand.io" size="2">
                         Studio NAND
                       </ExternalLink>
                     }
@@ -169,16 +206,12 @@ export default function Home() {
 
                   <Station
                     variant="timeline"
-                    dotIndex={2}
+                    dotIndex={3}
                     startYear={2013}
                     endYear={2015}
                     year={"2013-2015"}
                     name={
-                      <ExternalLink
-                        href="///artcom.de"
-                        className="px-0"
-                        size="2"
-                      >
+                      <ExternalLink href="///artcom.de" size="2">
                         ART+COM Studios
                       </ExternalLink>
                     }
@@ -199,27 +232,19 @@ export default function Home() {
 
                   <Station
                     variant="timeline"
-                    dotIndex={3}
+                    dotIndex={4}
                     startYear={2010}
                     endYear={2015}
                     year={"2010-2015"}
                     name={
                       <>
-                        <ExternalLink
-                          href="///fh-potsdam.de/"
-                          className="px-0"
-                          size="2"
-                        >
+                        <ExternalLink href="///fh-potsdam.de/" size="2">
                           FHP
                         </ExternalLink>
                         <Text size="1" className="px-2">
                           and
                         </Text>
-                        <ExternalLink
-                          href="///zhdk.ch"
-                          className="px-0"
-                          size="2"
-                        >
+                        <ExternalLink href="///zhdk.ch" size="2">
                           ZHdK
                         </ExternalLink>
                       </>

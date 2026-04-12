@@ -1,9 +1,18 @@
 "use client";
 
 import { motion } from "motion/react";
-import type { CSSProperties, ReactNode } from "react";
+import {
+  type CSSProperties,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { cn } from "@/lib/cn";
 import { Text } from "../ui/Text";
+import { StationInlineContext } from "./InlineStationLink";
 
 export interface StationProps {
   year: ReactNode;
@@ -11,6 +20,8 @@ export interface StationProps {
   title: ReactNode;
   children: ReactNode;
   variant?: "plain" | "timeline";
+  timelineMode?: "range" | "release";
+  timelinePointShape?: "circle" | "diamond";
   current?: boolean;
   dotIndex?: number;
   dotDelay?: number;
@@ -35,6 +46,8 @@ export function Station({
   name,
   children,
   variant = "plain",
+  timelineMode = "range",
+  timelinePointShape = "circle",
   current = false,
   dotIndex = 0,
   dotDelay = dotIndex * 0.15,
@@ -51,6 +64,17 @@ export function Station({
   style,
 }: StationProps) {
   const isTimeline = variant === "timeline";
+  const isDiamondPoint = timelinePointShape === "diamond";
+  const stationRef = useRef<HTMLDivElement | null>(null);
+  const anchorRefs = useRef<Record<string, HTMLElement | null>>({});
+  const [registeredPoints, setRegisteredPoints] = useState<
+    Array<{ id: string; shape: "circle" | "diamond" }>
+  >([]);
+  const [activePointId, setActivePointId] = useState<string | null>(null);
+  const [pointPositions, setPointPositions] = useState<Record<string, number>>(
+    {},
+  );
+  const hasCustomTimelinePoints = registeredPoints.length > 0;
 
   const dotRight = timelineNodeOffset - 4.5;
   const contentStyle = isTimeline
@@ -60,15 +84,140 @@ export function Station({
       }
     : style;
 
+  const measurePoints = useCallback(() => {
+    const stationElement = stationRef.current;
+    if (!stationElement || registeredPoints.length === 0) {
+      return;
+    }
+
+    const stationRect = stationElement.getBoundingClientRect();
+    const measuredPositions = registeredPoints.map(({ id }) => {
+      const anchor = anchorRefs.current[id];
+      if (!anchor) {
+        return timelineNodeY;
+      }
+
+      const anchorRect = anchor.getBoundingClientRect();
+      return anchorRect.top - stationRect.top + anchorRect.height * 0.5 - 4.5;
+    });
+    const invertedPositions = [...measuredPositions].reverse();
+    const nextPositions = Object.fromEntries(
+      registeredPoints.map(({ id }) => {
+        const position = invertedPositions.shift() ?? timelineNodeY;
+        return [id, position];
+      }),
+    );
+
+    setPointPositions((currentPositions) => {
+      const currentEntries = Object.entries(currentPositions);
+      const nextEntries = Object.entries(nextPositions);
+
+      if (
+        currentEntries.length === nextEntries.length &&
+        nextEntries.every(([id, value]) => currentPositions[id] === value)
+      ) {
+        return currentPositions;
+      }
+
+      return nextPositions;
+    });
+  }, [registeredPoints, timelineNodeY]);
+
+  const registerPoint = useCallback(
+    (
+      id: string,
+      node: HTMLElement | null,
+      shape: "circle" | "diamond" = "diamond",
+    ) => {
+      anchorRefs.current[id] = node;
+      setRegisteredPoints((currentPoints) => {
+        const currentPoint = currentPoints.find((point) => point.id === id);
+        if (currentPoint && currentPoint.shape === shape) {
+          return currentPoints;
+        }
+
+        if (currentPoint) {
+          return currentPoints.map((point) =>
+            point.id === id ? { ...point, shape } : point,
+          );
+        }
+
+        return [...currentPoints, { id, shape }];
+      });
+    },
+    [],
+  );
+
+  const unregisterPoint = useCallback((id: string) => {
+    delete anchorRefs.current[id];
+    setRegisteredPoints((currentPoints) =>
+      currentPoints.filter((point) => point.id !== id),
+    );
+    setPointPositions((currentPositions) => {
+      if (!(id in currentPositions)) {
+        return currentPositions;
+      }
+
+      const nextPositions = { ...currentPositions };
+      delete nextPositions[id];
+      return nextPositions;
+    });
+    setActivePointId((currentId) => (currentId === id ? null : currentId));
+  }, []);
+
+  const inlineContextValue = useMemo(
+    () => ({
+      activePointId,
+      registerPoint,
+      unregisterPoint,
+      setActivePointId,
+    }),
+    [activePointId, registerPoint, unregisterPoint],
+  );
+
+  useEffect(() => {
+    if (!hasCustomTimelinePoints) {
+      return;
+    }
+
+    measurePoints();
+
+    const observer =
+      typeof ResizeObserver === "undefined"
+        ? null
+        : new ResizeObserver(() => {
+            measurePoints();
+          });
+
+    if (stationRef.current) {
+      observer?.observe(stationRef.current);
+    }
+
+    for (const point of registeredPoints) {
+      const anchor = anchorRefs.current[point.id];
+      if (anchor) {
+        observer?.observe(anchor);
+      }
+    }
+
+    window.addEventListener("resize", measurePoints);
+
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener("resize", measurePoints);
+    };
+  }, [hasCustomTimelinePoints, measurePoints, registeredPoints]);
+
   return (
     <div
+      ref={stationRef}
       className={cn(
         isTimeline && "relative min-h-[92px] py-1 sm:min-h-[104px]",
         className,
       )}
       style={contentStyle}
     >
-      {isTimeline && !hideTimelinePoint && (
+      {isTimeline && !hideTimelinePoint && !hasCustomTimelinePoints && (
         <>
           {current && timeframeActive && (
             <span
@@ -80,7 +229,8 @@ export function Station({
             type="button"
             aria-label={`Highlight ${typeof title === "string" ? title : "timeline station"}`}
             className={cn(
-              "absolute z-20 size-[9px] rounded-full border border-white/20 shadow-[0_0_0_3px_rgba(10,10,10,0.85)] transition-colors duration-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/30",
+              "absolute z-20 size-[9px] border border-white/20 shadow-[0_0_0_3px_rgba(10,10,10,0.85)] transition-colors duration-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/30",
+              isDiamondPoint ? "rotate-45 rounded-[2px]" : "rounded-full",
               timeframeActive ? "bg-gray-100" : "bg-gray-500",
             )}
             style={{ right: dotRight, top: timelineNodeY }}
@@ -99,6 +249,42 @@ export function Station({
           />
         </>
       )}
+      {isTimeline &&
+        !hideTimelinePoint &&
+        hasCustomTimelinePoints &&
+        registeredPoints.map((point, index) => {
+          const pointIsDiamond = point.shape === "diamond";
+          const pointActive = activePointId === point.id;
+
+          return (
+            <motion.button
+              key={point.id}
+              type="button"
+              aria-label={`Highlight ${point.id}`}
+              className={cn(
+                "absolute z-20 size-[9px] border border-white/20 shadow-[0_0_0_3px_rgba(10,10,10,0.85)] transition-colors duration-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/30",
+                pointIsDiamond ? "rotate-45 rounded-[2px]" : "rounded-full",
+                pointActive ? "bg-gray-100" : "bg-gray-500",
+              )}
+              style={{
+                right: dotRight,
+                top: pointPositions[point.id] ?? timelineNodeY + index * 18,
+              }}
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{
+                delay: dotDelay + index * 0.06,
+                type: "spring",
+                stiffness: 300,
+                damping: 20,
+              }}
+              onPointerEnter={() => setActivePointId(point.id)}
+              onPointerLeave={() => setActivePointId(null)}
+              onFocus={() => setActivePointId(point.id)}
+              onBlur={() => setActivePointId(null)}
+            />
+          );
+        })}
       <div className="relative mb-3 flex w-full min-w-0 flex-col pr-3 sm:pr-4 gap-0.5">
         {isTimeline ? (
           <>
@@ -120,6 +306,7 @@ export function Station({
                     "inline-flex rounded-full border border-white/10 bg-white/6 px-2 py-1 font-mono text-[11px] leading-none tracking-[0.12em] text-white/70 uppercase transition-colors duration-200",
                     isTimeline &&
                       "cursor-default focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/30",
+                    timelineMode === "release" && "cursor-default",
                     timeframeActive &&
                       "border-white/20 bg-white/10 text-white/92",
                   )}
@@ -153,6 +340,7 @@ export function Station({
                   "inline-flex rounded-full border border-white/10 bg-white/6 px-2 py-1 font-mono text-[11px] leading-none tracking-[0.12em] text-white/70 uppercase transition-colors duration-200",
                   isTimeline &&
                     "cursor-default focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/30",
+                  timelineMode === "release" && "cursor-default",
                   timeframeActive &&
                     "border-white/20 bg-white/10 text-white/92",
                 )}
@@ -168,9 +356,11 @@ export function Station({
           </div>
         )}
       </div>
-      <div className="pr-3 text-white/88 sm:pr-4 [&_p]:text-pretty">
-        {children}
-      </div>
+      <StationInlineContext value={inlineContextValue}>
+        <div className="pr-3 text-white/88 sm:pr-4 [&_p]:text-pretty">
+          {children}
+        </div>
+      </StationInlineContext>
     </div>
   );
 }

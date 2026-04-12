@@ -69,17 +69,23 @@ export function Timeline({
     ) as TimelineStationData["child"][];
 
     return childArray.map((child, index) => {
+      const timelineMode = child.props.timelineMode ?? "range";
       const fallbackEndYear = child.props.current
         ? new Date().getFullYear()
         : parseYearValue(child.props.year, new Date().getFullYear());
+      const startYear =
+        child.props.startYear ??
+        parseYearValue(child.props.year, fallbackEndYear);
+      const endYear =
+        child.props.endYear ??
+        (timelineMode === "release" ? startYear : fallbackEndYear);
 
       return {
         child,
         index,
-        startYear:
-          child.props.startYear ??
-          parseYearValue(child.props.year, fallbackEndYear),
-        endYear: child.props.endYear ?? fallbackEndYear,
+        startYear,
+        endYear,
+        timelineMode,
         layout: {
           index,
           lane: index % 2,
@@ -347,30 +353,44 @@ export function Timeline({
         </svg>
       )}
 
-      {stations.map(({ child, index, layout }) => (
-        <div
-          key={child.key ?? index}
-          ref={(node) => {
-            itemRefs.current[index] = node;
-          }}
-        >
-          {cloneElement(child, {
-            timelinePadding,
-            timelineNodeOffset: graphWidth - laneXFor(layout.lane),
-            timelineNodeY: Math.max(
-              (metrics[index]?.height ?? NODE_OFFSET_Y) - NODE_END_INSET,
-              NODE_OFFSET_Y,
-            ),
-            hideTimelinePoint: hideStationPoints,
-            dotDelay: stationDotStart + index * STATION_STAGGER,
-            onTimeframeEnter: () => activateTimeframe(index),
-            onTimeframeLeave: () => deactivateTimeframe(index),
-            onMarkerEnter: () => activateTimeframe(index),
-            onMarkerLeave: () => deactivateTimeframe(index),
-            timeframeActive: activeTimeframeIndex === index,
-          })}
-        </div>
-      ))}
+      {stations.map(({ child, index, layout }) =>
+        (() => {
+          const hasTimeframe = durationGeometries[index]?.points.length > 1;
+
+          return (
+            <div
+              key={child.key ?? index}
+              ref={(node) => {
+                itemRefs.current[index] = node;
+              }}
+            >
+              {cloneElement(child, {
+                timelinePadding,
+                timelineNodeOffset: graphWidth - laneXFor(layout.lane),
+                timelineNodeY: Math.max(
+                  (metrics[index]?.height ?? NODE_OFFSET_Y) - NODE_END_INSET,
+                  NODE_OFFSET_Y,
+                ),
+                hideTimelinePoint: hideStationPoints,
+                dotDelay: stationDotStart + index * STATION_STAGGER,
+                onTimeframeEnter: hasTimeframe
+                  ? () => activateTimeframe(index)
+                  : undefined,
+                onTimeframeLeave: hasTimeframe
+                  ? () => deactivateTimeframe(index)
+                  : undefined,
+                onMarkerEnter: hasTimeframe
+                  ? () => activateTimeframe(index)
+                  : undefined,
+                onMarkerLeave: hasTimeframe
+                  ? () => deactivateTimeframe(index)
+                  : undefined,
+                timeframeActive: hasTimeframe && activeTimeframeIndex === index,
+              })}
+            </div>
+          );
+        })(),
+      )}
     </div>
   );
 }

@@ -30,6 +30,7 @@ uniform float u_highlight_edge_boost;
 uniform float u_highlight_dither_repel;
 uniform float u_highlight_noise;
 uniform float u_highlight_halo;
+uniform float u_highlight_halo_spread;
 
 varying vec2 v_uv;
 
@@ -207,7 +208,11 @@ void main() {
     + highlightEdge * edgeRipple * 0.45 * u_highlight_noise;
   float halo =
     u_highlight_strength
-    * (1.0 - smoothstep(highlightFeather * 1.6, highlightFeather * 8.0, abs(nearestRectDist)));
+    * (1.0 - smoothstep(
+      highlightFeather * 1.6,
+      highlightFeather * u_highlight_halo_spread,
+      abs(nearestRectDist)
+    ));
   halo *= 0.45 + 0.55 * noiseB;
   halo *= u_highlight_halo;
   highlightMask = clamp(highlightMask, 0.0, 1.0);

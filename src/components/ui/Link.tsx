@@ -14,6 +14,7 @@ interface OwnProps {
   external?: boolean;
   shaderHighlight?: boolean;
   shaderHighlightPadding?: ShaderHighlightPadding;
+  shaderHighlightHaloSpread?: number;
 }
 
 export type LinkProps = OwnProps &
@@ -30,7 +31,8 @@ export const Link = React.forwardRef<LinkElement, LinkProps>(function Link(
     children,
     external,
     shaderHighlight = true,
-    shaderHighlightPadding = { x: 0, y: 0 },
+    shaderHighlightPadding = { x: 2, y: 0 },
+    shaderHighlightHaloSpread = 4.8,
     ...props
   },
   ref,
@@ -61,7 +63,11 @@ export const Link = React.forwardRef<LinkElement, LinkProps>(function Link(
   }
 
   return (
-    <ShaderHighlight padding={shaderHighlightPadding} active={active}>
+    <ShaderHighlight
+      padding={shaderHighlightPadding}
+      haloSpread={shaderHighlightHaloSpread}
+      active={active}
+    >
       {element}
     </ShaderHighlight>
   );

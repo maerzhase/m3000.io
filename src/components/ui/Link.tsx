@@ -61,7 +61,7 @@ export const Link = React.forwardRef<LinkElement, LinkProps>(function Link(
   }
 
   return (
-    <ShaderHighlight padding={shaderHighlightPadding}>
+    <ShaderHighlight padding={shaderHighlightPadding} active={active}>
       {element}
     </ShaderHighlight>
   );

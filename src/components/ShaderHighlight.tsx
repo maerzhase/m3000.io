@@ -71,6 +71,7 @@ export function useShaderHighlightController() {
 type ShaderHighlightProps = {
   children: React.ReactElement;
   disabled?: boolean;
+  active?: boolean;
   padding?: ShaderHighlightPadding;
   radius?: number;
 };
@@ -164,6 +165,7 @@ function getNormalizedRects(
 export function ShaderHighlight({
   children,
   disabled = false,
+  active: forcedActive,
   padding = 2,
   radius = 16,
 }: ShaderHighlightProps) {
@@ -224,6 +226,19 @@ export function ShaderHighlight({
   }, [active, updateBounds]);
 
   React.useEffect(() => deactivate, [deactivate]);
+
+  React.useEffect(() => {
+    if (forcedActive === undefined) {
+      return;
+    }
+
+    if (forcedActive) {
+      activate();
+      return;
+    }
+
+    deactivate();
+  }, [activate, deactivate, forcedActive]);
 
   if (disabled || !controller) {
     return children;

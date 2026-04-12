@@ -30,7 +30,7 @@ export const Link = React.forwardRef<LinkElement, LinkProps>(function Link(
     children,
     external,
     shaderHighlight = true,
-    shaderHighlightPadding = { x: 0, y: 1 },
+    shaderHighlightPadding = { x: 0, y: 0 },
     ...props
   },
   ref,

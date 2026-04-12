@@ -71,10 +71,12 @@ export function Station({
     Array<{ id: string; shape: "circle" | "diamond" }>
   >([]);
   const [activePointId, setActivePointId] = useState<string | null>(null);
+  const [stationHovered, setStationHovered] = useState(false);
   const [pointPositions, setPointPositions] = useState<Record<string, number>>(
     {},
   );
   const hasCustomTimelinePoints = registeredPoints.length > 0;
+  const stationActive = timeframeActive || stationHovered;
 
   const dotRight = timelineNodeOffset - 4.5;
   const contentStyle = isTimeline
@@ -208,6 +210,16 @@ export function Station({
     };
   }, [hasCustomTimelinePoints, measurePoints, registeredPoints]);
 
+  const handleStationPointerEnter = useCallback(() => {
+    setStationHovered(true);
+    onTimeframeEnter?.();
+  }, [onTimeframeEnter]);
+
+  const handleStationPointerLeave = useCallback(() => {
+    setStationHovered(false);
+    onTimeframeLeave?.();
+  }, [onTimeframeLeave]);
+
   return (
     <div
       ref={stationRef}
@@ -216,10 +228,12 @@ export function Station({
         className,
       )}
       style={contentStyle}
+      onPointerEnter={handleStationPointerEnter}
+      onPointerLeave={handleStationPointerLeave}
     >
       {isTimeline && !hideTimelinePoint && !hasCustomTimelinePoints && (
         <>
-          {current && timeframeActive && (
+          {current && stationActive && (
             <span
               className="absolute z-20 size-[9px] rounded-full bg-gray-300 animate-ping opacity-20"
               style={{ right: dotRight, top: timelineNodeY }}
@@ -231,7 +245,7 @@ export function Station({
             className={cn(
               "absolute z-20 size-[9px] border border-white/20 shadow-[0_0_0_3px_rgba(10,10,10,0.85)] transition-colors duration-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/30",
               isDiamondPoint ? "rotate-45 rounded-[2px]" : "rounded-full",
-              timeframeActive ? "bg-gray-100" : "bg-gray-500",
+              stationActive ? "bg-gray-100" : "bg-gray-500",
             )}
             style={{ right: dotRight, top: timelineNodeY }}
             initial={{ scale: 0, opacity: 0 }}
@@ -254,7 +268,8 @@ export function Station({
         hasCustomTimelinePoints &&
         registeredPoints.map((point, index) => {
           const pointIsDiamond = point.shape === "diamond";
-          const pointActive = activePointId === point.id;
+          const pointActive =
+            activePointId !== null ? activePointId === point.id : stationActive;
 
           return (
             <motion.button
@@ -285,13 +300,34 @@ export function Station({
             />
           );
         })}
-      <div className="relative mb-3 flex w-full min-w-0 flex-col pr-3 sm:pr-4 gap-0.5">
+      <div
+        className={cn(
+          "relative mb-3 flex w-full min-w-0 flex-col gap-0.5 pr-3 sm:pr-4",
+          isTimeline && "py-2",
+        )}
+      >
         {isTimeline ? (
           <>
-            {name && <div className="min-w-0">{name}</div>}
+            {name && (
+              <div
+                className={cn(
+                  "min-w-0 transition-colors duration-200",
+                  stationActive ? "text-white" : "text-white/72",
+                )}
+              >
+                {name}
+              </div>
+            )}
             <div className="flex min-w-0 gap-3">
               <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">
-                <Text weight="semibold" size="3">
+                <Text
+                  weight="semibold"
+                  size="3"
+                  className={cn(
+                    "transition-colors duration-200",
+                    stationActive ? "text-white" : "text-white/82",
+                  )}
+                >
                   {title}
                 </Text>
               </div>
@@ -307,7 +343,7 @@ export function Station({
                     isTimeline &&
                       "cursor-default focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/30",
                     timelineMode === "release" && "cursor-default",
-                    timeframeActive &&
+                    stationActive &&
                       "border-white/20 bg-white/10 text-white/92",
                   )}
                   onPointerEnter={onTimeframeEnter}
@@ -324,7 +360,14 @@ export function Station({
         ) : (
           <div className="flex min-w-0 gap-3">
             <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">
-              <Text weight="semibold" size="3">
+              <Text
+                weight="semibold"
+                size="3"
+                className={cn(
+                  "transition-colors duration-200",
+                  stationActive ? "text-white" : "text-white/82",
+                )}
+              >
                 {title}
               </Text>
               {name ? <span>{name}</span> : null}
@@ -341,8 +384,7 @@ export function Station({
                   isTimeline &&
                     "cursor-default focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/30",
                   timelineMode === "release" && "cursor-default",
-                  timeframeActive &&
-                    "border-white/20 bg-white/10 text-white/92",
+                  stationActive && "border-white/20 bg-white/10 text-white/92",
                 )}
                 onPointerEnter={onTimeframeEnter}
                 onPointerLeave={onTimeframeLeave}
@@ -355,12 +397,17 @@ export function Station({
             </Text>
           </div>
         )}
+        <StationInlineContext value={inlineContextValue}>
+          <div
+            className={cn(
+              "mt-2 transition-colors duration-200 [&_p]:text-pretty [&_p]:transition-colors [&_p]:duration-200",
+              stationActive ? "[&_p]:text-white/92" : "[&_p]:text-white/72",
+            )}
+          >
+            {children}
+          </div>
+        </StationInlineContext>
       </div>
-      <StationInlineContext value={inlineContextValue}>
-        <div className="pr-3 text-white/88 sm:pr-4 [&_p]:text-pretty">
-          {children}
-        </div>
-      </StationInlineContext>
     </div>
   );
 }

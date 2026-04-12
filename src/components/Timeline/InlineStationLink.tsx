@@ -12,6 +12,7 @@ import { ExternalLink } from "../ui/Link";
 
 interface StationInlineContextValue {
   activePointId: string | null;
+  hoverEnabled: boolean;
   registerPoint: (
     id: string,
     node: HTMLElement | null,
@@ -42,6 +43,7 @@ export function InlineStationLink({
   const registerPoint = context?.registerPoint;
   const unregisterPoint = context?.unregisterPoint;
   const setActivePointId = context?.setActivePointId;
+  const hoverEnabled = context?.hoverEnabled ?? true;
   const active = context?.activePointId === pointId;
 
   const setRef = useCallback((node: HTMLElement | null) => {
@@ -62,8 +64,10 @@ export function InlineStationLink({
       ref={setRef}
       active={active}
       className="px-1"
-      onPointerEnter={() => setActivePointId?.(pointId)}
-      onPointerLeave={() => setActivePointId?.(null)}
+      onPointerEnter={
+        hoverEnabled ? () => setActivePointId?.(pointId) : undefined
+      }
+      onPointerLeave={hoverEnabled ? () => setActivePointId?.(null) : undefined}
       onFocus={() => setActivePointId?.(pointId)}
       onBlur={() => setActivePointId?.(null)}
     >

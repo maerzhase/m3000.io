@@ -5,11 +5,13 @@ import {
   Children,
   cloneElement,
   isValidElement,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
+import { cn } from "@/lib/cn";
 import { useShaderHighlightController } from "../ShaderHighlight";
 import {
   DURATION_COLOR,
@@ -52,16 +54,37 @@ export function Timeline({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const itemRefs = useRef<Array<HTMLDivElement | null>>([]);
   const [metrics, setMetrics] = useState<StationMetrics[]>([]);
+  const [debugEnabled, setDebugEnabled] = useState(false);
+  const [debugAnchorY, setDebugAnchorY] = useState<number | null>(null);
+  const [hoverEnabled, setHoverEnabled] = useState(false);
   const [activeTimeframeIndex, setActiveTimeframeIndex] = useState<
     number | null
   >(null);
   const shaderHighlightController = useShaderHighlightController();
 
-  const activateTimeframe = (index: number) => setActiveTimeframeIndex(index);
-  const deactivateTimeframe = (index: number) =>
-    setActiveTimeframeIndex((currentIndex) =>
-      currentIndex === index ? null : currentIndex,
-    );
+  const activateTimeframe = useCallback(
+    (index: number) => {
+      if (!hoverEnabled) {
+        return;
+      }
+
+      setActiveTimeframeIndex(index);
+    },
+    [hoverEnabled],
+  );
+
+  const deactivateTimeframe = useCallback(
+    (index: number) => {
+      if (!hoverEnabled) {
+        return;
+      }
+
+      setActiveTimeframeIndex((currentIndex) =>
+        currentIndex === index ? null : currentIndex,
+      );
+    },
+    [hoverEnabled],
+  );
 
   const stations = useMemo(() => {
     const childArray = Children.toArray(children).filter(
@@ -98,6 +121,25 @@ export function Timeline({
 
   const graphWidth = GRAPH_INSET * 2 + totalLanes * LANE_GAP;
   const timelinePadding = graphWidth + GRAPH_MARGIN_RIGHT;
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setDebugEnabled(params.get("timelineDebug") === "1");
+  }, []);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(hover: hover) and (pointer: fine)");
+    const syncHoverSupport = () => {
+      setHoverEnabled(mediaQuery.matches);
+    };
+
+    syncHoverSupport();
+    mediaQuery.addEventListener("change", syncHoverSupport);
+
+    return () => {
+      mediaQuery.removeEventListener("change", syncHoverSupport);
+    };
+  }, []);
 
   useEffect(() => {
     const measure = () => {
@@ -167,6 +209,94 @@ export function Timeline({
   }, [metrics, routeIntervals, stations]);
 
   const stationDotStart = ROOT_DRAW_DELAY + ROOT_DRAW_DURATION;
+
+  useEffect(() => {
+    if (!hoverEnabled || stations.length === 0) {
+      setDebugAnchorY(null);
+      return;
+    }
+
+    setActiveTimeframeIndex(null);
+  }, [hoverEnabled, stations.length]);
+
+  useEffect(() => {
+    if (hoverEnabled || stations.length === 0) {
+      return;
+    }
+
+    const pickActiveStation = () => {
+      const viewportHeight = window.innerHeight || 1;
+      const baseViewportAnchor = viewportHeight * 0.4;
+      const scrollBottom = window.scrollY + viewportHeight;
+      const documentHeight = document.documentElement.scrollHeight;
+      const remainingScroll = Math.max(0, documentHeight - scrollBottom);
+      const anchorTransitionDistance = viewportHeight * 1.25;
+      const anchorProgress =
+        1 -
+        Math.min(1, Math.max(0, remainingScroll / anchorTransitionDistance));
+      const endViewportAnchor = viewportHeight - 96;
+      const viewportAnchor =
+        baseViewportAnchor +
+        (endViewportAnchor - baseViewportAnchor) * anchorProgress;
+      setDebugAnchorY(viewportAnchor);
+      let nextIndex: number | null = null;
+      let bestDistance = Number.POSITIVE_INFINITY;
+
+      for (const station of stations) {
+        const element = itemRefs.current[station.index];
+        if (!element) {
+          continue;
+        }
+
+        const rect = element.getBoundingClientRect();
+        const isVisible = rect.bottom > 0 && rect.top < viewportHeight;
+        if (!isVisible) {
+          continue;
+        }
+
+        if (rect.top <= viewportAnchor && rect.bottom >= viewportAnchor) {
+          nextIndex = station.index;
+          break;
+        }
+
+        const clampedAnchor = Math.min(
+          Math.max(viewportAnchor, rect.top),
+          rect.bottom,
+        );
+        const distance = Math.abs(clampedAnchor - viewportAnchor);
+
+        if (distance < bestDistance) {
+          bestDistance = distance;
+          nextIndex = station.index;
+        }
+      }
+
+      setActiveTimeframeIndex((currentIndex) =>
+        currentIndex === nextIndex ? currentIndex : nextIndex,
+      );
+    };
+
+    const observer = new IntersectionObserver(pickActiveStation, {
+      threshold: [0, 0.15, 0.3, 0.5, 0.75, 1],
+      rootMargin: "-15% 0px -35% 0px",
+    });
+
+    for (const station of stations) {
+      const element = itemRefs.current[station.index];
+      if (element) {
+        observer.observe(element);
+      }
+    }
+
+    pickActiveStation();
+    window.addEventListener("resize", pickActiveStation);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", pickActiveStation);
+    };
+  }, [hoverEnabled, stations]);
+
   useEffect(() => {
     if (
       activeTimeframeIndex === null ||
@@ -243,6 +373,23 @@ export function Timeline({
 
   return (
     <div ref={containerRef} className="relative flex flex-col gap-[32px]">
+      {debugEnabled && !hoverEnabled && debugAnchorY !== null ? (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none fixed inset-x-0 z-[70] border-t border-amber-300/70"
+          style={{ top: debugAnchorY }}
+        />
+      ) : null}
+      {debugEnabled ? (
+        <div className="pointer-events-none fixed right-3 top-3 z-[80] rounded-md border border-amber-200/30 bg-black/80 px-3 py-2 font-mono text-[11px] leading-relaxed text-amber-100 shadow-[0_8px_24px_rgba(0,0,0,0.28)] backdrop-blur-sm">
+          <div>{`timelineDebug=1`}</div>
+          <div>{`mode: ${hoverEnabled ? "hover" : "scroll"}`}</div>
+          <div>{`active: ${activeTimeframeIndex === null ? "none" : activeTimeframeIndex + 1}`}</div>
+          <div>
+            {`anchor: ${debugAnchorY === null ? "n/a" : `${Math.round(debugAnchorY)}px`}`}
+          </div>
+        </div>
+      ) : null}
       {graphHeight > 0 && (
         <div
           aria-hidden="true"
@@ -360,10 +507,23 @@ export function Timeline({
           return (
             <div
               key={child.key ?? index}
+              className="relative"
               ref={(node) => {
                 itemRefs.current[index] = node;
               }}
             >
+              {debugEnabled ? (
+                <div
+                  className={cn(
+                    "pointer-events-none absolute -left-2 top-0 z-30 -translate-x-full rounded border px-1.5 py-0.5 font-mono text-[10px] leading-none sm:-left-3",
+                    activeTimeframeIndex === index
+                      ? "border-amber-300/70 bg-amber-300/15 text-amber-100"
+                      : "border-white/15 bg-black/40 text-white/45",
+                  )}
+                >
+                  {`#${index + 1}${activeTimeframeIndex === index ? " active" : ""}`}
+                </div>
+              ) : null}
               {cloneElement(child, {
                 timelinePadding,
                 timelineNodeOffset: graphWidth - laneXFor(layout.lane),
@@ -372,6 +532,7 @@ export function Timeline({
                   NODE_OFFSET_Y,
                 ),
                 hideTimelinePoint: hideStationPoints,
+                hoverEnabled,
                 dotDelay: stationDotStart + index * STATION_STAGGER,
                 onTimeframeEnter: hasTimeframe
                   ? () => activateTimeframe(index)
@@ -385,7 +546,7 @@ export function Timeline({
                 onMarkerLeave: hasTimeframe
                   ? () => deactivateTimeframe(index)
                   : undefined,
-                timeframeActive: hasTimeframe && activeTimeframeIndex === index,
+                timeframeActive: activeTimeframeIndex === index,
               })}
             </div>
           );

@@ -18,6 +18,7 @@ uniform float u_dither_levels;
 uniform float u_dither_strength;
 uniform float u_dither_coarseness;
 uniform float u_scroll_phase;
+uniform float u_scroll_offset_px;
 uniform float u_noise_seed;
 uniform float u_displace_strength;
 uniform float u_rgb_split;

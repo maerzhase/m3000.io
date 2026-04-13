@@ -12,29 +12,22 @@ import {
   useState,
 } from "react";
 import { cn } from "@/lib/cn";
-import { useShaderHighlightController } from "../ShaderHighlight";
 import {
   DURATION_COLOR,
   GRAPH_INSET,
   GRAPH_MARGIN_RIGHT,
   LANE_GAP,
   LINE_COLOR,
-  MAX_SHADER_PATH_POINTS,
   NODE_END_INSET,
   NODE_OFFSET_Y,
-  TIMEFRAME_HIGHLIGHT_WIDTH,
 } from "./constants";
-import {
-  laneXFor,
-  parseYearValue,
-  pointsToPath,
-  samplePoints,
-} from "./geometry";
+import { laneXFor, parseYearValue, pointsToPath } from "./geometry";
 import {
   buildDurationGeometries,
   buildRailPath,
   buildRouteIntervals,
 } from "./graph";
+import { TimelineHighlightShader } from "./TimelineHighlightShader";
 import type {
   StationMetrics,
   TimelineProps,
@@ -53,6 +46,7 @@ export function Timeline({
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const itemRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const triggerRefs = useRef<Array<HTMLDivElement | null>>([]);
   const [metrics, setMetrics] = useState<StationMetrics[]>([]);
   const [debugEnabled, setDebugEnabled] = useState(false);
   const [debugAnchorY, setDebugAnchorY] = useState<number | null>(null);
@@ -60,7 +54,7 @@ export function Timeline({
   const [activeTimeframeIndex, setActiveTimeframeIndex] = useState<
     number | null
   >(null);
-  const shaderHighlightController = useShaderHighlightController();
+  const activeTimeframeIndexRef = useRef<number | null>(null);
 
   const activateTimeframe = useCallback(
     (index: number) => {
@@ -209,6 +203,10 @@ export function Timeline({
   }, [metrics, routeIntervals, stations]);
 
   const stationDotStart = ROOT_DRAW_DELAY + ROOT_DRAW_DURATION;
+  const activeDurationGeometry =
+    activeTimeframeIndex !== null
+      ? durationGeometries[activeTimeframeIndex]
+      : null;
 
   useEffect(() => {
     if (!hoverEnabled || stations.length === 0) {
@@ -220,48 +218,65 @@ export function Timeline({
   }, [hoverEnabled, stations.length]);
 
   useEffect(() => {
-    if (hoverEnabled || stations.length === 0) {
+    activeTimeframeIndexRef.current = activeTimeframeIndex;
+  }, [activeTimeframeIndex]);
+
+  useEffect(() => {
+    if (hoverEnabled || stations.length === 0 || metrics.length === 0) {
       return;
     }
 
+    let frameId: number | null = null;
+    let resizeObserver: ResizeObserver | null = null;
+
     const pickActiveStation = () => {
+      const containerElement = containerRef.current;
+      if (!containerElement) {
+        return;
+      }
+
       const viewportHeight = window.innerHeight || 1;
-      const baseViewportAnchor = viewportHeight * 0.4;
-      const scrollBottom = window.scrollY + viewportHeight;
-      const documentHeight = document.documentElement.scrollHeight;
-      const remainingScroll = Math.max(0, documentHeight - scrollBottom);
-      const anchorTransitionDistance = viewportHeight * 1.25;
-      const anchorProgress =
-        1 -
-        Math.min(1, Math.max(0, remainingScroll / anchorTransitionDistance));
-      const endViewportAnchor = viewportHeight - 96;
-      const viewportAnchor =
-        baseViewportAnchor +
-        (endViewportAnchor - baseViewportAnchor) * anchorProgress;
-      setDebugAnchorY(viewportAnchor);
+      const viewportAnchorOffset = viewportHeight * 0.5;
+      const viewportAnchor = window.scrollY + viewportAnchorOffset;
+      const containerTop =
+        window.scrollY + containerElement.getBoundingClientRect().top;
+      setDebugAnchorY(viewportAnchorOffset);
       let nextIndex: number | null = null;
       let bestDistance = Number.POSITIVE_INFINITY;
 
       for (const station of stations) {
-        const element = itemRefs.current[station.index];
-        if (!element) {
+        const metric = metrics[station.index];
+        if (!metric) {
           continue;
         }
 
-        const rect = element.getBoundingClientRect();
-        const isVisible = rect.bottom > 0 && rect.top < viewportHeight;
+        const itemElement = itemRefs.current[station.index];
+        const triggerElement = triggerRefs.current[station.index];
+        const triggerOffset =
+          itemElement && triggerElement
+            ? triggerElement.getBoundingClientRect().top -
+              itemElement.getBoundingClientRect().top
+            : 0;
+        const triggerHeight =
+          triggerElement?.offsetHeight ?? Math.max(metric.height * 0.55, 1);
+        const stationTop = containerTop + metric.top + triggerOffset;
+        const stationBottom = stationTop + triggerHeight;
+        const visibleTop = stationTop - window.scrollY;
+        const visibleBottom = stationBottom - window.scrollY;
+        const isVisible = visibleBottom > 0 && visibleTop < viewportHeight;
+
         if (!isVisible) {
           continue;
         }
 
-        if (rect.top <= viewportAnchor && rect.bottom >= viewportAnchor) {
+        if (stationTop <= viewportAnchor && stationBottom >= viewportAnchor) {
           nextIndex = station.index;
           break;
         }
 
         const clampedAnchor = Math.min(
-          Math.max(viewportAnchor, rect.top),
-          rect.bottom,
+          Math.max(viewportAnchor, stationTop),
+          stationBottom,
         );
         const distance = Math.abs(clampedAnchor - viewportAnchor);
 
@@ -276,100 +291,69 @@ export function Timeline({
       );
     };
 
-    const observer = new IntersectionObserver(pickActiveStation, {
-      threshold: [0, 0.15, 0.3, 0.5, 0.75, 1],
-      rootMargin: "-15% 0px -35% 0px",
-    });
-
-    for (const station of stations) {
-      const element = itemRefs.current[station.index];
-      if (element) {
-        observer.observe(element);
-      }
-    }
-
-    pickActiveStation();
-    window.addEventListener("resize", pickActiveStation);
-
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("resize", pickActiveStation);
-    };
-  }, [hoverEnabled, stations]);
-
-  useEffect(() => {
-    if (
-      activeTimeframeIndex === null ||
-      !shaderHighlightController ||
-      !containerRef.current
-    ) {
-      return;
-    }
-
-    const durationGeometry = durationGeometries[activeTimeframeIndex];
-    if (!durationGeometry || durationGeometry.points.length < 2) {
-      return;
-    }
-
-    const highlightId = `timeframe-${activeTimeframeIndex}`;
-
-    const publish = (method: "activatePath" | "updatePath") => {
-      const containerRect = containerRef.current?.getBoundingClientRect();
-      if (!containerRect) {
+    const schedulePickActiveStation = () => {
+      if (frameId !== null) {
         return;
       }
 
-      const viewportWidth = window.innerWidth || 1;
-      const viewportHeight = window.innerHeight || 1;
-      const graphLeft = containerRect.right - graphWidth;
-      const graphTop = containerRect.top;
-
-      shaderHighlightController[method]({
-        id: highlightId,
-        width: TIMEFRAME_HIGHLIGHT_WIDTH,
-        points: samplePoints(durationGeometry.points, MAX_SHADER_PATH_POINTS)
-          .filter((point, index, points) => {
-            if (index === 0) {
-              return true;
-            }
-
-            const previousPoint = points[index - 1];
-            return (
-              Math.abs(point.x - previousPoint.x) > 0.05 ||
-              Math.abs(point.y - previousPoint.y) > 0.05
-            );
-          })
-          .map((point) => ({
-            x: (graphLeft + point.x) / viewportWidth,
-            y: 1 - (graphTop + point.y) / viewportHeight,
-          })),
+      frameId = window.requestAnimationFrame(() => {
+        frameId = null;
+        pickActiveStation();
       });
     };
 
-    publish("activatePath");
+    pickActiveStation();
+    window.addEventListener("scroll", schedulePickActiveStation, {
+      passive: true,
+    });
+    window.addEventListener("resize", schedulePickActiveStation);
+    window.visualViewport?.addEventListener(
+      "resize",
+      schedulePickActiveStation,
+    );
+    window.visualViewport?.addEventListener(
+      "scroll",
+      schedulePickActiveStation,
+    );
+    if (typeof ResizeObserver !== "undefined") {
+      resizeObserver = new ResizeObserver(() => {
+        schedulePickActiveStation();
+      });
 
-    const handleViewportChange = () => publish("updatePath");
-    window.addEventListener("scroll", handleViewportChange, { passive: true });
-    window.addEventListener("resize", handleViewportChange);
+      if (containerRef.current) {
+        resizeObserver.observe(containerRef.current);
+      }
 
-    const observer =
-      typeof ResizeObserver === "undefined"
-        ? null
-        : new ResizeObserver(handleViewportChange);
-    observer?.observe(containerRef.current);
+      for (const itemRef of itemRefs.current) {
+        if (itemRef) {
+          resizeObserver.observe(itemRef);
+        }
+      }
+
+      for (const triggerRef of triggerRefs.current) {
+        if (triggerRef) {
+          resizeObserver.observe(triggerRef);
+        }
+      }
+    }
 
     return () => {
-      window.removeEventListener("scroll", handleViewportChange);
-      window.removeEventListener("resize", handleViewportChange);
-      observer?.disconnect();
-      shaderHighlightController.deactivatePath(highlightId);
+      if (frameId !== null) {
+        window.cancelAnimationFrame(frameId);
+      }
+      resizeObserver?.disconnect();
+      window.removeEventListener("scroll", schedulePickActiveStation);
+      window.removeEventListener("resize", schedulePickActiveStation);
+      window.visualViewport?.removeEventListener(
+        "resize",
+        schedulePickActiveStation,
+      );
+      window.visualViewport?.removeEventListener(
+        "scroll",
+        schedulePickActiveStation,
+      );
     };
-  }, [
-    activeTimeframeIndex,
-    durationGeometries,
-    graphWidth,
-    shaderHighlightController,
-  ]);
+  }, [hoverEnabled, metrics, stations]);
 
   return (
     <div ref={containerRef} className="relative flex flex-col gap-[32px]">
@@ -403,6 +387,13 @@ export function Timeline({
             filter: "blur(16px)",
             opacity: 0.28,
           }}
+        />
+      )}
+      {graphHeight > 0 && (
+        <TimelineHighlightShader
+          width={graphWidth}
+          height={graphHeight}
+          activePoints={activeDurationGeometry?.points ?? null}
         />
       )}
       {graphHeight > 0 && (
@@ -534,6 +525,9 @@ export function Timeline({
                 hideTimelinePoint: hideStationPoints,
                 hoverEnabled,
                 dotDelay: stationDotStart + index * STATION_STAGGER,
+                timelineTriggerRef: (node: HTMLDivElement | null) => {
+                  triggerRefs.current[index] = node;
+                },
                 onTimeframeEnter: hasTimeframe
                   ? () => activateTimeframe(index)
                   : undefined,

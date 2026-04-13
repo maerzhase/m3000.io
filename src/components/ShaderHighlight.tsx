@@ -9,17 +9,6 @@ export interface ShaderHighlightPayload {
   haloSpread?: number;
 }
 
-export interface ShaderHighlightPoint {
-  x: number;
-  y: number;
-}
-
-export interface ShaderPathHighlightPayload {
-  id: string;
-  points: ShaderHighlightPoint[];
-  width?: number;
-}
-
 export interface ShaderHighlightRect {
   centerX: number;
   centerY: number;
@@ -43,9 +32,6 @@ export interface ShaderHighlightController {
   activate: (payload: ShaderHighlightPayload) => void;
   update: (payload: ShaderHighlightPayload) => void;
   deactivate: (id: string) => void;
-  activatePath: (payload: ShaderPathHighlightPayload) => void;
-  updatePath: (payload: ShaderPathHighlightPayload) => void;
-  deactivatePath: (id: string) => void;
 }
 
 const ShaderHighlightContext =

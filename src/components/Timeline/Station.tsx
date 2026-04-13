@@ -37,6 +37,7 @@ export interface StationProps {
   onTimeframeLeave?: () => void;
   onMarkerEnter?: () => void;
   onMarkerLeave?: () => void;
+  timelineTriggerRef?: (node: HTMLDivElement | null) => void;
   className?: string;
   style?: CSSProperties;
 }
@@ -61,6 +62,7 @@ export function Station({
   onTimeframeLeave,
   onMarkerEnter,
   onMarkerLeave,
+  timelineTriggerRef,
   className,
   style,
 }: StationProps) {
@@ -410,6 +412,7 @@ export function Station({
         )}
         <StationInlineContext value={inlineContextValue}>
           <div
+            ref={timelineTriggerRef}
             className={cn(
               "mt-2 transition-colors duration-200 [&_p]:text-pretty [&_p]:transition-colors [&_p]:duration-200",
               stationActive ? "[&_p]:text-white/92" : "[&_p]:text-white/72",

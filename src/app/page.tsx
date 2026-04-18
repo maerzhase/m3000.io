@@ -92,11 +92,11 @@ export default function Home() {
               {/* biome-ignore lint: using render */}
               <Text render={<h1 />} size="6">
                 <Hello />. I am Markus — <br />a (Berlin
-                <Text render={<sup />} size="2" weight="medium">
+                <Text render={<sup />} size="1" weight="medium">
                   DE
                 </Text>{" "}
                 ↔ Porto
-                <Text render={<sup />} size="2" weight="medium">
+                <Text render={<sup />} size="1" weight="medium">
                   PT
                 </Text>
                 ) based <br />

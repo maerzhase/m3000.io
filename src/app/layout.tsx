@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://m3000.io"),
   title: "Senior Design Engineer | Markus (m3000)",
   description:
-    "Senior Design Engineer building product UX, design systems, and full-stack platforms for complex digital products. Formerly at fxhash, Studio NAND, and ART+COM Studios.",
+    "Leading design engineering across product UX, architecture, and implementation, building platforms, interfaces, and products that turn technical complexity into usable, coherent, and performant systems.",
   applicationName: "m3000.io",
   alternates: {
     canonical: "https://m3000.io",
@@ -29,8 +29,11 @@ export const metadata: Metadata = {
     "Design Engineer",
     "Full-stack developer",
     "Product engineering",
+    "Product UX",
+    "Architecture",
     "Design systems",
     "Frontend architecture",
+    "Platform design",
     "Generative art",
     "fxhash",
     "Studio NAND",
@@ -48,7 +51,7 @@ export const metadata: Metadata = {
     url: "https://m3000.io",
     title: "Senior Design Engineer | Markus (m3000)",
     description:
-      "Senior Design Engineer focused on product UX, design systems, and full-stack platforms for complex digital products.",
+      "Leading design engineering across product UX, architecture, and implementation.",
     siteName: "m3000.io",
     images: [
       {
@@ -63,7 +66,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Senior Design Engineer | Markus (m3000)",
     description:
-      "Senior Design Engineer focused on product UX, design systems, and full-stack platforms for complex digital products.",
+      "Leading design engineering across product UX, architecture, and implementation.",
     images: ["/opengraph-image"],
     creator: "@maerzhase3000",
   },

@@ -25,7 +25,7 @@ const structuredData = {
       image: "https://m3000.io/me.png",
       jobTitle: "Senior Design Engineer",
       description:
-        "Senior Design Engineer building product UX, design systems, and full-stack platforms for complex digital products.",
+        "Leading design engineering across product UX, architecture, and implementation, building platforms, interfaces, and products that turn technical complexity into usable, coherent, and performant systems.",
       homeLocation: {
         "@type": "Place",
         name: "Porto, Portugal",
@@ -85,7 +85,8 @@ const structuredData = {
       "@id": "https://m3000.io/#website",
       url: "https://m3000.io",
       name: "m3000.io",
-      description: "Portfolio of Markus (m3000), Senior Design Engineer.",
+      description:
+        "Portfolio of Markus (m3000), Senior Design Engineer working across product UX, architecture, and implementation.",
       publisher: {
         "@id": "https://m3000.io/#person",
       },
@@ -134,10 +135,10 @@ export default function Home() {
               </Text>
               {/* biome-ignore lint: using render */}
               <Text size="4" render={<h2 />}>
-                I lead design engineering across product UX, systems, and
-                implementation. Since 2011 I&apos;ve been building interfaces,
-                platforms, and tooling for products where technical complexity
-                needs to become usable, coherent, and fast.
+                Leading design engineering across product UX, architecture, and
+                implementation — building platforms, interfaces, and products
+                that turn technical complexity into usable, coherent, and
+                performant systems.
               </Text>
 
               <div className="-mt-2">

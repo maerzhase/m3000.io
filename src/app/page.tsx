@@ -204,15 +204,18 @@ export default function Home() {
                     }
                   >
                     <Text render={<p />}>
-                      Building the largest open cross-chain generative art
-                      platform, I focused on UI and UX for complex onchain
-                      flows. The goal was to make these interactions clear and
-                      intuitive without hiding their mechanics. With a strong
-                      focus on performance and consistency, I shaped reusable UI
-                      patterns that scaled with the product, and migrated the
-                      codebase from a distributed microservice architecture to a
-                      unified monorepo to improve developer experience, shared
-                      code, and maintainability.
+                      Built and scaled the largest open multi-chain generative
+                      art platform,{" "}
+                      <u>
+                        used by 25k+ artists and collectors, enabling the
+                        creation of over 2M artworks and $100M+ in sales.
+                      </u>
+                      &nbsp;The focus was on making complex on-chain
+                      interactions intuitive without hiding their underlying
+                      mechanics — developing performant interfaces, reusable UI
+                      systems, and evolving the architecture into a unified
+                      monorepo to improve scalability, maintainability, and
+                      developer experience.
                     </Text>
                   </Station>
 
@@ -230,16 +233,14 @@ export default function Home() {
                     title="Design Engineer → Lead Design Engineer"
                   >
                     <Text render={<p />}>
-                      Building at the intersection of design and engineering, I
-                      developed interactive web applications, tools, and
-                      real-time systems for cultural and enterprise clients. The
-                      work focused on translating complex UX concepts and
-                      data-heavy interfaces into scalable, production-ready
-                      systems. I shaped technical architecture and
-                      implementation together with designers and engineers, and
-                      built custom tools, data pipelines, and design systems
-                      used in both installations and critical decision-making
-                      software.
+                      Building at the intersection of design and engineering,
+                      delivered interactive systems for cultural and enterprise
+                      clients, translating complex UX and data-heavy interfaces
+                      into scalable, production-ready applications used in
+                      real-world decision-making. <u>Shaped technical architecture,
+                        design systems, and developer workflows across projects,
+                        and progressed into a lead role, helping grow the team
+                        from 4 to 12.</u>
                     </Text>
                   </Station>
 

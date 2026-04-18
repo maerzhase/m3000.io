@@ -91,7 +91,8 @@ export default function Home() {
               </ShaderHighlight>
               {/* biome-ignore lint: using render */}
               <Text render={<h1 />} size="6">
-                <Hello />. I am Markus — <br />a (Berlin
+                <Hello />. I am Markus — <br />
+                (Berlin
                 <Text render={<sup />} size="1" weight="medium">
                   DE
                 </Text>{" "}
@@ -99,7 +100,7 @@ export default function Home() {
                 <Text render={<sup />} size="1" weight="medium">
                   PT
                 </Text>
-                ) based <br />
+                ) based <br className="hidden sm:inline" />
                 <Text size="5" weight="semibold">
                   Senior Design Engineer & Full-Stack Developer
                 </Text>

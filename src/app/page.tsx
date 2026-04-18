@@ -1,5 +1,3 @@
-export const dynamic = "force-dynamic";
-
 import {
   IconBrandGithubFilled,
   IconBrandLinkedinFilled,
@@ -27,11 +25,19 @@ const structuredData = {
       image: "https://m3000.io/me.png",
       jobTitle: "Senior Design Engineer",
       description:
-        "Porto-based Senior Design Engineer and Full-Stack Developer building modern interfaces, design systems, and tools for the web.",
+        "Senior Design Engineer building product UX, design systems, and full-stack platforms for complex digital products.",
       homeLocation: {
         "@type": "Place",
         name: "Porto, Portugal",
       },
+      knowsAbout: [
+        "Design systems",
+        "Product engineering",
+        "Frontend architecture",
+        "Full-stack development",
+        "Generative art platforms",
+        "Creative technology",
+      ],
       sameAs: [
         "https://github.com/maerzhase/",
         "https://linkedin.com/in/maerzhase3000/",
@@ -48,22 +54,42 @@ const structuredData = {
           url: "https://zhdk.ch/",
         },
       ],
-      worksFor: {
-        "@type": "Organization",
-        name: "fxhash",
-        url: "https://fxhash.xyz/",
+      hasOccupation: {
+        "@type": "Occupation",
+        name: "Senior Design Engineer",
+        occupationLocation: {
+          "@type": "City",
+          name: "Porto",
+        },
       },
+      memberOf: [
+        {
+          "@type": "Organization",
+          name: "fxhash",
+          url: "https://fxhash.xyz/",
+        },
+        {
+          "@type": "Organization",
+          name: "Studio NAND",
+          url: "https://nand.io/",
+        },
+        {
+          "@type": "Organization",
+          name: "ART+COM Studios",
+          url: "https://artcom.de/",
+        },
+      ],
     },
     {
       "@type": "WebSite",
       "@id": "https://m3000.io/#website",
       url: "https://m3000.io",
       name: "m3000.io",
-      description:
-        "Portfolio of Markus, a Porto-based Senior Design Engineer and Full-Stack Developer.",
+      description: "Portfolio of Markus (m3000), Senior Design Engineer.",
       publisher: {
         "@id": "https://m3000.io/#person",
       },
+      inLanguage: "en",
     },
   ],
 };
@@ -108,10 +134,10 @@ export default function Home() {
               </Text>
               {/* biome-ignore lint: using render */}
               <Text size="4" render={<h2 />}>
-                Since 2011 I've been working with data and information
-                technology—both inside and outside the web. I thrive in modern
-                design and coding environments, and when existing tools don't
-                quite fit, I build my own.
+                I lead design engineering across product UX, systems, and
+                implementation. Since 2011 I&apos;ve been building interfaces,
+                platforms, and tooling for products where technical complexity
+                needs to become usable, coherent, and fast.
               </Text>
 
               <div className="-mt-2">
@@ -126,8 +152,9 @@ export default function Home() {
                     title="Open Source Projects"
                   >
                     <Text render={<p />} className="max-w-[70ch]">
-                      In 2026 I started releasing a growing set of open source
-                      projects, including{" "}
+                      In 2026 I began releasing a growing set of open source
+                      projects that reflect the way I like to work: close to
+                      products, systems, and real constraints. They include{" "}
                       <InlineStationLink
                         href="https://ai11y.m3000.io"
                         pointId="ai11y"
@@ -135,16 +162,16 @@ export default function Home() {
                         ai11y
                       </InlineStationLink>
                       , a structured UI context layer for AI agents that makes
-                      existing user interfaces understandable and actionable;{" "}
+                      existing interfaces understandable and actionable;{" "}
                       <InlineStationLink
                         href="https://market.m3000.io"
                         pointId="market"
                       >
                         market-ui
                       </InlineStationLink>
-                      , design-system with declarative components for interfaces
-                      shaped by price, time, and competition, built for
-                      transactions, auctions, and dynamic marketplace logic; and{" "}
+                      , a design system for interfaces shaped by price, time,
+                      and competition, built for transactions, auctions, and
+                      dynamic marketplace logic; and{" "}
                       <InlineStationLink
                         href="https://gems.m3000.io"
                         pointId="gems"
@@ -200,7 +227,7 @@ export default function Home() {
                         Studio NAND
                       </ExternalLink>
                     }
-                    title="Lead Design Technologist"
+                    title="Design Engineer → Lead Design Engineer"
                   >
                     <Text render={<p />}>
                       Building at the intersection of design and engineering, I
@@ -211,7 +238,7 @@ export default function Home() {
                       systems. I shaped technical architecture and
                       implementation together with designers and engineers, and
                       built custom tools, data pipelines, and design systems
-                      used in both installations and criticial decision-making
+                      used in both installations and critical decision-making
                       software.
                     </Text>
                   </Station>
@@ -227,11 +254,11 @@ export default function Home() {
                         ART+COM Studios
                       </ExternalLink>
                     }
-                    title="RND Developer"
+                    title="R&D Developer"
                   >
                     <Text render={<p />}>
                       Working across software, hardware, and spatial design, I
-                      designed and build interactive installations and kinetic
+                      designed and built interactive installations and kinetic
                       sculptures for public exhibitions. The work was hands-on
                       and experimental, turning conceptual ideas into
                       technically viable systems. I developed real-time,
@@ -265,17 +292,15 @@ export default function Home() {
                   >
                     <Text render={<p />}>
                       Graduating in 2015 in Interface + Interaction Design, I
-                      focused on designing interfaces and user experiences for
-                      complex systems, creating interfaces for solving complex
-                      problems and shaping how people understand and navigate
-                      technical environments. My thesis{" "}
+                      focused on how interfaces help people understand and
+                      navigate complex systems. My thesis{" "}
                       <Text
                         weight="semibold"
                         className="dither whitespace-nowrap rounded-md bg-black px-1 text-white"
                       >
                         (Sprache / Algorithmen)
                       </Text>{" "}
-                      explored how algorithmic logic shapes natural language — a
+                      explored how algorithmic logic shapes natural language, a
                       line of thinking that has since become central to modern
                       AI systems.
                     </Text>

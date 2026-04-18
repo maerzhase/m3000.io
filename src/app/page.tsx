@@ -237,10 +237,12 @@ export default function Home() {
                       delivered interactive systems for cultural and enterprise
                       clients, translating complex UX and data-heavy interfaces
                       into scalable, production-ready applications used in
-                      real-world decision-making. <u>Shaped technical architecture,
-                        design systems, and developer workflows across projects,
-                        and progressed into a lead role, helping grow the team
-                        from 4 to 12.</u>
+                      real-world decision-making.{" "}
+                      <u>
+                        Shaped technical architecture, design systems, and
+                        developer workflows across projects, and progressed into
+                        a lead role, helping grow the team from 4 to 12.
+                      </u>
                     </Text>
                   </Station>
 

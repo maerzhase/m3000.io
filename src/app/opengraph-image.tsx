@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { Geist } from "next/font/google";
 import { ImageResponse } from "next/og";
 
 export const runtime = "nodejs";
@@ -10,6 +11,10 @@ export const size = {
 };
 export const contentType = "image/png";
 
+const geistSans = Geist({
+  subsets: ["latin"],
+});
+
 const COLORS = {
   background: "#000000",
   border: "rgba(255, 255, 255, 0.12)",
@@ -18,15 +23,15 @@ const COLORS = {
   textSoft: "rgba(255, 255, 255, 0.42)",
 };
 
-async function getIconDataUrl() {
-  const iconPath = path.join(process.cwd(), "src/app/icon.png");
-  const icon = await readFile(iconPath);
+async function getAvatarDataUrl() {
+  const avatarPath = path.join(process.cwd(), "public/me-avatar-dither.png");
+  const avatar = await readFile(avatarPath);
 
-  return `data:image/png;base64,${icon.toString("base64")}`;
+  return `data:image/png;base64,${avatar.toString("base64")}`;
 }
 
 export default async function OpenGraphImage() {
-  const iconSrc = await getIconDataUrl();
+  const avatarSrc = await getAvatarDataUrl();
 
   return new ImageResponse(
     <div
@@ -38,8 +43,7 @@ export default async function OpenGraphImage() {
         overflow: "hidden",
         background: COLORS.background,
         color: COLORS.textPrimary,
-        fontFamily:
-          '"Geist", "Geist Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
+        fontFamily: geistSans.style.fontFamily,
       }}
     >
       <div
@@ -97,8 +101,9 @@ export default async function OpenGraphImage() {
           <div
             style={{
               display: "flex",
-              fontSize: 24,
-              fontWeight: 600,
+              fontSize: 20,
+              lineHeight: 1.4,
+              fontWeight: 500,
               letterSpacing: "-0.03em",
             }}
           >
@@ -116,26 +121,58 @@ export default async function OpenGraphImage() {
             <div
               style={{
                 display: "flex",
-                fontSize: 62,
-                lineHeight: 1,
-                fontWeight: 600,
-                letterSpacing: "-0.06em",
+                flexDirection: "column",
+                gap: "6px",
                 maxWidth: "760px",
               }}
             >
-              Senior Design Engineer & Full-Stack Developer.
+              <div
+                style={{
+                  display: "flex",
+                  fontSize: 52,
+                  lineHeight: 1.15,
+                  fontWeight: 400,
+                  letterSpacing: "-0.05em",
+                }}
+              >
+                I am Markus.
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  fontSize: 52,
+                  lineHeight: 1.15,
+                  fontWeight: 600,
+                  letterSpacing: "-0.05em",
+                }}
+              >
+                Senior Design Engineer &
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  fontSize: 52,
+                  lineHeight: 1.15,
+                  fontWeight: 600,
+                  letterSpacing: "-0.05em",
+                }}
+              >
+                Full-Stack Developer.
+              </div>
             </div>
             <div
               style={{
                 display: "flex",
                 maxWidth: "560px",
-                fontSize: 26,
-                lineHeight: 1.25,
+                fontSize: 20,
+                lineHeight: 1.4,
+                fontWeight: 400,
                 color: COLORS.textMuted,
                 letterSpacing: "-0.03em",
               }}
             >
-              Since 2011, working with data and information technology.
+              Building systems that make complexity understandable through
+              thoughtful design, clear structure, and reliable engineering.
             </div>
           </div>
         </div>
@@ -163,12 +200,13 @@ export default async function OpenGraphImage() {
           />
           {/* biome-ignore lint/performance/noImgElement: next/og renders plain image elements inside ImageResponse */}
           <img
-            src={iconSrc}
+            src={avatarSrc}
             width="220"
             height="220"
             alt=""
             style={{
-              objectFit: "contain",
+              objectFit: "cover",
+              borderRadius: "999px",
             }}
           />
         </div>

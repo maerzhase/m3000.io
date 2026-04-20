@@ -181,7 +181,16 @@ export default function Home() {
                       </InlineStationLink>
                       , a React avatar component and hosted image API for
                       generating deterministic gemstone avatars from any string
-                      seed.
+                      seed; and{" "}
+                      <InlineStationLink
+                        href="https://jobnest.m3000.io/"
+                        pointId="jobnest"
+                      >
+                        JobNest
+                      </InlineStationLink>
+                      , a privacy-first job application tracker that helps
+                      people stay on top of their application progress without
+                      compromising their data.
                     </Text>
                   </Station>
 

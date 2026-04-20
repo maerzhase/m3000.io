@@ -26,6 +26,12 @@ export function CurrentProjects() {
           web, organized as a personal collection.
         </Text>
       </Station>
+      <Station year="" name="jobnest.m3000.io" title="JobNest">
+        <Text render={<p />}>
+          A privacy-first job application tracker that helps people stay on top
+          of their application progress without compromising their data.
+        </Text>
+      </Station>
     </section>
   );
 }

@@ -201,8 +201,8 @@ export default async function OpenGraphImage() {
           {/* biome-ignore lint/performance/noImgElement: next/og renders plain image elements inside ImageResponse */}
           <img
             src={avatarSrc}
-            width="220"
-            height="220"
+            width={220}
+            height={220}
             alt=""
             style={{
               objectFit: "cover",

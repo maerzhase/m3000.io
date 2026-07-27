@@ -181,7 +181,7 @@ export default function Home() {
                       </InlineStationLink>
                       , a React avatar component and hosted image API for
                       generating deterministic gemstone avatars from any string
-                      seed; and{" "}
+                      seed;{" "}
                       <InlineStationLink
                         href="https://jobnest.m3000.io/"
                         pointId="jobnest"
@@ -190,7 +190,17 @@ export default function Home() {
                       </InlineStationLink>
                       , a privacy-first job application tracker that helps
                       people stay on top of their application progress without
-                      compromising their data.
+                      compromising their data; and{" "}
+                      <InlineStationLink
+                        href="https://github.com/maerzhase/whitehash"
+                        pointId="whitehash"
+                      >
+                        whitehash
+                      </InlineStationLink>
+                      , a framework-agnostic TypeScript and React toolkit for
+                      reading and embedding fxhash generative art directly from
+                      public blockchain infrastructure and content-addressed
+                      storage.
                     </Text>
                   </Station>
 

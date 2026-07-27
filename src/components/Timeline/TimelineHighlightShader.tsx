@@ -28,6 +28,8 @@ uniform int u_path_point_count;
 uniform vec2 u_path_points[24];
 uniform float u_path_width;
 uniform float u_path_strength;
+uniform float u_path_reveal;
+uniform float u_packet_time;
 
 varying vec2 v_uv;
 
@@ -69,13 +71,21 @@ float bayer4(vec2 p) {
   return 5.0 / 16.0;
 }
 
-float sdSegment(vec2 p, vec2 a, vec2 b, out float projectedLength) {
+float sdSegment(
+  vec2 p,
+  vec2 a,
+  vec2 b,
+  out float projectedLength,
+  out float signedSide
+) {
   vec2 pa = p - a;
   vec2 ba = b - a;
   float baDot = max(dot(ba, ba), 0.000001);
   float h = clamp(dot(pa, ba) / baDot, 0.0, 1.0);
+  vec2 offset = pa - ba * h;
   projectedLength = length(ba) * h;
-  return length(pa - ba * h);
+  signedSide = sign(ba.x * offset.y - ba.y * offset.x);
+  return length(offset);
 }
 
 void main() {
@@ -83,48 +93,93 @@ void main() {
   float pathDistancePx = 1e5;
   float pathTravelPx = 0.0;
   float accumulatedPathLengthPx = 0.0;
+  float pathBend = 0.0;
+  float pathBendDirection = 0.0;
+  float pathSide = 0.0;
+  vec2 previousDirection = vec2(0.0, 1.0);
 
   for (int i = 0; i < 23; i++) {
     if (i >= u_path_point_count - 1) break;
     vec2 pathStart = u_path_points[i];
     vec2 pathEnd = u_path_points[i + 1];
     float segmentTravel = 0.0;
-    float segmentDistance = sdSegment(pixel, pathStart, pathEnd, segmentTravel);
+    float segmentSide = 0.0;
+    float segmentDistance = sdSegment(
+      pixel,
+      pathStart,
+      pathEnd,
+      segmentTravel,
+      segmentSide
+    );
+    vec2 segmentDelta = pathEnd - pathStart;
+    vec2 segmentDirection =
+      segmentDelta / max(length(segmentDelta), 0.000001);
+    float segmentBend =
+      i > 0 ? clamp(1.0 - dot(previousDirection, segmentDirection), 0.0, 1.0) : 0.0;
+    float segmentBendDirection = sign(
+      previousDirection.x * segmentDirection.y
+      - previousDirection.y * segmentDirection.x
+    );
 
     if (segmentDistance < pathDistancePx) {
       pathDistancePx = segmentDistance;
       pathTravelPx = accumulatedPathLengthPx + segmentTravel;
+      pathBend = segmentBend;
+      pathBendDirection = segmentBendDirection;
+      pathSide = segmentSide;
     }
 
     accumulatedPathLengthPx += length(pathEnd - pathStart);
+    previousDirection = segmentDirection;
   }
 
   float pathHalfWidth = max(0.5, u_path_width * 0.5);
   float pathFeather = max(0.8, pathHalfWidth * 0.55);
   float pathLength = max(accumulatedPathLengthPx, 0.0001);
-  float directionHead = pathLength - mod(u_time * pathLength * 0.22, pathLength);
-  float wrappedDistanceToHead = abs(pathTravelPx - directionHead);
-  wrappedDistanceToHead = min(
-    wrappedDistanceToHead,
-    pathLength - wrappedDistanceToHead
-  );
-  float directionTrailLength = max(pathLength * 0.16, pathHalfWidth * 18.0);
+  float directionalTravelPx = pathLength - pathTravelPx;
+  float revealHead = u_path_reveal * pathLength;
+  float revealFeather = max(pathLength * 0.035, pathHalfWidth * 7.0);
+  float revealMask =
+    1.0 - smoothstep(revealHead, revealHead + revealFeather, directionalTravelPx);
+
+  float packetCycle = mod(max(u_packet_time - 0.1, 0.0), 3.6);
+  float packetProgress = smoothstep(0.0, 1.0, clamp(packetCycle / 0.9, 0.0, 1.0));
+  float directionHead = packetProgress * pathLength;
+  float distanceToHead = abs(directionalTravelPx - directionHead);
+  float directionTrailLength = max(pathLength * 0.085, pathHalfWidth * 12.0);
+  float packetPresence = 1.0 - smoothstep(0.95, 1.2, packetCycle);
   float directionPulse =
-    1.0 - smoothstep(0.0, directionTrailLength, wrappedDistanceToHead);
+    (1.0 - smoothstep(0.0, directionTrailLength, distanceToHead))
+    * packetPresence;
+  float outsideBend = smoothstep(
+    -0.1,
+    0.9,
+    -pathBendDirection * pathSide
+  );
+  float bendLight =
+    pow(clamp(pathBend * 42.0, 0.0, 1.0), 0.55)
+    * outsideBend
+    * directionPulse;
   float noiseA =
     valueNoise(
       vec2(
-        pathTravelPx * 0.012 - u_time * 0.95,
+        directionalTravelPx * 0.012 - u_time * 0.95,
         pathDistancePx * 0.85 + u_noise_seed * 2.0
       )
     );
   float noiseB =
     valueNoise(
       vec2(
-        pathTravelPx * 0.02 - u_time * 1.45 + 13.7,
+        directionalTravelPx * 0.02 - u_time * 1.45 + 13.7,
         pathDistancePx * 1.2 - u_noise_seed * 3.0
       )
     );
+  float haloDrift = valueNoise(
+    vec2(
+      directionalTravelPx * 0.006 - u_time * 0.16,
+      pathDistancePx * 0.32 + u_noise_seed * 5.0
+    )
+  );
   float pathShimmer = mix(noiseA, noiseB, 0.42);
   pathShimmer = smoothstep(0.18, 0.88, pathShimmer);
   pathShimmer *= 0.78 + 0.22 * noiseB;
@@ -141,43 +196,69 @@ void main() {
       * 1.15
     + pathEdgeNoise * pathHalfWidth * 0.6 * 1.15;
 
+  float pathBase =
+    u_path_strength
+    * revealMask
+    * (1.0 - smoothstep(pathHalfWidth * 0.28, pathHalfWidth * 0.86, pathDistancePx));
   float pathCore =
     u_path_strength
+    * revealMask
     * (1.0 - smoothstep(pathHalfWidth, pathHalfWidth + pathFeather, warpedPathDistance));
   float pathRim =
     u_path_strength
+    * revealMask
     * (1.0 - smoothstep(pathHalfWidth * 0.1, pathHalfWidth * 1.8, abs(warpedPathDistance)));
   float pathGlow =
     u_path_strength
+    * revealMask
     * (1.0 - smoothstep(pathHalfWidth * 0.45, pathHalfWidth * 2.7, abs(warpedPathDistance)));
+  float packetBody =
+    u_path_strength
+    * revealMask
+    * directionPulse
+    * (1.0 - smoothstep(pathHalfWidth * 0.65, pathHalfWidth * 1.9, pathDistancePx));
+  float packetAura =
+    u_path_strength
+    * revealMask
+    * directionPulse
+    * (1.0 - smoothstep(pathHalfWidth * 1.1, pathHalfWidth * 4.4, pathDistancePx));
 
   float pathWave =
-    0.5 + 0.5 * sin(pathTravelPx * 0.018 - u_time * 3.1 + noiseA * 4.0);
+    0.5 + 0.5 * sin(directionalTravelPx * 0.018 - u_time * 3.1 + noiseA * 4.0);
   pathWave = mix(0.76, 1.06, pathWave);
 
+  pathBase = clamp(pathBase, 0.0, 1.0);
   pathCore = clamp(pathCore, 0.0, 1.0);
   pathRim = clamp(pathRim, 0.0, 1.0);
   pathGlow = clamp(pathGlow, 0.0, 1.0);
+  packetBody = clamp(packetBody, 0.0, 1.0);
+  packetAura = clamp(packetAura, 0.0, 1.0);
 
-  vec3 primaryColor = vec3(0.45, 0.1, 0.02);
-  vec3 haloColor = vec3(0.9, 0.24, 0.08);
+  vec3 primaryColor = vec3(0.42);
+  vec3 haloColor = vec3(0.78);
   vec3 pathHotColor = mix(
-    primaryColor * 3.0,
-    vec3(0.98, 0.56, 0.22),
+    primaryColor * 2.1,
+    vec3(0.98),
     min(1.0, pathShimmer + directionPulse * 0.4)
   );
 
   vec3 color = vec3(0.0);
+  color += vec3(0.76) * pathBase * 0.46;
+  color += vec3(0.9) * packetBody * (0.17 + pathShimmer * 0.08);
+  color += vec3(0.68) * packetAura * (0.07 + haloDrift * 0.045);
   color +=
     pathHotColor
     * pathCore
-    * (0.28 + 0.22 * pathShimmer + directionPulse * 0.34)
+    * (0.28 + 0.18 * pathShimmer + directionPulse * 0.38 + bendLight * 0.22)
     * pathWave;
-  color += haloColor * pathRim * (0.19 + 0.12 * pathShimmer);
+  color +=
+    haloColor
+    * pathRim
+    * (0.16 + 0.1 * haloDrift + directionPulse * 0.08 + bendLight * 0.16);
   color +=
     primaryColor
     * pathGlow
-    * (0.14 + directionPulse * 0.1)
+    * (0.12 + haloDrift * 0.055 + directionPulse * 0.11 + bendLight * 0.13)
     * 1.9
     * pathWave;
   color += edgeNoise * 0.045 * pathGlow * 1.05 * pathWave;
@@ -185,10 +266,13 @@ void main() {
   color += pathEdgeNoise * 0.04 * pathRim * 1.05;
 
   float alpha =
-    pathGlow * 0.16
+    pathBase * 0.36
+    + packetBody * 0.16
+    + packetAura * 0.065
+    + pathGlow * 0.16
     + pathRim * 0.25
-    + pathCore * (0.34 + directionPulse * 0.1);
-  alpha = clamp(alpha, 0.0, 0.78);
+    + pathCore * (0.34 + directionPulse * 0.1 + bendLight * 0.08);
+  alpha = clamp(alpha, 0.0, 0.82);
   color = clamp(color, 0.0, 1.0);
 
   if (u_dither_strength > 0.0 && u_dither_levels > 1.0) {
@@ -273,6 +357,7 @@ export function TimelineHighlightShader({
   const pointCountRef = useRef(0);
   const strengthTargetRef = useRef(0);
   const snapStrengthRef = useRef<number | null>(null);
+  const resetAnimationRef = useRef(false);
   const activeSignatureRef = useRef<string | null>(null);
 
   const sampledPoints = useMemo(
@@ -306,6 +391,7 @@ export function TimelineHighlightShader({
       pointsRef.current.set(nextTarget);
       if (pathChanged && sampledPoints.length > 1) {
         snapStrengthRef.current = 0;
+        resetAnimationRef.current = true;
       }
     }
 
@@ -358,6 +444,8 @@ export function TimelineHighlightShader({
     const uPathPoints = gl.getUniformLocation(program, "u_path_points");
     const uPathWidth = gl.getUniformLocation(program, "u_path_width");
     const uPathStrength = gl.getUniformLocation(program, "u_path_strength");
+    const uPathReveal = gl.getUniformLocation(program, "u_path_reveal");
+    const uPacketTime = gl.getUniformLocation(program, "u_packet_time");
 
     const buffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
@@ -368,6 +456,8 @@ export function TimelineHighlightShader({
     let lastTime = performance.now() * 0.001;
     let timeSeconds = 0;
     let strength = 0;
+    let revealProgress = 0;
+    let packetTime = 0;
     let canvasWidth = 0;
     let canvasHeight = 0;
     let renderScale = 1;
@@ -397,8 +487,19 @@ export function TimelineHighlightShader({
         snapStrengthRef.current = null;
       }
 
+      if (resetAnimationRef.current) {
+        revealProgress = 0;
+        packetTime = 0;
+        resetAnimationRef.current = false;
+      }
+
+      if (strengthTargetRef.current > 0) {
+        revealProgress = Math.min(1, revealProgress + dt / 0.34);
+        packetTime += dt;
+      }
+
       const strengthFollow =
-        strengthTargetRef.current > strength ? 0.032 : 0.075;
+        strengthTargetRef.current > strength ? 0.16 : 0.075;
       strength += (strengthTargetRef.current - strength) * strengthFollow;
 
       const currentPoints = pointsRef.current;
@@ -439,6 +540,9 @@ export function TimelineHighlightShader({
           TIMEFRAME_HIGHLIGHT_WIDTH * 0.84 * renderScale,
         );
         gl.uniform1f(uPathStrength, strength * 0.86);
+        const easedReveal = 1 - (1 - revealProgress) ** 3;
+        gl.uniform1f(uPathReveal, easedReveal);
+        gl.uniform1f(uPacketTime, packetTime);
 
         gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
         gl.enableVertexAttribArray(positionLoc);

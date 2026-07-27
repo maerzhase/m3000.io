@@ -277,6 +277,24 @@ export function Station({
               style={{ right: dotRight, top: timelineNodeY }}
             />
           )}
+          {timeframeActive && (
+            <motion.span
+              aria-hidden="true"
+              className={cn(
+                "pointer-events-none absolute z-[19] size-[9px] border border-white/70 bg-white/10",
+                isDiamondPoint ? "rotate-45 rounded-[2px]" : "rounded-full",
+              )}
+              style={{ right: dotRight, top: timelineNodeY }}
+              initial={{ opacity: 0, scale: 0.7 }}
+              animate={{ opacity: [0, 0.72, 0], scale: [0.7, 1.2, 2.2] }}
+              transition={{
+                delay: 0.04,
+                duration: 0.55,
+                times: [0, 0.22, 1],
+                ease: [0.22, 1, 0.36, 1],
+              }}
+            />
+          )}
           <motion.button
             type="button"
             aria-label={`Highlight ${typeof title === "string" ? title : "timeline station"}`}
@@ -287,13 +305,25 @@ export function Station({
             )}
             style={{ right: dotRight, top: timelineNodeY }}
             initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{
-              delay: dotDelay,
-              type: "spring",
-              stiffness: 300,
-              damping: 20,
+            animate={{
+              scale: timeframeActive ? [1, 0.78, 1.16, 1] : 1,
+              opacity: 1,
             }}
+            transition={
+              timeframeActive
+                ? {
+                    delay: 0.04,
+                    duration: 0.48,
+                    times: [0, 0.24, 0.66, 1],
+                    ease: [0.22, 1, 0.36, 1],
+                  }
+                : {
+                    delay: dotDelay,
+                    type: "spring",
+                    stiffness: 300,
+                    damping: 20,
+                  }
+            }
             onPointerEnter={onMarkerEnter}
             onPointerLeave={onMarkerLeave}
             onFocus={onMarkerEnter}

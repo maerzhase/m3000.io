@@ -11,7 +11,7 @@ import {
   useState,
 } from "react";
 import cake from "./cake-2026.png";
-import FlyTally from "./FlyTally";
+import FlyTally, { MAX_FLY_TALLY } from "./FlyTally";
 import frame from "./frame-2026.png";
 import PortraitFly from "./PortraitFly";
 import styles from "./page.module.css";
@@ -46,7 +46,10 @@ export default function BdayPage() {
   const [stage, setStage] = useState<Stage>("unlit");
   const [holding, setHolding] = useState(false);
   const [fliesSwatted, setFliesSwatted] = useState(0);
-  const countFly = useCallback(() => setFliesSwatted((count) => count + 1), []);
+  const countFly = useCallback(
+    () => setFliesSwatted((count) => Math.min(MAX_FLY_TALLY, count + 1)),
+    [],
+  );
   const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const celebrationTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const skipClick = useRef(false);

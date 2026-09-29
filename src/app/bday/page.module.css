@@ -100,34 +100,28 @@
 .flyTally {
   position: absolute;
   bottom: 3.8%;
-  left: 22%;
-  right: 22%;
+  left: 18%;
+  right: 18%;
   height: 4.5%;
   pointer-events: none;
 }
 .tallyMarks {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
+  justify-content: flex-start;
   height: 100%;
   color: #d9c5a5;
   opacity: 0.78;
   filter: drop-shadow(0 1px 0 #291c16);
 }
 .tallyMarks svg {
-  max-width: 80%;
   height: 100%;
-  width: auto;
-  overflow: visible;
+  width: 100%;
+  overflow: hidden;
   fill: none;
   stroke: currentColor;
   stroke-width: 1.3;
   stroke-linecap: round;
-}
-.tallyTotal {
-  font-size: clamp(9px, 2vw, 13px);
-  font-style: italic;
 }
 .srOnly {
   position: absolute;

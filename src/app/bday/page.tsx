@@ -11,6 +11,7 @@ import {
 } from "react";
 import cake from "./cake-2026.png";
 import frame from "./frame-2026.png";
+import PortraitFly from "./PortraitFly";
 import styles from "./page.module.css";
 
 type Stage = "unlit" | "lit" | "wished";
@@ -148,6 +149,7 @@ export default function BdayPage() {
             priority
             draggable={false}
           />
+          <PortraitFly />
           <span className={styles.candlelight} aria-hidden="true" />
           {candles.map((style) => (
             <span

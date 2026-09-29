@@ -2,154 +2,195 @@
 
 import confetti from "canvas-confetti";
 import Image from "next/image";
-import { type CSSProperties, useState } from "react";
-import { cn } from "@/lib/cn";
-import cakeOff from "./cake-off.png";
-import cakeOn from "./cake-on.png";
-import frame from "./frame.png";
+import {
+  type CSSProperties,
+  type KeyboardEvent,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import cake from "./cake-2026.png";
+import frame from "./frame-2026.png";
+import styles from "./page.module.css";
 
-type FlameStyle = CSSProperties & {
-  "--x": string;
-  "--y": string;
-};
+type Stage = "unlit" | "lit" | "wished";
+type CandleStyle = CSSProperties & { "--x": string; "--y": string };
+const candles: CandleStyle[] = [
+  { "--x": "46.8%", "--y": "58.1%" },
+  { "--x": "53.5%", "--y": "58.1%" },
+];
+const HOLD_DURATION = 1400;
 
-const leftFlameStyle: FlameStyle = { "--x": "45.3%", "--y": "59%" };
-const rightFlameStyle: FlameStyle = { "--x": "54%", "--y": "59%" };
-
-function shootConfetti() {
-  const rand = Math.random();
-  if (rand > 0.5) {
-    confetti({
-      particleCount: 200,
-      spread: 60,
-      origin: { y: 0.6 },
-    });
-  } else {
-    const heart = confetti.shapeFromPath({
-      path: "M10 30 A20 20 0 0 1 50 30 Q50 60 10 90 Q-30 60 -30 30 A20 20 0 0 1 10 30 Z",
-    });
-
-    confetti({
-      particleCount: 200,
-      shapes: [heart],
-      colors: ["#ff4d6d", "#ff8fa3", "#ffccd5"],
-      spread: 80,
-      origin: { y: 0.6 },
-    });
-  }
+function celebrate() {
+  const heart = confetti.shapeFromPath({
+    path: "M10 30 A20 20 0 0 1 50 30 Q50 60 10 90 Q-30 60 -30 30 A20 20 0 0 1 10 30 Z",
+  });
+  confetti({
+    particleCount: 90,
+    spread: 85,
+    startVelocity: 27,
+    gravity: 0.65,
+    ticks: 260,
+    scalar: 0.85,
+    shapes: ["circle", heart],
+    colors: ["#a14b36", "#cf9352", "#f3d9a1", "#6c7650"],
+    origin: { x: 0.5, y: 0.58 },
+    disableForReducedMotion: true,
+  });
 }
 
 export default function BdayPage() {
-  const [on, setOn] = useState(false);
+  const [stage, setStage] = useState<Stage>("unlit");
+  const [holding, setHolding] = useState(false);
+  const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const celebrationTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const skipClick = useRef(false);
 
-  function toggleCandles() {
-    setOn(!on);
-    if (!on) {
-      shootConfetti();
-    }
+  useEffect(() => {
+    return () => {
+      if (holdTimer.current) clearTimeout(holdTimer.current);
+      if (celebrationTimer.current) clearTimeout(celebrationTimer.current);
+      confetti.reset();
+    };
+  }, []);
+
+  function stopHolding() {
+    if (holdTimer.current) clearTimeout(holdTimer.current);
+    holdTimer.current = null;
+    setHolding(false);
   }
 
+  function finishWish(fromHold = false) {
+    stopHolding();
+    skipClick.current = fromHold;
+    setStage("wished");
+    celebrationTimer.current = setTimeout(celebrate, 350);
+  }
+
+  function startHolding() {
+    if (stage !== "lit" || holdTimer.current) return;
+    setHolding(true);
+    holdTimer.current = setTimeout(() => finishWish(true), HOLD_DURATION);
+  }
+
+  function lightCandles() {
+    if (celebrationTimer.current) clearTimeout(celebrationTimer.current);
+    confetti.reset();
+    skipClick.current = false;
+    setStage("lit");
+  }
+
+  function handleKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
+    if (event.key === "Escape") stopHolding();
+    if (event.key !== " " && event.key !== "Enter") return;
+    event.preventDefault();
+    if (event.repeat) return;
+    if (stage === "lit") startHolding();
+    else lightCandles();
+  }
+
+  const instruction =
+    stage === "unlit"
+      ? "Tap to light the candles."
+      : stage === "lit"
+        ? holding
+          ? "Keep holding…"
+          : "Make a wish. Hold to blow out the candles."
+        : "Tap to make another wish.";
+
   return (
-    <div className="bg-amber-200 w-screen h-screen bg-[url(/bg.png)] relative overflow-hidden">
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-1/2 aspect-square">
-        {/* base (candles off) */}
-        <Image
-          src={cakeOff}
-          alt="bday cake off"
-          className="size-[80%] absolute left-1/2 top-1/2 -translate-1/2"
-          onClick={toggleCandles}
-        />
-        <Image
-          onClick={toggleCandles}
-          src={cakeOn}
-          alt="bday cake on"
-          className={cn(
-            "size-[80%] absolute left-1/2 top-1/2 -translate-1/2",
-            "transition-opacity duration-200",
-            {
-              "opacity-0": !on,
-              "opacity-100": on,
-            },
-          )}
-        />
-        {on && (
-          <>
-            <div className="flame" style={leftFlameStyle}></div>
-            <div className="flame" style={rightFlameStyle}></div>
-          </>
-        )}
-        {/* frame overlay */}
-        <Image
-          src={frame}
-          alt="bday cake frame"
-          className="absolute size-[95%] left-1/2 top-1/2 -translate-1/2 pointer-events-none"
-        />
+    <main className={styles.page} data-stage={stage} data-holding={holding}>
+      <div className={styles.portraitWrap}>
+        <button
+          type="button"
+          className={styles.portrait}
+          aria-label={
+            stage === "lit"
+              ? "Hold to blow out the birthday candles"
+              : "Light the birthday candles"
+          }
+          aria-describedby="birthday-instruction"
+          onClick={(event) => {
+            if (skipClick.current) {
+              skipClick.current = false;
+              return;
+            }
+            if (stage !== "lit") lightCandles();
+            else if (event.detail === 0) finishWish();
+          }}
+          onPointerDown={(event) => {
+            if (event.button !== 0) return;
+            event.currentTarget.setPointerCapture(event.pointerId);
+            startHolding();
+          }}
+          onPointerUp={stopHolding}
+          onPointerCancel={() => {
+            stopHolding();
+            skipClick.current = false;
+          }}
+          onLostPointerCapture={stopHolding}
+          onKeyDown={handleKeyDown}
+          onKeyUp={(event) => {
+            if (event.key === " " || event.key === "Enter") {
+              event.preventDefault();
+              stopHolding();
+              skipClick.current = false;
+            }
+          }}
+          onBlur={stopHolding}
+          onContextMenu={(event) => event.preventDefault()}
+        >
+          <Image
+            src={cake}
+            alt="Six cats gathered around a birthday cake with 41 candles"
+            className={styles.painting}
+            sizes="(max-width: 600px) 75vw, 465px"
+            priority
+            draggable={false}
+          />
+          <span className={styles.candlelight} aria-hidden="true" />
+          {candles.map((style) => (
+            <span
+              key={style["--x"]}
+              className={styles.candle}
+              style={style}
+              aria-hidden="true"
+            >
+              {stage === "lit" && <span className={styles.flame} />}
+              {stage === "wished" && <span className={styles.smoke} />}
+            </span>
+          ))}
+          <Image
+            src={frame}
+            alt=""
+            className={styles.frame}
+            sizes="(max-width: 600px) 90vw, 620px"
+            draggable={false}
+          />
+        </button>
       </div>
 
-      <style jsx global>{`
-        .flame {
-          position: absolute;
-          left: var(--x);
-          top: var(--y);
-          width: 7%; 
-          height: 13%; 
-          transform: translate(-50%, -50%);
-          transform-origin: center center;
-          pointer-events: none;
-          z-index: 50;
-          filter: drop-shadow(0 0 8px rgba(255, 180, 80, 0.5));
-          mix-blend-mode: screen;
-          animation: flameSway 0.15s infinite ease-in-out alternate,
-            flameOpacity 1s infinite linear alternate;
-        }
-        .flame::before,
-        .flame::after {
-          content: "";
-          position: absolute;
-          left: 50%;
-          top: 40%;
-          transform: translate(-50%, -50%);
-          border-radius: 50% / 60%;
-        }
-        .flame::before {
-          width: 40%;
-          height: 50%;
-          background: radial-gradient(
-            closest-side,
-            rgba(255, 255, 200, 1) 0%,
-            rgba(255, 180, 80, 0.7) 60%,
-            rgba(255, 140, 60, 0) 100%
-          );
-        }
-        .flame::after {
-          width: 80%;
-          height: 80%;
-          background: radial-gradient(
-            closest-side,
-            rgba(255, 200, 120, 0.5) 0%,
-            rgba(255, 140, 60, 0.15) 50%,
-            rgba(255, 120, 50, 0) 100%
-          );
-          filter: blur(3px);
-        }
-
-        @keyframes flameSway {
-          0% {
-            transform: translate(-50%, -100%) rotate(-2deg) scale(1);
-          }
-          100% {
-            transform: translate(-50%, -100%) rotate(2deg) scale(1.05);
-          }
-        }
-        @keyframes flameOpacity {
-          0% {
-            opacity: 0.85;
-          }
-          100% {
-            opacity: 1;
-          }
-        }
-      `}</style>
-    </div>
+      <div className={styles.below}>
+        <p
+          id="birthday-instruction"
+          className={styles.instruction}
+          aria-live="polite"
+        >
+          {instruction}
+        </p>
+        <div className={styles.progress} aria-hidden="true">
+          <span />
+        </div>
+        {stage === "lit" && (
+          <button
+            type="button"
+            className={styles.textButton}
+            onClick={() => finishWish()}
+          >
+            Blow out candles
+          </button>
+        )}
+      </div>
+    </main>
   );
 }

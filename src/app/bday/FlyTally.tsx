@@ -1,7 +1,8 @@
 import styles from "./page.module.css";
+export const MAX_FLY_TALLY = 25;
 
 export default function FlyTally({ count }: { count: number }) {
-  const visible = Math.min(count, 25);
+  const visible = Math.min(count, MAX_FLY_TALLY);
   const groups = Math.ceil(visible / 5);
 
   return (
@@ -12,8 +13,9 @@ export default function FlyTally({ count }: { count: number }) {
       {count > 0 && (
         <span className={styles.tallyMarks} aria-hidden="true">
           <svg
-            viewBox={`0 0 ${groups * 32} 28`}
-            width={groups * 32}
+            viewBox="0 0 160 28"
+            preserveAspectRatio="xMinYMid meet"
+            width={160}
             height={28}
           >
             <title>Fly tally marks</title>
@@ -31,7 +33,6 @@ export default function FlyTally({ count }: { count: number }) {
               );
             })}
           </svg>
-          {count > 25 && <span className={styles.tallyTotal}>{count}</span>}
         </span>
       )}
     </span>

@@ -5,11 +5,13 @@ import Image from "next/image";
 import {
   type CSSProperties,
   type KeyboardEvent,
+  useCallback,
   useEffect,
   useRef,
   useState,
 } from "react";
 import cake from "./cake-2026.png";
+import FlyTally from "./FlyTally";
 import frame from "./frame-2026.png";
 import PortraitFly from "./PortraitFly";
 import styles from "./page.module.css";
@@ -43,6 +45,8 @@ function celebrate() {
 export default function BdayPage() {
   const [stage, setStage] = useState<Stage>("unlit");
   const [holding, setHolding] = useState(false);
+  const [fliesSwatted, setFliesSwatted] = useState(0);
+  const countFly = useCallback(() => setFliesSwatted((count) => count + 1), []);
   const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const celebrationTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const skipClick = useRef(false);
@@ -150,7 +154,7 @@ export default function BdayPage() {
             draggable={false}
           />
         </button>
-        <PortraitFly />
+        <PortraitFly onSwat={countFly} />
         <span className={styles.candlelight} aria-hidden="true" />
         {candles.map((style) => (
           <span
@@ -170,6 +174,7 @@ export default function BdayPage() {
           sizes="(max-width: 600px) 90vw, 620px"
           draggable={false}
         />
+        <FlyTally count={fliesSwatted} />
       </div>
 
       <div className={styles.below}>

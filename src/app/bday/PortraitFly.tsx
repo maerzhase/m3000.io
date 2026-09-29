@@ -21,7 +21,7 @@ const eyes = [
 ];
 const PATCH = 72;
 
-export default function PortraitFly() {
+export default function PortraitFly({ onSwat }: { onSwat: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const flyTargetRef = useRef<HTMLButtonElement>(null);
   const swatRef = useRef<(() => void) | null>(null);
@@ -50,6 +50,7 @@ export default function PortraitFly() {
       swattedAt = elapsed;
       returnsAt = elapsed + 3.5;
       flyTarget.hidden = true;
+      onSwat();
     };
     const pixels: { x: number; y: number; weight: number; alpha: number }[] =
       [];
@@ -224,7 +225,7 @@ export default function PortraitFly() {
       motion.removeEventListener("change", syncPlayback);
       document.removeEventListener("visibilitychange", syncPlayback);
     };
-  }, []);
+  }, [onSwat]);
 
   return (
     <span className={styles.portraitFly}>

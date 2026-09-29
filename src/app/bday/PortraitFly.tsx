@@ -23,11 +23,14 @@ const PATCH = 72;
 
 export default function PortraitFly() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const flyTargetRef = useRef<HTMLButtonElement>(null);
+  const swatRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     const context = canvas?.getContext("2d");
-    if (!canvas || !context) return;
+    const flyTarget = flyTargetRef.current;
+    if (!canvas || !context || !flyTarget) return;
 
     const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
     const image = new window.Image();
@@ -37,6 +40,17 @@ export default function PortraitFly() {
     let previous = 0;
     let elapsed = 0;
     let lastPaint = 0;
+    let returnsAt = 0;
+    let swattedAt = -10;
+    let flyX = 627;
+    let flyY = 625;
+    flyTarget.hidden = true;
+    swatRef.current = () => {
+      if (!ready || motion.matches || elapsed < returnsAt) return;
+      swattedAt = elapsed;
+      returnsAt = elapsed + 3.5;
+      flyTarget.hidden = true;
+    };
     const pixels: { x: number; y: number; weight: number; alpha: number }[] =
       [];
     for (let y = 0; y < PATCH; y++) {
@@ -67,7 +81,7 @@ export default function PortraitFly() {
       frame = requestAnimationFrame(animate);
       if (now - lastPaint < 1000 / 30) return;
       lastPaint = now;
-      if (!context || !canvas) return;
+      if (!context || !canvas || !flyTarget) return;
 
       const x =
         627 + 355 * Math.sin(elapsed * 0.53) + 55 * Math.sin(elapsed * 2.1);
@@ -76,13 +90,23 @@ export default function PortraitFly() {
         245 * Math.sin(elapsed * 0.71 + 0.8) +
         55 * Math.sin(elapsed * 1.9);
       const attention = Math.min(1, Math.max(0, (elapsed - 2) / 1.2));
+      const alive = elapsed >= returnsAt;
+      const gaze = alive
+        ? Math.min(attention, Math.max(0, (elapsed - returnsAt - 0.5) / 0.8))
+        : 0;
       context.clearRect(0, 0, canvas.width, canvas.height);
 
       for (const patch of patches) {
         const angle = Math.atan2(y - patch.y, x - patch.x);
         // A little lag feels more like a curious cat than a cursor follower.
-        patch.dx += (Math.cos(angle) * 6 * attention - patch.dx) * 0.13;
-        patch.dy += (Math.sin(angle) * 4.5 * attention - patch.dy) * 0.13;
+        patch.dx += (Math.cos(angle) * 6 * gaze - patch.dx) * 0.13;
+        // Downward tracking needs to overcome the painting's upward-set pupils.
+        // Use vertical distance so a fly off to the side still draws their gaze down.
+        const vertical =
+          y > patch.y
+            ? Math.tanh((y - patch.y) / 180) * 14
+            : Math.sin(angle) * 4.5;
+        patch.dy += (vertical * gaze - patch.dy) * 0.13;
         for (const pixel of pixels) {
           const sx = pixel.x - patch.dx * pixel.weight;
           const sy = pixel.y - patch.dy * pixel.weight;
@@ -110,6 +134,22 @@ export default function PortraitFly() {
         );
       }
 
+      if (!alive) {
+        const puff = (elapsed - swattedAt) / 0.25;
+        if (puff < 1) {
+          context.strokeStyle = `rgba(229, 218, 185, ${0.6 * (1 - puff)})`;
+          context.lineWidth = 2;
+          context.beginPath();
+          context.arc(flyX, flyY, 5 + puff * 20, 0, Math.PI * 2);
+          context.stroke();
+        }
+        return;
+      }
+      flyX = x;
+      flyY = y;
+      flyTarget.hidden = false;
+      flyTarget.style.left = `${(x / 1254) * 100}%`;
+      flyTarget.style.top = `${(y / 1254) * 100}%`;
       context.save();
       context.translate(x, y);
       context.rotate(Math.sin(elapsed * 2.1) * 0.5);
@@ -131,8 +171,11 @@ export default function PortraitFly() {
 
     function syncPlayback() {
       cancelAnimationFrame(frame);
-      if (disposed || !ready) return;
-      if (motion.matches) context?.clearRect(0, 0, 1254, 1254);
+      if (disposed || !ready || !flyTarget) return;
+      if (motion.matches) {
+        context?.clearRect(0, 0, 1254, 1254);
+        flyTarget.hidden = true;
+      }
       if (motion.matches || document.hidden) return;
       previous = performance.now();
       frame = requestAnimationFrame(animate);
@@ -175,6 +218,7 @@ export default function PortraitFly() {
     document.addEventListener("visibilitychange", syncPlayback);
     return () => {
       disposed = true;
+      swatRef.current = null;
       image.onload = null;
       cancelAnimationFrame(frame);
       motion.removeEventListener("change", syncPlayback);
@@ -183,8 +227,21 @@ export default function PortraitFly() {
   }, []);
 
   return (
-    <span className={styles.portraitFly} aria-hidden="true">
-      <canvas ref={canvasRef} width={1254} height={1254} />
+    <span className={styles.portraitFly}>
+      <span aria-hidden="true">
+        <canvas ref={canvasRef} width={1254} height={1254} />
+      </span>
+      <button
+        ref={flyTargetRef}
+        type="button"
+        hidden
+        className={styles.flyTarget}
+        aria-label="Swat the fly"
+        onPointerDown={(event) => {
+          if (event.button === 0) swatRef.current?.();
+        }}
+        onClick={() => swatRef.current?.()}
+      />
     </span>
   );
 }

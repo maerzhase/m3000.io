@@ -149,27 +149,27 @@ export default function BdayPage() {
             priority
             draggable={false}
           />
-          <PortraitFly />
-          <span className={styles.candlelight} aria-hidden="true" />
-          {candles.map((style) => (
-            <span
-              key={style["--x"]}
-              className={styles.candle}
-              style={style}
-              aria-hidden="true"
-            >
-              {stage === "lit" && <span className={styles.flame} />}
-              {stage === "wished" && <span className={styles.smoke} />}
-            </span>
-          ))}
-          <Image
-            src={frame}
-            alt=""
-            className={styles.frame}
-            sizes="(max-width: 600px) 90vw, 620px"
-            draggable={false}
-          />
         </button>
+        <PortraitFly />
+        <span className={styles.candlelight} aria-hidden="true" />
+        {candles.map((style) => (
+          <span
+            key={style["--x"]}
+            className={styles.candle}
+            style={style}
+            aria-hidden="true"
+          >
+            {stage === "lit" && <span className={styles.flame} />}
+            {stage === "wished" && <span className={styles.smoke} />}
+          </span>
+        ))}
+        <Image
+          src={frame}
+          alt=""
+          className={styles.frame}
+          sizes="(max-width: 600px) 90vw, 620px"
+          draggable={false}
+        />
       </div>
 
       <div className={styles.below}>

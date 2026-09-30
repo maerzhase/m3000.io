@@ -46,7 +46,7 @@ export const Link = React.forwardRef<LinkElement, LinkProps>(function Link(
       variant={variant}
       className={cn(
         "inline text-1 align-middle",
-        "hover:text-secondary data-active:text-secondary",
+        "hover:text-secondary data-[state=active]:text-secondary",
         "focus-visible:rounded-xs focus-visible:ring-1 focus-visible:ring-primary focus-visible:outline-none",
         "[&_svg]:inline-block [&_svg]:align-[-0.125em] [&_svg]:shrink-0",
         className,

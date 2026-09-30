@@ -307,7 +307,7 @@ float smokeDensity(vec2 uv, float contentMask, float detailMix) {
   return 1.0 - exp(-light * 2.3);
 }
 
-vec3 baseScene(vec2 uv, float contentMask, float detailMix) {
+vec3 baseScene(vec2 uv, float contentMask, float detailMix, float lightIntensity) {
   vec2 p = toWorld(uv);
   float minRes = min(u_resolution.x, u_resolution.y);
   float rScale = clamp(520.0 / minRes, 1.0, 1.6);
@@ -342,7 +342,7 @@ vec3 baseScene(vec2 uv, float contentMask, float detailMix) {
   float r = 0.45 * rScale;
   float rCenter = 0.55 * rScale;
   vec3 col = u_base_color;
-  col += u_intensity * (blob(p, c1, r) * b1 + blob(p, c2, rCenter) * b2 + blob(p, c3, r) * b3);
+  col += lightIntensity * (blob(p, c1, r) * b1 + blob(p, c2, rCenter) * b2 + blob(p, c3, r) * b3);
   float d = length(toWorld(uv));
   float vig = 1.0 - smoothstep(u_vignette_radius * 0.5, u_vignette_radius, d);
   vig = mix(1.0 - u_vignette_strength, 1.0, vig);
@@ -366,7 +366,7 @@ vec3 baseScene(vec2 uv, float contentMask, float detailMix) {
     * u_noise_global_strength;
   float ambientLight = clamp(length(col - u_base_color) * 7.0, 0.0, 1.0);
   float mist = smokeDensity(uv, contentMask, detailMix);
-  float scatteredLight = pow(mist, 1.1) * u_intensity * (0.66 + ambientLight * 0.08);
+  float scatteredLight = pow(mist, 1.1) * lightIntensity * (0.66 + ambientLight * 0.08);
   vec3 smokeScene = u_base_color * 1.05 + vec3(scatteredLight);
   smokeScene += max(col - u_base_color, 0.0) * (0.08 + mist * 0.12);
   return mix(col, smokeScene, u_smoke_mix);
@@ -422,7 +422,7 @@ void main() {
 
   highlightMask *= u_highlight_strength;
   highlightEdge *= u_highlight_strength;
-  vec3 centerScene = baseScene(uv, contentMask, 1.0);
+  vec3 centerScene = baseScene(uv, contentMask, 1.0, u_intensity);
   vec4 pressure = interactionFlow(worldUv, texture2D(u_trail, uv));
   float highlightFog = pressure.w > 0.001
     ? smokeDensity(uv, 0.0, 0.0) : 0.0;
@@ -493,9 +493,10 @@ void main() {
       * 0.48;
     rs = min(rs, 10.0 / min(u_resolution.x, u_resolution.y));
     vec2 splitOffset = rs * velDir / vec2(u_resolution.x / u_resolution.y, 1.0);
-    vec3 broadScene = baseScene(uv, contentMask, 0.0);
-    vec3 cr = baseScene(uv - splitOffset, contentMask, 0.0);
-    vec3 cb = baseScene(uv + splitOffset, contentMask, 0.0);
+    // Keep fringe colors and their contrast gates independent of ambient brightness.
+    vec3 broadScene = baseScene(uv, contentMask, 0.0, 0.3);
+    vec3 cr = baseScene(uv - splitOffset, contentMask, 0.0, 0.3);
+    vec3 cb = baseScene(uv + splitOffset, contentMask, 0.0, 0.3);
     vec3 splitDifference = vec3(cr.r - broadScene.r, 0.0, cb.b - broadScene.b);
     vec3 splitChroma = splitDifference
       - vec3(dot(splitDifference, vec3(0.2126, 0.7152, 0.0722)));
@@ -651,7 +652,7 @@ const BASE_COLOR = [7 / 255, 7 / 255, 7 / 255] as const;
 const PRIMARY_COLOR = [0.18, 0.07, 0.055] as const;
 
 const DEFAULT_PARAMS = {
-  intensity: 0.3,
+  intensity: 0.1,
   colorIntensity: 2.5,
   mouseGlowIntensity: 0.1,
   mouseGlowRadius: 0.2,

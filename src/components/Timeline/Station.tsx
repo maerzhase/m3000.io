@@ -79,7 +79,8 @@ export function Station({
     {},
   );
   const hasCustomTimelinePoints = registeredPoints.length > 0;
-  const stationActive = timeframeActive || stationHovered;
+  const stationActive =
+    timeframeActive || stationHovered || activePointId !== null;
 
   const dotRight = timelineNodeOffset - 4.5;
   const contentStyle = isTimeline
